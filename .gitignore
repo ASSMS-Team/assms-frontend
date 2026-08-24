@@ -7,4 +7,7 @@ dist/
 *.tfstate
 *.tfstate.*
 *.tfplan
-
+terraform.tfvars
+backend.hcl
+*.pem
+*.key
