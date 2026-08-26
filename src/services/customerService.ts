@@ -22,3 +22,20 @@ export async function createCustomer(
 
   return response.data
 }
+
+// The whole list, newest first - the ordering is the API's, not ours.
+export async function getAllCustomers(): Promise<CustomerResponse[]> {
+  const response = await customerApi.get<CustomerResponse[]>('/api/customers')
+
+  return response.data
+}
+
+// Throws on 404 rather than resolving with null, so the caller can tell "no
+// such customer" apart from a request that never reached the service.
+export async function getCustomerById(id: string): Promise<CustomerResponse> {
+  const response = await customerApi.get<CustomerResponse>(
+    `/api/customers/${encodeURIComponent(id)}`,
+  )
+
+  return response.data
+}
