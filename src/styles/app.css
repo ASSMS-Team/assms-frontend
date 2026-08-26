@@ -1,0 +1,318 @@
+/* App theme, layered on top of Bootstrap.
+
+   Kept separate from index.css so the Vite template's leftovers stay where they
+   are; this file is imported after both and overrides what it needs to. */
+
+:root {
+  /* index.css sets the root font to 18px, which scales every Bootstrap rem up
+     with it. 16px is the size Bootstrap's scale is designed around. */
+  font-size: 16px;
+
+  --app-bg: #f5f6f8;
+  --app-surface: #ffffff;
+  --app-border: #e6e8ec;
+  --app-ink: #16181d;
+  --app-muted: #6b7280;
+  --app-accent: #2563eb;
+  --app-accent-soft: rgba(37, 99, 235, 0.08);
+  --app-shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 8px 24px rgba(16, 24, 40, 0.06);
+}
+
+/* The template painted a dark page background and vertical rules down the
+   content column. Both are undone here rather than in index.css. */
+body {
+  background: var(--app-bg);
+  color: var(--app-ink);
+}
+
+#root {
+  border-inline: 0;
+  background: var(--app-bg);
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+}
+
+/* ---------- top bar ---------- */
+
+.app-navbar {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--app-border);
+  padding-block: 0.6rem;
+}
+
+.app-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--app-ink);
+  line-height: 1.15;
+}
+
+.app-brand:hover {
+  color: var(--app-ink);
+}
+
+.app-brand-mark {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.app-brand-sub {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--app-muted);
+  letter-spacing: 0.01em;
+}
+
+.app-nav-link {
+  color: var(--app-muted);
+  font-size: 0.925rem;
+  font-weight: 500;
+  padding-inline: 0.85rem;
+  border-radius: 8px;
+}
+
+.app-nav-link:hover {
+  color: var(--app-ink);
+  background: var(--app-accent-soft);
+}
+
+.app-nav-link.active {
+  color: var(--app-accent);
+  background: var(--app-accent-soft);
+}
+
+.app-main {
+  padding-block: 2.25rem 3rem;
+  flex: 1;
+}
+
+/* ---------- page headings ---------- */
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+/* Class selectors beat index.css's bare h1/p rules, so the template's 56px
+   heading and zero paragraph margin do not apply here. */
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+  color: var(--app-ink);
+  margin: 0;
+}
+
+.page-sub {
+  margin: 0.3rem 0 0;
+  color: var(--app-muted);
+  font-size: 0.94rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--app-muted);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--app-accent);
+}
+
+/* ---------- cards ---------- */
+
+.app-card {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: var(--app-shadow);
+  overflow: hidden;
+}
+
+.app-card-padded {
+  padding: 1.75rem;
+}
+
+.form-column {
+  max-width: 640px;
+}
+
+/* ---------- table ---------- */
+
+.app-table {
+  --bs-table-hover-bg: var(--app-accent-soft);
+}
+
+.app-table thead th {
+  background: #fbfbfc;
+  border-bottom: 1px solid var(--app-border);
+  color: var(--app-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.85rem 1.15rem;
+}
+
+.app-table tbody td {
+  padding: 0.95rem 1.15rem;
+  border-bottom: 1px solid #f1f2f4;
+  vertical-align: middle;
+}
+
+.app-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.row-link {
+  cursor: pointer;
+}
+
+.row-link-name {
+  font-weight: 600;
+  color: var(--app-ink);
+  text-decoration: none;
+}
+
+.row-link:hover .row-link-name {
+  color: var(--app-accent);
+}
+
+/* ---------- loading / empty / not-found blocks ---------- */
+
+.state-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 3.5rem 1.5rem;
+  text-align: center;
+}
+
+.state-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--app-ink);
+}
+
+.state-text {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.925rem;
+}
+
+.state-block .btn {
+  margin-top: 0.6rem;
+}
+
+.empty-mark {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+/* ---------- detail list ---------- */
+
+.detail-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f1f2f4;
+}
+
+.detail-row:last-child {
+  border-bottom: 0;
+}
+
+.detail-row dt {
+  margin: 0;
+  color: var(--app-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.detail-row dd {
+  margin: 0;
+  color: var(--app-ink);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+
+.detail-id {
+  font-size: 0.85rem;
+  color: var(--app-muted);
+  background: #f5f6f8;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+}
+
+@media (max-width: 575.98px) {
+  .detail-row {
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+}
+
+/* ---------- form ---------- */
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 550;
+  color: var(--app-ink);
+}
+
+.form-control,
+.form-select {
+  border-color: var(--app-border);
+  border-radius: 9px;
+  padding: 0.55rem 0.8rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 4px var(--app-accent-soft);
+}
+
+.btn {
+  border-radius: 9px;
+  font-weight: 550;
+  padding: 0.55rem 1.1rem;
+}
