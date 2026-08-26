@@ -44,6 +44,10 @@ export default defineConfig([
 
 ```
 
+## Continuous Integration
+
+GitHub Actions runs on pull requests targeting `dev` or `main` and pushes to `dev` or `main`. CI validates Terraform formatting and both environment roots, installs locked npm dependencies, runs the configured lint script, and builds the React/Vite application. Mandatory failures fail CI, and no deployment occurs from this workflow. Frontend tests and coverage remain pending because the current `package.json` does not define a test script.
+
 You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
 ```js
