@@ -51,6 +51,17 @@ export async function getAllCustomers(): Promise<CustomerResponse[]> {
   return response.data
 }
 
+// Resolves with the customer as it now stands on 200 - status INACTIVE, whether
+// this call changed it or it was already inactive. 404 is the only failure the
+// caller has to tell apart: no customer with this id.
+export async function deactivateCustomer(id: string): Promise<CustomerResponse> {
+  const response = await customerApi.post<CustomerResponse>(
+    `/api/customers/${encodeURIComponent(id)}/deactivate`,
+  )
+
+  return response.data
+}
+
 // Throws on 404 rather than resolving with null, so the caller can tell "no
 // such customer" apart from a request that never reached the service.
 export async function getCustomerById(id: string): Promise<CustomerResponse> {
