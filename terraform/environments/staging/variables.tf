@@ -48,9 +48,9 @@ variable "web_app_name" {
   type        = string
 }
 variable "sku_name" {
-  description = "Economical, configurable App Service Plan SKU."
+  description = "Staging App Service Plan SKU; F1 is selected for the university development environment."
   type        = string
-  default     = "B1"
+  default     = "F1"
 }
 variable "always_on" {
   description = "Whether Always On is enabled."

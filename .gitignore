@@ -34,6 +34,7 @@ dist-ssr
 *.tfstate.*
 *.tfplan
 terraform.tfvars
+backend.hcl
 
 
 # Secrets
