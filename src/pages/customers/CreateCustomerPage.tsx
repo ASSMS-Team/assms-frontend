@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 
-import CreateCustomerForm from '../../components/forms/CreateCustomerForm'
+import CustomerForm from '../../components/forms/CustomerForm'
 
 // Thin wrapper: title and layout only. Everything to do with the form - state,
 // submission, error handling - belongs to the form component.
@@ -18,7 +18,7 @@ function CreateCustomerPage() {
       </div>
 
       <div className="card app-card app-card-padded form-column">
-        <CreateCustomerForm />
+        <CustomerForm mode="create" />
       </div>
     </>
   )

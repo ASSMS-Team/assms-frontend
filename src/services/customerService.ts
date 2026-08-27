@@ -1,6 +1,10 @@
 import axios from 'axios'
 
-import type { CreateCustomerRequest, CustomerResponse } from '../types/customer'
+import type {
+  CreateCustomerRequest,
+  CustomerResponse,
+  UpdateCustomerRequest,
+} from '../types/customer'
 
 // baseURL comes from the env var declared in vite-env.d.ts, which types it as a
 // required string - so there is no fallback URL here to quietly mask a missing
@@ -19,6 +23,23 @@ export async function createCustomer(
   request: CreateCustomerRequest,
 ): Promise<CustomerResponse> {
   const response = await customerApi.post<CustomerResponse>('/api/customers', request)
+
+  return response.data
+}
+
+// Resolves with the customer as it now stands on 200. Non-2xx is thrown by
+// axios: 400 for a field validation failure, 404 when no such customer exists,
+// and 409 either for a phone another active customer holds or for a customer
+// that is no longer active - the two 409s are told apart by whether the problem
+// details carry an "errors" object.
+export async function updateCustomer(
+  id: string,
+  request: UpdateCustomerRequest,
+): Promise<CustomerResponse> {
+  const response = await customerApi.put<CustomerResponse>(
+    `/api/customers/${encodeURIComponent(id)}`,
+    request,
+  )
 
   return response.data
 }

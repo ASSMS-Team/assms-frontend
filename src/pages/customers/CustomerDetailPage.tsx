@@ -52,7 +52,14 @@ function CustomerDetailPage() {
           <h1 className="page-title">{customer ? customer.name : 'Customer'}</h1>
           {customer && <p className="page-sub">Registered {formatDateTime(customer.createdAt)}</p>}
         </div>
-        {customer && <StatusBadge status={customer.status} />}
+        {customer && (
+          <div className="d-flex align-items-center gap-3">
+            <StatusBadge status={customer.status} />
+            <Link className="btn btn-primary" to={`/customers/${customer.id}/edit`}>
+              Edit
+            </Link>
+          </div>
+        )}
       </div>
 
       <div className="card app-card">
