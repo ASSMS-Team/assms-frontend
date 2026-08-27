@@ -33,6 +33,8 @@ dist-ssr
 *.tfstate
 *.tfstate.*
 *.tfplan
+terraform.tfvars
+backend.hcl
 
 
 # Secrets

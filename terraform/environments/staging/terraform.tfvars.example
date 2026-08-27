@@ -8,7 +8,7 @@ platform_state_key                  = "platform/staging.tfstate"
 
 app_service_plan_name = "asp-assms-frontend-staging"
 web_app_name          = "app-assms-frontend-staging-XXXX"
-sku_name              = "B1"
+sku_name              = "F1"
 always_on             = false
 
 tags = {
