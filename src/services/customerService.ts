@@ -44,9 +44,16 @@ export async function updateCustomer(
   return response.data
 }
 
-// The whole list, newest first - the ordering is the API's, not ours.
-export async function getAllCustomers(): Promise<CustomerResponse[]> {
-  const response = await customerApi.get<CustomerResponse[]>('/api/customers')
+// The list, newest first - the ordering is the API's, not ours. Without a
+// status that is every customer; with one it is only the customers holding it.
+export async function getAllCustomers(status?: string): Promise<CustomerResponse[]> {
+  // The parameter is appended only when there is a status to send. Passing it
+  // as '' instead would not filter: the server converts an empty query value to
+  // null before validating, so it reads as "no filter" and returns everyone -
+  // silently, which is exactly the outcome the 400 exists to prevent.
+  const response = await customerApi.get<CustomerResponse[]>('/api/customers', {
+    params: status ? { status } : undefined,
+  })
 
   return response.data
 }
