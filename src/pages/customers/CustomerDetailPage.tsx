@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
+import { ASSET_TYPE_LABELS } from '../../constants/asset'
 import { CUSTOMER_TYPE_LABELS } from '../../constants/customer'
+import { getAssetsByCustomerId } from '../../services/assetService'
 import { deactivateCustomer, getCustomerById } from '../../services/customerService'
+import type { AssetResponse } from '../../types/asset'
 import type { CustomerResponse } from '../../types/customer'
 import { formatDateTime } from '../../utils/formatDateTime'
 
@@ -21,6 +24,13 @@ function CustomerDetailPage() {
   // still on screen and still correct.
   const [actionError, setActionError] = useState('')
   const [deactivating, setDeactivating] = useState(false)
+  // The assets list carries its own loading and error state rather than sharing
+  // the customer's. A failed assets fetch is a failure of one section, and
+  // folding it into `error` would blank out a customer already on screen.
+  const [assets, setAssets] = useState<AssetResponse[]>([])
+  const [assetsLoading, setAssetsLoading] = useState(true)
+  const [assetsError, setAssetsError] = useState('')
+  const navigate = useNavigate()
 
   useEffect(() => {
     async function load() {
@@ -46,6 +56,28 @@ function CustomerDetailPage() {
 
     void load()
   }, [id])
+
+  // Runs once the customer is known rather than on mount, so an id that turns
+  // out to be nobody does not fire a second request that is bound to 404.
+  const customerId = customer?.id
+
+  useEffect(() => {
+    if (!customerId) {
+      return
+    }
+
+    async function load() {
+      try {
+        setAssets(await getAssetsByCustomerId(customerId!))
+      } catch {
+        setAssetsError('Could not load this customer’s assets. Check that the customer service is running.')
+      } finally {
+        setAssetsLoading(false)
+      }
+    }
+
+    void load()
+  }, [customerId])
 
   async function handleDeactivate() {
     if (!customer) {
@@ -198,6 +230,90 @@ function CustomerDetailPage() {
           )
         )}
       </div>
+
+      {/* Only once the customer is on screen: with no customer there is nothing
+          for these assets to belong to, and the state above already says why. */}
+      {customer && (
+        <>
+          <div className="page-head mt-4">
+            <div>
+              <h2 className="page-title">Assets</h2>
+              <p className="page-sub">Equipment registered against this customer, newest first.</p>
+            </div>
+            <Link className="btn btn-primary" to="/assets/new">
+              New asset
+            </Link>
+          </div>
+
+          <div className="card app-card">
+            {assetsLoading ? (
+              <div className="state-block">
+                <div className="spinner-border text-primary" role="status">
+                  <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="state-text">Loading assets...</p>
+              </div>
+            ) : assetsError ? (
+              // Sits inside this card only. The customer above is loaded and
+              // still correct, so it stays exactly where it is.
+              <div className="state-block">
+                <div className="alert alert-danger mb-0" role="alert">
+                  {assetsError}
+                </div>
+              </div>
+            ) : assets.length === 0 ? (
+              // An empty list is a normal outcome, not an error - say so instead
+              // of rendering a table with nothing but headers.
+              <div className="state-block">
+                <div className="empty-mark">0</div>
+                <p className="state-title">No assets registered</p>
+                <p className="state-text">
+                  Nothing has been registered against this customer yet.
+                </p>
+                <Link className="btn btn-primary" to="/assets/new">
+                  Register an asset
+                </Link>
+              </div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table table-hover app-table align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th scope="col">Asset type</th>
+                      <th scope="col">Model</th>
+                      <th scope="col">Serial number</th>
+                      <th scope="col">Installation date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {assets.map((asset) => (
+                      <tr
+                        key={asset.id}
+                        className="row-link"
+                        onClick={() => navigate(`/assets/${asset.id}`)}
+                      >
+                        <td>
+                          {/* A real link as well as the clickable row, so the
+                              page stays reachable by keyboard. */}
+                          <Link className="row-link-name" to={`/assets/${asset.id}`}>
+                            {ASSET_TYPE_LABELS[asset.assetType] ?? asset.assetType}
+                          </Link>
+                        </td>
+                        <td>{asset.model}</td>
+                        <td className="text-nowrap">{asset.serialNumber}</td>
+                        {/* Shown as the API sends it - a day with no time of day
+                            has nothing to convert, and running 'YYYY-MM-DD'
+                            through a Date would read it as UTC midnight. */}
+                        <td className="text-nowrap">{asset.installationDate}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </>
   )
 }
