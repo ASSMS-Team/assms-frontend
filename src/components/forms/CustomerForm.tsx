@@ -3,16 +3,34 @@ import type { ChangeEvent, FormEvent } from 'react'
 import axios from 'axios'
 
 import { CUSTOMER_TYPES, CUSTOMER_TYPE_LABELS } from '../../constants/customer'
-import { createCustomer } from '../../services/customerService'
+import { createCustomer, updateCustomer } from '../../services/customerService'
 import type {
   CreateCustomerRequest,
   CustomerResponse,
   ValidationProblemDetails,
 } from '../../types/customer'
 
+// The five editable fields. CreateCustomerRequest and UpdateCustomerRequest are
+// the same shape today, so one piece of state serves both modes; the parameter
+// type on each service function is what would break loudly if they diverge.
+type CustomerFormValues = CreateCustomerRequest
+
+// A discriminated union rather than a bag of optional props: "edit" cannot be
+// asked for without the id, the values to start from, and somewhere to report
+// a save or a customer that has been deleted since the form was loaded.
+type CustomerFormProps =
+  | { mode: 'create' }
+  | {
+      mode: 'edit'
+      customerId: string
+      initialValues: CustomerFormValues
+      onSaved: (customer: CustomerResponse) => void
+      onNotFound: () => void
+    }
+
 // customerType defaults to a real value rather than '' so the form state matches
 // CustomerType exactly and no cast is needed at submit time.
-const EMPTY_FORM: CreateCustomerRequest = {
+const EMPTY_FORM: CustomerFormValues = {
   name: '',
   phone: '',
   address: '',
@@ -20,14 +38,20 @@ const EMPTY_FORM: CreateCustomerRequest = {
   email: '',
 }
 
-function CreateCustomerForm() {
-  const [values, setValues] = useState<CreateCustomerRequest>(EMPTY_FORM)
+function CustomerForm(props: CustomerFormProps) {
+  // Read once, on the first render: the edit page only mounts the form after the
+  // customer has loaded, so there is nothing to sync afterwards.
+  const [values, setValues] = useState<CustomerFormValues>(
+    props.mode === 'edit' ? props.initialValues : EMPTY_FORM,
+  )
   // Keyed by field name, exactly as the API returns them - the server's JSON is
   // camelCased, so these keys line up with the input names without translation.
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [created, setCreated] = useState<CustomerResponse | null>(null)
+
+  const isEdit = props.mode === 'edit'
 
   function handleChange(
     event: ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -45,30 +69,44 @@ function CreateCustomerForm() {
     setCreated(null)
     setSubmitting(true)
 
-    try {
-      const customer = await createCustomer({
-        ...values,
-        // Blank means "not supplied". '' would fail the server's email rule.
-        email: values.email?.trim() ? values.email.trim() : null,
-      })
+    const request = {
+      ...values,
+      // Blank means "not supplied". '' would fail the server's email rule.
+      email: values.email?.trim() ? values.email.trim() : null,
+    }
 
-      setCreated(customer)
-      setValues(EMPTY_FORM)
+    try {
+      if (props.mode === 'edit') {
+        props.onSaved(await updateCustomer(props.customerId, request))
+      } else {
+        setCreated(await createCustomer(request))
+        setValues(EMPTY_FORM)
+      }
     } catch (error) {
       if (axios.isAxiosError<ValidationProblemDetails>(error)) {
         const problem = error.response?.data
 
-        if (problem?.errors) {
-          // Covers both the 400 and the 409 - the API keys the duplicate phone
-          // conflict on "phone" so it lands on the input like any other error.
+        if (props.mode === 'edit' && error.response?.status === 404) {
+          // The customer was deleted between loading the form and saving it.
+          props.onNotFound()
+        } else if (problem?.errors) {
+          // Both the 400 and the duplicate-phone 409: the API keys the conflict
+          // on "phone" so it lands on the input like any other field error.
           setFieldErrors(problem.errors)
         } else {
+          // A 409 with no errors object is the other conflict - the customer is
+          // no longer active - and belongs to the form as a whole, not a field.
           setFormError(
-            problem?.title ?? 'Could not reach the customer service. Try again.',
+            [problem?.title, problem?.detail].filter(Boolean).join(' ') ||
+              'Could not reach the customer service. Try again.',
           )
         }
       } else {
-        setFormError('Something went wrong while creating the customer.')
+        setFormError(
+          isEdit
+            ? 'Something went wrong while saving the customer.'
+            : 'Something went wrong while creating the customer.',
+        )
       }
     } finally {
       setSubmitting(false)
@@ -185,10 +223,16 @@ function CreateCustomerForm() {
       </div>
 
       <button type="submit" className="btn btn-primary" disabled={submitting}>
-        {submitting ? 'Creating...' : 'Create customer'}
+        {submitting
+          ? isEdit
+            ? 'Saving...'
+            : 'Creating...'
+          : isEdit
+            ? 'Save changes'
+            : 'Create customer'}
       </button>
     </form>
   )
 }
 
-export default CreateCustomerForm
+export default CustomerForm

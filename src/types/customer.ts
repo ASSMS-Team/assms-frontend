@@ -18,6 +18,19 @@ export interface CreateCustomerRequest {
   email: string | null
 }
 
+// What PUT /api/customers/{id} accepts. Identical to the create shape today,
+// but kept as its own type - the id comes from the URL, and status and the
+// timestamps stay server-owned, so the two can diverge without dragging each
+// other along.
+export interface UpdateCustomerRequest {
+  name: string
+  phone: string
+  address: string
+  customerType: CustomerType
+  // Same rule as on create: null for "not supplied", never ''.
+  email: string | null
+}
+
 // What the API returns for a customer. Phone comes back exactly as it was
 // submitted, not in the server's normalized form.
 export interface CustomerResponse {

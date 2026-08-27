@@ -1,6 +1,10 @@
 import axios from 'axios'
 
-import type { CreateCustomerRequest, CustomerResponse } from '../types/customer'
+import type {
+  CreateCustomerRequest,
+  CustomerResponse,
+  UpdateCustomerRequest,
+} from '../types/customer'
 
 // baseURL comes from the env var declared in vite-env.d.ts, which types it as a
 // required string - so there is no fallback URL here to quietly mask a missing
@@ -19,6 +23,51 @@ export async function createCustomer(
   request: CreateCustomerRequest,
 ): Promise<CustomerResponse> {
   const response = await customerApi.post<CustomerResponse>('/api/customers', request)
+
+  return response.data
+}
+
+// Resolves with the customer as it now stands on 200. Non-2xx is thrown by
+// axios: 400 for a field validation failure, 404 when no such customer exists,
+// and 409 either for a phone another active customer holds or for a customer
+// that is no longer active - the two 409s are told apart by whether the problem
+// details carry an "errors" object.
+export async function updateCustomer(
+  id: string,
+  request: UpdateCustomerRequest,
+): Promise<CustomerResponse> {
+  const response = await customerApi.put<CustomerResponse>(
+    `/api/customers/${encodeURIComponent(id)}`,
+    request,
+  )
+
+  return response.data
+}
+
+// The whole list, newest first - the ordering is the API's, not ours.
+export async function getAllCustomers(): Promise<CustomerResponse[]> {
+  const response = await customerApi.get<CustomerResponse[]>('/api/customers')
+
+  return response.data
+}
+
+// Resolves with the customer as it now stands on 200 - status INACTIVE, whether
+// this call changed it or it was already inactive. 404 is the only failure the
+// caller has to tell apart: no customer with this id.
+export async function deactivateCustomer(id: string): Promise<CustomerResponse> {
+  const response = await customerApi.post<CustomerResponse>(
+    `/api/customers/${encodeURIComponent(id)}/deactivate`,
+  )
+
+  return response.data
+}
+
+// Throws on 404 rather than resolving with null, so the caller can tell "no
+// such customer" apart from a request that never reached the service.
+export async function getCustomerById(id: string): Promise<CustomerResponse> {
+  const response = await customerApi.get<CustomerResponse>(
+    `/api/customers/${encodeURIComponent(id)}`,
+  )
 
   return response.data
 }
