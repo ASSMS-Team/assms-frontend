@@ -24,3 +24,17 @@ export async function getAssetById(id: string): Promise<AssetResponse> {
 
   return response.data
 }
+
+// Every asset the customer owns, newest first - the ordering is the API's, not
+// ours. The route is nested under the customer because that is who the list
+// belongs to. Resolves with an empty array when the customer has no equipment;
+// a 404 here means no such customer, not an empty list, and is thrown.
+export async function getAssetsByCustomerId(
+  customerId: string,
+): Promise<AssetResponse[]> {
+  const response = await customerApi.get<AssetResponse[]>(
+    `/api/customers/${encodeURIComponent(customerId)}/assets`,
+  )
+
+  return response.data
+}
