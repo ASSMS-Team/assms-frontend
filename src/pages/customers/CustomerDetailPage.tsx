@@ -4,7 +4,7 @@ import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
 import { CUSTOMER_TYPE_LABELS } from '../../constants/customer'
-import { getCustomerById } from '../../services/customerService'
+import { deactivateCustomer, getCustomerById } from '../../services/customerService'
 import type { CustomerResponse } from '../../types/customer'
 import { formatDateTime } from '../../utils/formatDateTime'
 
@@ -16,6 +16,11 @@ function CustomerDetailPage() {
   // valid question, not a failure, and it reads differently to the user.
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState('')
+  // Separate from `error`: that one replaces the page because the customer
+  // could not be loaded at all, while this one sits above a customer that is
+  // still on screen and still correct.
+  const [actionError, setActionError] = useState('')
+  const [deactivating, setDeactivating] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -42,6 +47,41 @@ function CustomerDetailPage() {
     void load()
   }, [id])
 
+  async function handleDeactivate() {
+    if (!customer) {
+      return
+    }
+
+    // Asked before the call, not after: deactivation is not something to
+    // discover you have done.
+    const confirmed = window.confirm(
+      `Deactivate ${customer.name}? The record is kept, but the customer stops ` +
+        'being active and their phone number is freed for someone else.',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setActionError('')
+    setDeactivating(true)
+
+    try {
+      // The response is the customer as it now stands, so the badge flips from
+      // what came back rather than from a second request.
+      setCustomer(await deactivateCustomer(customer.id))
+    } catch (caught) {
+      if (axios.isAxiosError(caught) && caught.response?.status === 404) {
+        // Deleted between loading this page and pressing the button.
+        setNotFound(true)
+      } else {
+        setActionError('Could not deactivate this customer. Check that the customer service is running.')
+      }
+    } finally {
+      setDeactivating(false)
+    }
+  }
+
   return (
     <>
       <div className="page-head">
@@ -55,12 +95,36 @@ function CustomerDetailPage() {
         {customer && (
           <div className="d-flex align-items-center gap-3">
             <StatusBadge status={customer.status} />
-            <Link className="btn btn-primary" to={`/customers/${customer.id}/edit`}>
-              Edit
-            </Link>
+            {/* Hidden once the customer is inactive: the server refuses the
+                save, so offering the form only leads to a filled-in page that
+                cannot be submitted. The 409 stays as the backstop for a
+                customer deactivated after this page was loaded. */}
+            {customer.status === 'ACTIVE' && (
+              <Link className="btn btn-primary" to={`/customers/${customer.id}/edit`}>
+                Edit
+              </Link>
+            )}
+            {/* Only an active customer can be deactivated, so the button is
+                absent rather than disabled once it has been. */}
+            {customer.status === 'ACTIVE' && (
+              <button
+                type="button"
+                className="btn btn-outline-danger"
+                onClick={handleDeactivate}
+                disabled={deactivating}
+              >
+                {deactivating ? 'Deactivating...' : 'Deactivate'}
+              </button>
+            )}
           </div>
         )}
       </div>
+
+      {actionError && (
+        <p className="alert alert-danger" role="alert">
+          {actionError}
+        </p>
+      )}
 
       <div className="card app-card">
         {loading ? (
