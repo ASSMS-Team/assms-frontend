@@ -4,6 +4,7 @@ import AppLayout from '../components/layout/AppLayout'
 import CreateCustomerPage from '../pages/customers/CreateCustomerPage'
 import CustomerDetailPage from '../pages/customers/CustomerDetailPage'
 import CustomerListPage from '../pages/customers/CustomerListPage'
+import EditCustomerPage from '../pages/customers/EditCustomerPage'
 
 // The app's route table. New pages get an entry here rather than being reached
 // from inside another component.
@@ -18,6 +19,7 @@ function AppRoutes() {
             segment higher either way, so /customers/new is never read as an id. */}
         <Route path="/customers/new" element={<CreateCustomerPage />} />
         <Route path="/customers/:id" element={<CustomerDetailPage />} />
+        <Route path="/customers/:id/edit" element={<EditCustomerPage />} />
       </Route>
     </Routes>
   )
