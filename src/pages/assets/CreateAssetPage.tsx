@@ -18,7 +18,7 @@ function CreateAssetPage() {
       </div>
 
       <div className="card app-card app-card-padded form-column">
-        <AssetForm />
+        <AssetForm mode="create" />
       </div>
     </>
   )

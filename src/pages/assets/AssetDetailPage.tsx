@@ -58,6 +58,11 @@ function AssetDetailPage() {
           </h1>
           {asset && <p className="page-sub">Registered {formatDateTime(asset.createdAt)}</p>}
         </div>
+        {asset && (
+          <Link className="btn btn-primary" to={`/assets/${asset.id}/edit`}>
+            Edit
+          </Link>
+        )}
       </div>
 
       <div className="card app-card">

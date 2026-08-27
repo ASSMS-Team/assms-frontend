@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react'
 import type { ChangeEvent, FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import axios from 'axios'
 
 import { ASSET_TYPES, ASSET_TYPE_LABELS } from '../../constants/asset'
-import { createAsset } from '../../services/assetService'
+import { createAsset, updateAsset } from '../../services/assetService'
 import { getAllCustomers } from '../../services/customerService'
 import type { AssetResponse, CreateAssetRequest } from '../../types/asset'
 import type {
@@ -11,9 +12,27 @@ import type {
   ValidationProblemDetails,
 } from '../../types/customer'
 
-// The seven editable fields - exactly the create request, since the server owns
-// the id and both timestamps.
+// The seven fields the create request carries. Edit works from the same shape
+// even though UpdateAssetRequest has six: the owner is held so the form can
+// show which customer the asset belongs to, and is dropped at submit time.
 type AssetFormValues = CreateAssetRequest
+
+// A discriminated union rather than a bag of optional props: "edit" cannot be
+// asked for without the id, the values to start from, and somewhere to report
+// a save or an asset that has been deleted since the form was loaded.
+type AssetFormProps =
+  | { mode: 'create' }
+  | {
+      mode: 'edit'
+      assetId: string
+      initialValues: AssetFormValues
+      // The owner's name, for the read-only display. Null while the page is
+      // still fetching it, or if that fetch failed - the form falls back to the
+      // id, which it already holds, rather than showing nothing.
+      customerName: string | null
+      onSaved: (asset: AssetResponse) => void
+      onNotFound: () => void
+    }
 
 // assetType defaults to a real value rather than '' so the form state matches
 // AssetType exactly and no cast is needed at submit time. customerId cannot do
@@ -29,8 +48,14 @@ const EMPTY_FORM: AssetFormValues = {
   notes: '',
 }
 
-function AssetForm() {
-  const [values, setValues] = useState<AssetFormValues>(EMPTY_FORM)
+function AssetForm(props: AssetFormProps) {
+  const isEdit = props.mode === 'edit'
+
+  // Read once, on the first render: the edit page only mounts the form after
+  // the asset has loaded, so there is nothing to sync afterwards.
+  const [values, setValues] = useState<AssetFormValues>(
+    props.mode === 'edit' ? props.initialValues : EMPTY_FORM,
+  )
   // Keyed by field name, exactly as the API returns them - the server's JSON is
   // camelCased, so these keys line up with the input names without translation.
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
@@ -40,12 +65,19 @@ function AssetForm() {
 
   // Loading the customers is its own concern, with its own loading and error
   // state: it is a second request that can fail on its own, and the dropdown is
-  // the only part of the form that depends on it.
+  // the only part of the form that depends on it. Edit mode has no dropdown, so
+  // it never loads and starts out of the loading state rather than stuck in it.
   const [customers, setCustomers] = useState<CustomerResponse[]>([])
-  const [customersLoading, setCustomersLoading] = useState(true)
+  const [customersLoading, setCustomersLoading] = useState(!isEdit)
   const [customersError, setCustomersError] = useState<string | null>(null)
 
   useEffect(() => {
+    // An asset does not change hands, so edit mode offers no owner to pick and
+    // has nothing to fetch.
+    if (isEdit) {
+      return
+    }
+
     async function load() {
       try {
         // Only active customers: the server refuses an asset against an
@@ -61,16 +93,18 @@ function AssetForm() {
     }
 
     void load()
-  }, [])
+  }, [isEdit])
 
   // No active customer means no valid value for a required field, so there is
   // nothing submittable here - said outright rather than left as an empty
-  // dropdown the Agent would keep clicking at.
+  // dropdown the Agent would keep clicking at. Only ever true on create: an
+  // asset being edited already has an owner, whatever that customer's status.
   const noActiveCustomers =
-    !customersLoading && customersError === null && customers.length === 0
+    !isEdit && !customersLoading && customersError === null && customers.length === 0
 
-  const disabled =
-    submitting || customersLoading || customersError !== null || noActiveCustomers
+  const disabled = isEdit
+    ? submitting
+    : submitting || customersLoading || customersError !== null || noActiveCustomers
 
   function handleChange(
     event: ChangeEvent<
@@ -100,17 +134,35 @@ function AssetForm() {
     }
 
     try {
-      setCreated(await createAsset(request))
-      setValues(EMPTY_FORM)
+      if (props.mode === 'edit') {
+        // Listed field by field rather than spread: customerId is not part of
+        // the update body at all, and this is what keeps it out of the wire.
+        props.onSaved(
+          await updateAsset(props.assetId, {
+            assetType: request.assetType,
+            model: request.model,
+            serialNumber: request.serialNumber,
+            installationDate: request.installationDate,
+            location: request.location,
+            notes: request.notes,
+          }),
+        )
+      } else {
+        setCreated(await createAsset(request))
+        setValues(EMPTY_FORM)
+      }
     } catch (error) {
       if (axios.isAxiosError<ValidationProblemDetails>(error)) {
         const problem = error.response?.data
 
-        if (problem?.errors) {
+        if (props.mode === 'edit' && error.response?.status === 404) {
+          // The asset was deleted between loading the form and saving it.
+          props.onNotFound()
+        } else if (problem?.errors) {
           // Every expected failure lands here: the 400 on any field, the 409
-          // keyed on serialNumber for a duplicate, and the 409 keyed on
-          // customerId for a customer that is missing or no longer active.
-          // The API keys all three, so one branch renders all three.
+          // keyed on serialNumber for a duplicate, and - on create only - the
+          // 409 keyed on customerId for a customer that is missing or no longer
+          // active. The API keys all of them, so one branch renders them all.
           setFieldErrors(problem.errors)
         } else {
           setFormError(
@@ -119,7 +171,11 @@ function AssetForm() {
           )
         }
       } else {
-        setFormError('Something went wrong while creating the asset.')
+        setFormError(
+          isEdit
+            ? 'Something went wrong while saving the asset.'
+            : 'Something went wrong while creating the asset.',
+        )
       }
     } finally {
       setSubmitting(false)
@@ -169,30 +225,48 @@ function AssetForm() {
         </p>
       )}
 
-      <div className="mb-3">
-        <label className="form-label" htmlFor="customerId">Customer</label>
-        <select
-          id="customerId"
-          name="customerId"
-          className={`form-select${fieldErrors.customerId ? ' is-invalid' : ''}`}
-          value={values.customerId}
-          onChange={handleChange}
-          disabled={disabled}
-          aria-invalid={Boolean(fieldErrors.customerId)}
-        >
-          <option value="">
-            {customersLoading ? 'Loading customers...' : 'Select a customer'}
-          </option>
-          {/* Phone as well as name: two customers can share a name, and the
-              phone is what tells them apart at a glance. */}
-          {customers.map((customer) => (
-            <option key={customer.id} value={customer.id}>
-              {customer.name} - {customer.phone}
+      {props.mode === 'edit' ? (
+        // Read-only rather than hidden: the owner is what confirms this is the
+        // right asset. A div, not a label - there is no control to label.
+        <div className="mb-3">
+          <div className="form-label">Customer</div>
+          <p className="form-control-plaintext mb-0">
+            {/* The name is what identifies the customer to an Agent. The id is
+                the fallback, and only shows while the name is on its way or if
+                it could not be fetched. */}
+            {props.customerName ?? <code className="detail-id">{values.customerId}</code>}
+          </p>
+          <p className="form-text mb-0">
+            An asset does not change hands, so its owner is not editable here.{' '}
+            <Link to={`/customers/${values.customerId}`}>View owning customer</Link>
+          </p>
+        </div>
+      ) : (
+        <div className="mb-3">
+          <label className="form-label" htmlFor="customerId">Customer</label>
+          <select
+            id="customerId"
+            name="customerId"
+            className={`form-select${fieldErrors.customerId ? ' is-invalid' : ''}`}
+            value={values.customerId}
+            onChange={handleChange}
+            disabled={disabled}
+            aria-invalid={Boolean(fieldErrors.customerId)}
+          >
+            <option value="">
+              {customersLoading ? 'Loading customers...' : 'Select a customer'}
             </option>
-          ))}
-        </select>
-        {errorsFor('customerId')}
-      </div>
+            {/* Phone as well as name: two customers can share a name, and the
+                phone is what tells them apart at a glance. */}
+            {customers.map((customer) => (
+              <option key={customer.id} value={customer.id}>
+                {customer.name} - {customer.phone}
+              </option>
+            ))}
+          </select>
+          {errorsFor('customerId')}
+        </div>
+      )}
 
       <div className="mb-3">
         <label className="form-label" htmlFor="assetType">Asset type</label>
@@ -288,7 +362,13 @@ function AssetForm() {
       </div>
 
       <button type="submit" className="btn btn-primary" disabled={disabled}>
-        {submitting ? 'Creating...' : 'Create asset'}
+        {submitting
+          ? isEdit
+            ? 'Saving...'
+            : 'Creating...'
+          : isEdit
+            ? 'Save changes'
+            : 'Create asset'}
       </button>
     </form>
   )
