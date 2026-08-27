@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import AppLayout from '../components/layout/AppLayout'
 import AssetDetailPage from '../pages/assets/AssetDetailPage'
 import CreateAssetPage from '../pages/assets/CreateAssetPage'
+import EditAssetPage from '../pages/assets/EditAssetPage'
 import CreateCustomerPage from '../pages/customers/CreateCustomerPage'
 import CustomerDetailPage from '../pages/customers/CustomerDetailPage'
 import CustomerListPage from '../pages/customers/CustomerListPage'
@@ -24,6 +25,7 @@ function AppRoutes() {
         <Route path="/customers/:id/edit" element={<EditCustomerPage />} />
         <Route path="/assets/new" element={<CreateAssetPage />} />
         <Route path="/assets/:id" element={<AssetDetailPage />} />
+        <Route path="/assets/:id/edit" element={<EditAssetPage />} />
       </Route>
     </Routes>
   )

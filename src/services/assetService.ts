@@ -1,7 +1,11 @@
 // The assets endpoints live on the customer & asset service, so they go through
 // the same axios instance rather than a second one pointed at the same baseURL.
 import { customerApi } from './customerService'
-import type { AssetResponse, CreateAssetRequest } from '../types/asset'
+import type {
+  AssetResponse,
+  CreateAssetRequest,
+  UpdateAssetRequest,
+} from '../types/asset'
 
 // Resolves with the created asset on 201. Any non-2xx - 400 for a field
 // validation failure, 409 for a serial another asset already holds or for a
@@ -11,6 +15,22 @@ export async function createAsset(
   request: CreateAssetRequest,
 ): Promise<AssetResponse> {
   const response = await customerApi.post<AssetResponse>('/api/assets', request)
+
+  return response.data
+}
+
+// Resolves with the asset as it now stands on 200. Non-2xx is thrown by axios:
+// 400 for a field validation failure, 404 when no such asset exists, and 409
+// for a serial number another asset already holds. The owner is not part of the
+// request - it is not editable - so there is no customer failure here.
+export async function updateAsset(
+  id: string,
+  request: UpdateAssetRequest,
+): Promise<AssetResponse> {
+  const response = await customerApi.put<AssetResponse>(
+    `/api/assets/${encodeURIComponent(id)}`,
+    request,
+  )
 
   return response.data
 }

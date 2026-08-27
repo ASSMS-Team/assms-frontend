@@ -29,6 +29,23 @@ export interface CreateAssetRequest {
   notes: string | null
 }
 
+// What PUT /api/assets/{id} accepts. The id travels in the URL, and customerId
+// is absent on purpose rather than merely optional: an asset does not change
+// hands, so the server does not read an owner from the update body at all.
+export interface UpdateAssetRequest {
+  assetType: AssetType
+  model: string
+  serialNumber: string
+  // Same rule as on create: 'YYYY-MM-DD', and null rather than '' when blank,
+  // so a missing date is reported as a field error instead of aborting the
+  // whole model binding.
+  installationDate: string | null
+  location: string
+  // Optional on the server. Send null rather than '' when the field is blank,
+  // so a cleared note is stored as NULL rather than as an empty string.
+  notes: string | null
+}
+
 // What the API returns for an asset. The serial number comes back exactly as it
 // was submitted, not in the server's normalized form.
 export interface AssetResponse {
