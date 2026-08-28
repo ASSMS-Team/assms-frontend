@@ -16,7 +16,7 @@ on:
       - 'vite.config.*'
       - 'tsconfig*.json'
       - 'terraform/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/**'
   push:
     branches:
       - dev
@@ -32,7 +32,7 @@ on:
       - 'vite.config.*'
       - 'tsconfig*.json'
       - 'terraform/**'
-      - '.github/workflows/ci.yml'
+      - '.github/workflows/**'
 
 permissions:
   contents: read
