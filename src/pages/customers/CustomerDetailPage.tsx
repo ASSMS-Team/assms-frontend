@@ -283,6 +283,7 @@ function CustomerDetailPage() {
                       <th scope="col">Model</th>
                       <th scope="col">Serial number</th>
                       <th scope="col">Installation date</th>
+                      <th scope="col">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -305,6 +306,12 @@ function CustomerDetailPage() {
                             has nothing to convert, and running 'YYYY-MM-DD'
                             through a Date would read it as UTC midnight. */}
                         <td className="text-nowrap">{asset.installationDate}</td>
+                        {/* The list is not filtered by status - a retired unit
+                            stays in the customer's history - so the badge is
+                            what says which equipment is still in service. */}
+                        <td>
+                          <StatusBadge status={asset.status} />
+                        </td>
                       </tr>
                     ))}
                   </tbody>
