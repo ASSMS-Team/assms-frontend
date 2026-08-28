@@ -28,25 +28,17 @@ this repository.
 
 ## Azure OIDC Setup
 
-No ASSMS OIDC application registration currently exists. Before creating a
-federated credential, an authorized GitHub administrator must determine this
-repository's actual OIDC subject configuration. Do not assume the legacy branch
-subject format: newer repositories may use immutable repository-claim subject
-customization.
-
-Perform this one-time GitHub check with a token authorized to read repository
-Actions OIDC settings, then record the returned `include_claim_keys` / default
-status:
+The active authentication path is:
 
 ```text
-GET /repos/ASSMS-Team/assms-frontend/actions/oidc/customization/sub
+GitHub Actions -> GitHub OIDC -> id-assms-github-staging-cd -> resource-scoped RBAC
 ```
 
-Then issue a token from a tightly controlled `dev`-only diagnostic workflow or
-inspect the GitHub OIDC configuration UI, and use the resulting `sub` claim
-verbatim in Azure. The Azure federated credential issuer remains
-`https://token.actions.githubusercontent.com` and its audience remains
-`api://AzureADTokenExchange`.
+`id-assms-github-staging-cd` is an Azure User-Assigned Managed Identity. It has
+no client secret, password, certificate credential, or Entra application
+registration managed by this project. Its Frontend federated credential uses
+the verified immutable `dev` subject and the
+`api://AzureADTokenExchange` audience.
 
 Assign only `Website Contributor` on this Web App scope:
 
@@ -54,7 +46,7 @@ Assign only `Website Contributor` on this Web App scope:
 /subscriptions/45ff51f1-702e-4ba3-98ff-435d3b08a04b/resourceGroups/rg-assms-staging/providers/Microsoft.Web/sites/app-assms-frontend-staging-45ff260826
 ```
 
-The OIDC application client ID, tenant ID, and subscription ID are non-secret
+The managed identity client ID, tenant ID, and subscription ID are non-secret
 GitHub variables. No Azure client secret is used.
 
 ## Deployment Flow
