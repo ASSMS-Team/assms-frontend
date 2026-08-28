@@ -2,10 +2,11 @@
 
 ## Scope and Trigger
 
-`.github/workflows/staging-cd.yml` deploys only the `dev` branch after
-`Frontend CI` completes successfully. It checks out the successful workflow's
-head SHA, builds that exact revision, and serializes staging deployments with
-`frontend-staging-deployment`. Manual dispatch is permitted only from `dev`.
+`.github/workflows/staging-cd.yml` is reusable. `Frontend CI` calls it only
+after `terraform-validation` and `frontend-build` succeed for a `dev` push. The
+caller passes its exact `github.sha`, which the reusable workflow checks out and
+deploys. This keeps CI and CD on the same commit without `workflow_run` or a
+default-branch dependency. Manual dispatch is permitted only from `dev`.
 
 ## Required GitHub Configuration
 
@@ -27,15 +28,25 @@ this repository.
 
 ## Azure OIDC Setup
 
-No ASSMS OIDC application registration currently exists. An Azure administrator
-must create one application/service principal and configure a federated
-credential for this repository:
+No ASSMS OIDC application registration currently exists. Before creating a
+federated credential, an authorized GitHub administrator must determine this
+repository's actual OIDC subject configuration. Do not assume the legacy branch
+subject format: newer repositories may use immutable repository-claim subject
+customization.
+
+Perform this one-time GitHub check with a token authorized to read repository
+Actions OIDC settings, then record the returned `include_claim_keys` / default
+status:
 
 ```text
-issuer: https://token.actions.githubusercontent.com
-audience: api://AzureADTokenExchange
-subject: repo:ASSMS-Team/assms-frontend:ref:refs/heads/dev
+GET /repos/ASSMS-Team/assms-frontend/actions/oidc/customization/sub
 ```
+
+Then issue a token from a tightly controlled `dev`-only diagnostic workflow or
+inspect the GitHub OIDC configuration UI, and use the resulting `sub` claim
+verbatim in Azure. The Azure federated credential issuer remains
+`https://token.actions.githubusercontent.com` and its audience remains
+`api://AzureADTokenExchange`.
 
 Assign only `Website Contributor` on this Web App scope:
 

@@ -84,3 +84,17 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  deploy-staging:
+    name: Staging CD
+    needs:
+      - terraform-validation
+      - frontend-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/staging-cd.yml
+    with:
+      commit_sha: ${{ github.sha }}
+      source_ref: ${{ github.ref }}
