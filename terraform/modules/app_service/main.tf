@@ -19,10 +19,19 @@ resource "azurerm_linux_web_app" "this" {
   tags                                           = var.tags
 
   site_config {
+    app_command_line        = var.app_command_line
     always_on               = var.always_on
     ftps_state              = "Disabled"
     http2_enabled           = true
     minimum_tls_version     = "1.2"
     scm_minimum_tls_version = "1.2"
+
+    dynamic "application_stack" {
+      for_each = var.node_version == null ? [] : [var.node_version]
+
+      content {
+        node_version = application_stack.value
+      }
+    }
   }
 }

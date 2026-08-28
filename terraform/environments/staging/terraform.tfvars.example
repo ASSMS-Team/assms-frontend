@@ -10,6 +10,8 @@ app_service_plan_name = "asp-assms-frontend-staging"
 web_app_name          = "app-assms-frontend-staging-XXXX"
 sku_name              = "F1"
 always_on             = false
+node_version          = "22-lts"
+app_command_line      = "pm2 serve /home/site/wwwroot --no-daemon --spa"
 
 tags = {
   Project     = "ASSMS"

@@ -57,6 +57,16 @@ variable "always_on" {
   type        = bool
   default     = false
 }
+variable "node_version" {
+  description = "Node.js runtime for serving the compiled Vite SPA in staging."
+  type        = string
+  default     = "22-lts"
+}
+variable "app_command_line" {
+  description = "PM2 static-server command with SPA fallback for React Router routes."
+  type        = string
+  default     = "pm2 serve /home/site/wwwroot --no-daemon --spa"
+}
 variable "tags" {
   description = "Tags applied to frontend hosting resources."
   type        = map(string)

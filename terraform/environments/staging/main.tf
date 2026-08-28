@@ -26,5 +26,7 @@ module "app_service" {
   web_app_name          = var.web_app_name
   sku_name              = var.sku_name
   always_on             = var.always_on
+  node_version          = var.node_version
+  app_command_line      = var.app_command_line
   tags                  = var.tags
 }

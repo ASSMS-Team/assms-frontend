@@ -23,6 +23,18 @@ variable "always_on" {
   type        = bool
   default     = false
 }
+variable "node_version" {
+  description = "Optional Linux App Service Node.js runtime used to host the compiled frontend."
+  type        = string
+  default     = null
+  nullable    = true
+}
+variable "app_command_line" {
+  description = "Optional Linux App Service startup command."
+  type        = string
+  default     = null
+  nullable    = true
+}
 variable "tags" {
   description = "Tags applied to frontend hosting resources."
   type        = map(string)

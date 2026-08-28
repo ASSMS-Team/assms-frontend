@@ -18,7 +18,38 @@ The Web App has HTTPS-only access, TLS 1.2, HTTP/2, disabled FTPS, disabled FTP/
 
 ## Deployment Status
 
-Frontend infrastructure is complete. The React build has **not** been deployed, and no backend API URL is configured. The frontend does not connect directly to MySQL or Kafka.
+Frontend infrastructure is complete. The React build has now been deployed to the staging Web App. The frontend does not connect directly to MySQL or Kafka.
+
+## Asset UI Staging Deployment Verification
+
+| Check | Result |
+|---|---|
+| Frontend source SHA | `1fdf64fe42cdfffce17d9585a4f226c5d95bc72b` |
+| CI | PASS (manually verified) |
+| Production build | PASS — `npm ci` followed by `npm run build` produced `dist/` |
+| Deployment target | `app-assms-frontend-staging-45ff260826` |
+| Root page | PASS — HTTPS `GET /` returned `200` |
+| Customer API URL embedded at build time | `https://assms-customer-staging-45ff260826.southeastasia.cloudapp.azure.com` |
+| Customer API CORS | PASS — staging frontend origin allowed; unrelated origin received no CORS permission |
+| US-02A Register Asset | PASS — manually verified in staging. |
+| US-02B View Customer Assets | PASS — manually verified in staging. |
+| US-02C Update Asset | PASS — manually verified in staging. |
+| US-02D Deactivate Asset | PASS — manually verified in staging. |
+
+### Known staging routing issue
+
+The direct-route `404` was resolved with an in-place App Service configuration update. The staging Linux App Service now uses Node.js `22-lts` and this startup command:
+
+```text
+pm2 serve /home/site/wwwroot --no-daemon --spa
+```
+
+`/home/site/wwwroot` is the Linux App Service ZIP-deployment root. PM2 serves the compiled Vite output and returns `index.html` for unknown client-side routes, allowing React Router to process them. External verification confirmed that `/`, `/assets/new`, a synthetic `/assets/{id}`, `/assets/{id}/edit`, and a synthetic `/customers/{id}` each return `200` and the SPA shell. No React business code, API URL, CORS policy, or backend configuration changed.
+
+Manual staging UI testing subsequently confirmed the four Asset stories. No
+unexpected browser-console, CORS, mixed-content, routing, or runtime errors
+were observed. Customer API HTTPS and the staging frontend-origin CORS policy
+remained functional during verification.
 
 ## F1 Limitations
 
@@ -26,4 +57,5 @@ F1 is a staging choice with shared compute, 60 CPU minutes/day, 1 GB RAM, 1 GB s
 
 ## Future Deployment and CD Work
 
-After backend APIs are deployed and stable, define public API URLs, build the SPA, choose a reviewed App Service deployment method, and implement GitHub Actions CD. None of those steps has started.
+The staging Customer API URL and reviewed ZIP deployment method are now in use.
+GitHub Actions CD remains intentionally unimplemented.
