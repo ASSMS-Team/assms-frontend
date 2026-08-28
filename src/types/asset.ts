@@ -58,6 +58,12 @@ export interface AssetResponse {
   installationDate: string
   location: string
   notes: string | null
+  // ACTIVE or INACTIVE. Typed as a plain string, exactly like
+  // CustomerResponse.status and for the same reason: StatusBadge decides its
+  // colour by comparing against 'ACTIVE', so a value the frontend has not heard
+  // of renders grey rather than failing to type-check against a stale union.
+  // Absent from both request types above - the server owns it.
+  status: string
   // ISO 8601 UTC strings, not Date objects - JSON has no date type.
   createdAt: string
   updatedAt: string

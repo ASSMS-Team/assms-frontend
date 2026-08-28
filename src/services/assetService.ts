@@ -21,8 +21,11 @@ export async function createAsset(
 
 // Resolves with the asset as it now stands on 200. Non-2xx is thrown by axios:
 // 400 for a field validation failure, 404 when no such asset exists, and 409
-// for a serial number another asset already holds. The owner is not part of the
-// request - it is not editable - so there is no customer failure here.
+// either for a serial number another asset already holds or because the asset
+// is inactive and no longer editable. The two 409s differ in shape - only the
+// duplicate is keyed on a field - so callers branch on whether `errors` is
+// present. The owner is not part of the request, so there is no customer
+// failure here.
 export async function updateAsset(
   id: string,
   request: UpdateAssetRequest,
@@ -30,6 +33,17 @@ export async function updateAsset(
   const response = await customerApi.put<AssetResponse>(
     `/api/assets/${encodeURIComponent(id)}`,
     request,
+  )
+
+  return response.data
+}
+
+// Resolves with the asset as it now stands on 200 - status INACTIVE, whether
+// this call changed it or it was already inactive. 404 is the only failure the
+// caller has to tell apart: no asset with this id.
+export async function deactivateAsset(id: string): Promise<AssetResponse> {
+  const response = await customerApi.post<AssetResponse>(
+    `/api/assets/${encodeURIComponent(id)}/deactivate`,
   )
 
   return response.data

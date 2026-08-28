@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 
+import StatusBadge from '../../components/common/StatusBadge'
 import { ASSET_TYPE_LABELS } from '../../constants/asset'
-import { getAssetById } from '../../services/assetService'
+import { deactivateAsset, getAssetById } from '../../services/assetService'
 import type { AssetResponse } from '../../types/asset'
 import { formatDateTime } from '../../utils/formatDateTime'
 
@@ -15,6 +16,11 @@ function AssetDetailPage() {
   // valid question, not a failure, and it reads differently to the user.
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState('')
+  // Separate from `error`: that one replaces the page because the asset could
+  // not be loaded at all, while this one sits above an asset that is still on
+  // screen and still correct.
+  const [actionError, setActionError] = useState('')
+  const [deactivating, setDeactivating] = useState(false)
 
   useEffect(() => {
     async function load() {
@@ -41,6 +47,41 @@ function AssetDetailPage() {
     void load()
   }, [id])
 
+  async function handleDeactivate() {
+    if (!asset) {
+      return
+    }
+
+    // Asked before the call, not after: deactivation is not something to
+    // discover you have done.
+    const confirmed = window.confirm(
+      `Deactivate ${asset.model} (${asset.serialNumber})? The record is kept, but ` +
+        'the asset stops being active and can no longer be edited.',
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setActionError('')
+    setDeactivating(true)
+
+    try {
+      // The response is the asset as it now stands, so the badge flips from
+      // what came back rather than from a second request.
+      setAsset(await deactivateAsset(asset.id))
+    } catch (caught) {
+      if (axios.isAxiosError(caught) && caught.response?.status === 404) {
+        // Deleted between loading this page and pressing the button.
+        setNotFound(true)
+      } else {
+        setActionError('Could not deactivate this asset. Check that the customer service is running.')
+      }
+    } finally {
+      setDeactivating(false)
+    }
+  }
+
   return (
     <>
       <div className="page-head">
@@ -59,11 +100,38 @@ function AssetDetailPage() {
           {asset && <p className="page-sub">Registered {formatDateTime(asset.createdAt)}</p>}
         </div>
         {asset && (
-          <Link className="btn btn-primary" to={`/assets/${asset.id}/edit`}>
-            Edit
-          </Link>
+          <div className="d-flex align-items-center gap-3">
+            <StatusBadge status={asset.status} />
+            {/* Hidden once the asset is inactive: the server refuses the save,
+                so offering the form only leads to a filled-in page that cannot
+                be submitted. The 409 stays as the backstop for an asset
+                deactivated after this page was loaded. */}
+            {asset.status === 'ACTIVE' && (
+              <Link className="btn btn-primary" to={`/assets/${asset.id}/edit`}>
+                Edit
+              </Link>
+            )}
+            {/* Only an active asset can be deactivated, so the button is absent
+                rather than disabled once it has been. */}
+            {asset.status === 'ACTIVE' && (
+              <button
+                type="button"
+                className="btn btn-outline-danger"
+                onClick={handleDeactivate}
+                disabled={deactivating}
+              >
+                {deactivating ? 'Deactivating...' : 'Deactivate'}
+              </button>
+            )}
+          </div>
         )}
       </div>
+
+      {actionError && (
+        <p className="alert alert-danger" role="alert">
+          {actionError}
+        </p>
+      )}
 
       <div className="card app-card">
         {loading ? (
@@ -127,6 +195,12 @@ function AssetDetailPage() {
                   {/* The response carries the owner's id, so the link needs no
                       second request to build. */}
                   <Link to={`/customers/${asset.customerId}`}>View owning customer</Link>
+                </dd>
+              </div>
+              <div className="detail-row">
+                <dt>Status</dt>
+                <dd>
+                  <StatusBadge status={asset.status} />
                 </dd>
               </div>
               <div className="detail-row">
