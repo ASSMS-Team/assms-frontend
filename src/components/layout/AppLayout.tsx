@@ -25,6 +25,9 @@ function AppLayout() {
             <NavLink className="nav-link app-nav-link" to="/assets/new">
               New asset
             </NavLink>
+            <NavLink className="nav-link app-nav-link" to="/jobs/new">
+              New job
+            </NavLink>
           </div>
         </div>
       </nav>
