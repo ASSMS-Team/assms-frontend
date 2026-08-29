@@ -8,6 +8,7 @@ import CreateCustomerPage from '../pages/customers/CreateCustomerPage'
 import CustomerDetailPage from '../pages/customers/CustomerDetailPage'
 import CustomerListPage from '../pages/customers/CustomerListPage'
 import EditCustomerPage from '../pages/customers/EditCustomerPage'
+import CreateJobPage from '../pages/jobs/CreateJobPage'
 
 // The app's route table. New pages get an entry here rather than being reached
 // from inside another component.
@@ -26,6 +27,7 @@ function AppRoutes() {
         <Route path="/assets/new" element={<CreateAssetPage />} />
         <Route path="/assets/:id" element={<AssetDetailPage />} />
         <Route path="/assets/:id/edit" element={<EditAssetPage />} />
+        <Route path="/jobs/new" element={<CreateJobPage />} />
       </Route>
     </Routes>
   )
