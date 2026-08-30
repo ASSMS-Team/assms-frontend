@@ -21,6 +21,8 @@ Create these GitHub **Actions variables** in this repository:
 | `FRONTEND_APP_NAME` | `app-assms-frontend-staging-45ff260826`. |
 | `FRONTEND_URL` | `https://app-assms-frontend-staging-45ff260826.azurewebsites.net` |
 | `VITE_CUSTOMER_API_URL` | `https://assms-customer-staging-45ff260826.southeastasia.cloudapp.azure.com` |
+| `VITE_JOB_API_URL` | `https://assms-job-staging-45ff260826.southeastasia.cloudapp.azure.com` |
+| `VITE_REPORTING_API_URL` | `https://assms-reporting-staging-45ff260826.centralindia.cloudapp.azure.com` |
 
 This workflow needs no application secret. Do not store MySQL credentials,
 customer VM environment files, TLS private keys, or deployment SSH keys in
@@ -51,15 +53,15 @@ GitHub variables. No Azure client secret is used.
 
 ## Deployment Flow
 
-1. Set `VITE_CUSTOMER_API_URL` only for the staging build; `.env.example` is
-   unchanged.
+1. Set the Customer, Job, and Reporting `VITE_*_API_URL` variables only for the
+   staging build; `.env.example` is unchanged.
 2. Run `npm ci`, `npm run lint`, and `npm run build` on Node.js 22.
 3. Require `dist/index.html`, ZIP the compiled `dist` contents, and deploy with
    `az webapp deploy` rather than FTP or basic publishing.
 4. Confirm the App Service startup command remains
    `pm2 serve /home/site/wwwroot --no-daemon --spa`.
-5. Confirm `/` and `/assets/new` return the React SPA shell and the Customer
-   HTTPS health endpoint is reachable.
+5. Confirm `/`, `/jobs/new`, and `/reports/jobs-by-status` return the React
+   SPA shell and each backend HTTPS health endpoint is reachable.
 
 ## Rollback and Emergency Procedure
 
