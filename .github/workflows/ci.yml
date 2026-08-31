@@ -1,0 +1,100 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'tests/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'eslint.config.*'
+      - 'vite.config.*'
+      - 'tsconfig*.json'
+      - 'terraform/**'
+      - '.github/workflows/**'
+  push:
+    branches:
+      - dev
+      - main
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'tests/**'
+      - 'index.html'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'eslint.config.*'
+      - 'vite.config.*'
+      - 'tsconfig*.json'
+      - 'terraform/**'
+      - '.github/workflows/**'
+
+permissions:
+  contents: read
+
+jobs:
+  terraform-validation:
+    name: Terraform validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v4
+
+      - name: Check Terraform formatting
+        run: terraform fmt -check -recursive terraform
+
+      - name: Validate staging Terraform
+        run: |
+          terraform -chdir=terraform/environments/staging init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=terraform/environments/staging validate
+
+      - name: Validate production Terraform
+        run: |
+          terraform -chdir=terraform/environments/production init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=terraform/environments/production validate
+
+  frontend-build:
+    name: Frontend lint and build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+  deploy-staging:
+    name: Staging CD
+    needs:
+      - terraform-validation
+      - frontend-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/staging-cd.yml
+    with:
+      commit_sha: ${{ github.sha }}
+      source_ref: ${{ github.ref }}

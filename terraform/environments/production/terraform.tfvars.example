@@ -1,2 +1,19 @@
-# Placeholder
+environment = "production"
+location    = "southeastasia"
 
+platform_state_resource_group_name  = "rg-assms-tfstate"
+platform_state_storage_account_name = "stassmstfstateXXXX"
+platform_state_container_name       = "tfstate"
+platform_state_key                  = "platform/production.tfstate"
+
+app_service_plan_name = "asp-assms-frontend-production"
+web_app_name          = "app-assms-frontend-production-XXXX"
+sku_name              = "B1"
+always_on             = false
+
+tags = {
+  Project     = "ASSMS"
+  Environment = "production"
+  Service     = "Frontend"
+  ManagedBy   = "Terraform"
+}
