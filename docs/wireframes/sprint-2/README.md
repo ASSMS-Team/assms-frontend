@@ -1,6 +1,12 @@
 # ASSMS Sprint 2 Wireframes
 
-This folder is the agreed repository location for the ASSMS-28 wireframe deliverable. `index.html` is an interactive, browser-based prototype with sample data and no API calls.
+This folder is the proposed repository location for the ASSMS-28 wireframe deliverable, pending team approval. `index.html` is an interactive browser prototype with sample data and no API calls.
+
+## Revision 2
+
+Refined typography, navigation, table spacing and responsive surfaces. Job filters now apply status AND technician to sample rows. Report filters apply UTC boundaries and region to sample assignments, with empty and invalid-range results and CSV export. Report counts describe assignments in the period, not current open-job workload. Assignment review supports processing, no candidate, success and pending synchronization. Technician creation/editing updates local sample rows; deactivation checks open assignments and requires confirmation when permitted. Changes reset on reload.
+
+This is a design review draft, not a production feature implementation. Technician search/filter controls are UI proposals. Region and skill examples require alignment with the final API catalogue. Overview, Customers and Assets remain placeholders. BA/QA sign-off is pending.
 
 ## Review the prototype
 
