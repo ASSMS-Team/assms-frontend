@@ -55,7 +55,12 @@ remained functional during verification.
 
 F1 is a staging choice with shared compute, 60 CPU minutes/day, 1 GB RAM, 1 GB storage, and no production SLA. The app can be temporarily stopped if the free-tier quota is exhausted. A reviewed upgrade to B1 is possible if a demonstration needs more capacity.
 
-## Future Deployment and CD Work
+## Deployment and CD Status
 
 The staging Customer API URL and reviewed ZIP deployment method are now in use.
-GitHub Actions CD remains intentionally unimplemented.
+GitHub Actions staging CD is implemented on `dev` through
+`.github/workflows/staging-cd.yml`. It runs after Terraform validation, lint and
+the production build succeed, deploys the exact tested commit through Azure
+OIDC, and verifies the SPA routes and Customer API health endpoint. Retain a
+successful private Actions run screenshot before describing the CD path as
+runtime verified in the Sprint 1 evaluation.
