@@ -11,6 +11,7 @@ import CustomerDetailPage from '../pages/customers/CustomerDetailPage'
 import CustomerListPage from '../pages/customers/CustomerListPage'
 import EditCustomerPage from '../pages/customers/EditCustomerPage'
 import CreateJobPage from '../pages/jobs/CreateJobPage'
+import CreateTechnicianPage from '../pages/technicians/CreateTechnicianPage'
 import JobsByStatusPage from '../pages/reports/JobsByStatusPage'
 import LoginPage from '../pages/auth/LoginPage'
 import ForbiddenPage from '../pages/auth/ForbiddenPage'
@@ -39,6 +40,7 @@ function AppRoutes() {
           <Route path="/jobs/new" element={<CreateJobPage />} />
         </Route>
         <Route element={<RoleRoute roles={['Dispatcher', 'Manager']} />}>
+          <Route path="/technicians/new" element={<CreateTechnicianPage />} />
           <Route path="/reports/jobs-by-status" element={<JobsByStatusPage />} />
         </Route>
         </Route>
