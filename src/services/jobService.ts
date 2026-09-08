@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import type { CreateJobRequest, JobResponse } from '../types/job'
+import { attachAuth } from './authToken'
 
 // Its own instance, not the customer one: the job service is a separate process
 // on a separate port, so it needs its own baseURL. As there, the URL comes from
@@ -12,6 +13,7 @@ export const jobApi = axios.create({
     'Content-Type': 'application/json',
   },
 })
+attachAuth(jobApi)
 
 // Resolves with the created job on 201. Any non-2xx is thrown by axios; callers
 // read the problem details off error.response.data. The failures worth telling
