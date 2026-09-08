@@ -5,6 +5,7 @@ import type {
   CustomerResponse,
   UpdateCustomerRequest,
 } from '../types/customer'
+import { attachAuth } from './authToken'
 
 // baseURL comes from the env var declared in vite-env.d.ts, which types it as a
 // required string - so there is no fallback URL here to quietly mask a missing
@@ -15,6 +16,7 @@ export const customerApi = axios.create({
     'Content-Type': 'application/json',
   },
 })
+attachAuth(customerApi)
 
 // Resolves with the created customer on 201. Any non-2xx - 400 for a field
 // validation failure, 409 for a phone already held by an active customer - is
