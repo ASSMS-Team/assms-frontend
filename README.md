@@ -16,6 +16,7 @@ the backing services, each of which owns its own database and is reached over HT
 ```
                     ┌─→ Customer & Asset Service  :5037   customers, assets
 assms-frontend  ────┼─→ Job Service               :5252   jobs
+                    ├─→ Dispatch Service          :5055   technicians, assignments
                     └─→ Reporting Service         :5238   reports (read-only)
 ```
 
@@ -30,6 +31,7 @@ One axios instance per **backing service**, not per resource — which is why
 | Customers | List, detail, create, edit, deactivate |
 | Assets | Detail, create, edit, deactivate; listed under their customer |
 | Jobs | Create — cascading customer → asset selection, validated by the Job Service |
+| Technicians | Create — Dispatcher-owned records with skills and coverage region |
 | Reports | Jobs by status, with optional date bounds |
 
 Deactivation is a status change, not a delete: a deactivated record still renders, greyed
@@ -116,7 +118,7 @@ would quietly mask a missing `.env` by sending requests somewhere unexpected.
 | `VITE_CUSTOMER_API_URL` | `http://localhost:5037` | Customer & Asset Service |
 | `VITE_JOB_API_URL` | `http://localhost:5252` | Job Service |
 | `VITE_REPORTING_API_URL` | `http://localhost:5238` | Reporting Service |
-| `VITE_DISPATCH_API_URL` | *(blank)* | Dispatch Service — not yet consumed |
+| `VITE_DISPATCH_API_URL` | `http://localhost:5055` | Dispatch Service |
 
 Each port comes from that service's `launchSettings.json`. `.env` is gitignored;
 `.env.example` is the tracked template.
@@ -139,6 +141,7 @@ to it — `curl` will work when the browser does not.
 | `/assets/:id` | Asset detail |
 | `/assets/:id/edit` | Edit asset |
 | `/jobs/new` | Create job |
+| `/technicians/new` | Create technician; Dispatcher and Manager only |
 | `/reports/jobs-by-status` | Jobs by status report |
 
 New pages get an entry in `src/routes/AppRoutes.tsx` rather than being reached from inside
