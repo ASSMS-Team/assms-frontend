@@ -82,6 +82,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Test authentication and route authorization
+        run: npm run test
+
       - name: Build
         run: npm run build
 

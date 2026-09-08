@@ -1,6 +1,7 @@
 import axios from 'axios'
 
 import type { JobsByStatusReport } from '../types/report'
+import { attachAuth } from './authToken'
 
 // A third instance, alongside the customer and job ones: the reporting service
 // is another separate process on another port, so it needs its own baseURL. As
@@ -13,6 +14,7 @@ export const reportingApi = axios.create({
     'Content-Type': 'application/json',
   },
 })
+attachAuth(reportingApi)
 
 // The jobs-by-status report. Both bounds are optional and independent: with
 // neither, every projected job is counted; with both, the jobs created between
