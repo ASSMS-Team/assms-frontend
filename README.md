@@ -1,6 +1,13 @@
 # assms-frontend
 
-## Overview
+## Product design
+
+The interactive [Sprint 2 wireframe prototype](docs/wireframes/sprint-2/index.html)
+and its [acceptance-criteria mapping](docs/wireframes/sprint-2/README.md) are the
+implementation reference for ASSMS-28. Open the prototype directly in a browser;
+it uses sample data and does not call the ASSMS APIs.
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 The ASSMS web client: a React 19 + Vite 8 single-page application, and the only user
 interface in the system. It holds no data of its own — every screen is a view onto one of
