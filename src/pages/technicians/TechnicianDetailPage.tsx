@@ -47,6 +47,7 @@ function TechnicianDetailPage() {
           {technician && <p className="page-sub">{technician.reference}</p>}
         </div>
         {technician && <StatusBadge status={technician.status} />}
+        {technician && <Link className="btn btn-primary" to={`/technicians/${technician.id}/edit`}>Edit</Link>}
       </div>
 
       <div className="card app-card">

@@ -3,9 +3,9 @@ import type { ChangeEvent, FormEvent } from 'react'
 import axios from 'axios'
 
 import { REGIONS, REGION_LABELS, TECHNICIAN_SKILLS } from '../../constants/technician'
-import { createTechnician } from '../../services/dispatchService'
+import { createTechnician, updateTechnician } from '../../services/dispatchService'
 import type { ValidationProblemDetails } from '../../types/customer'
-import type { CreateTechnicianRequest, TechnicianResponse } from '../../types/technician'
+import type { CreateTechnicianRequest, TechnicianResponse, UpdateTechnicianRequest } from '../../types/technician'
 
 type FormValues = Omit<CreateTechnicianRequest, 'phone' | 'email'> & { phone: string; email: string }
 
@@ -19,8 +19,14 @@ const EMPTY_FORM: FormValues = {
   email: '',
 }
 
-function TechnicianForm() {
-  const [values, setValues] = useState<FormValues>(EMPTY_FORM)
+type TechnicianFormProps = { technician?: TechnicianResponse }
+
+function TechnicianForm({ technician: existing }: TechnicianFormProps) {
+  const isEdit = Boolean(existing)
+  const [values, setValues] = useState<FormValues>(() => existing ? {
+    reference: existing.reference, fullName: existing.fullName, region: existing.region, skills: [...existing.skills],
+    status: existing.status, phone: existing.phone ?? '', email: existing.email ?? '',
+  } : EMPTY_FORM)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [formError, setFormError] = useState<string | null>(null)
   const [created, setCreated] = useState<TechnicianResponse | null>(null)
@@ -48,13 +54,23 @@ function TechnicianForm() {
     setSubmitting(true)
 
     try {
-      const technician = await createTechnician({
+      const request = {
         ...values,
         phone: values.phone.trim() || null,
         email: values.email.trim() || null,
-      })
+      }
+      const technician = isEdit
+        ? await updateTechnician(existing!.id, {
+          fullName: request.fullName,
+          region: request.region,
+          skills: request.skills,
+          status: request.status,
+          phone: request.phone,
+          email: request.email,
+        } as UpdateTechnicianRequest)
+        : await createTechnician(request)
       setCreated(technician)
-      setValues(EMPTY_FORM)
+      if (!isEdit) setValues(EMPTY_FORM)
     } catch (error) {
       if (axios.isAxiosError<ValidationProblemDetails>(error) && error.response?.data.errors) {
         setFieldErrors(error.response.data.errors)
@@ -74,12 +90,12 @@ function TechnicianForm() {
   return (
     <form onSubmit={handleSubmit} noValidate>
       {formError && <p className="alert alert-danger" role="alert">{formError}</p>}
-      {created && <p className="alert alert-success" role="status">Created {created.fullName} ({created.reference}).</p>}
+      {created && <p className="alert alert-success" role="status">{isEdit ? 'Updated' : 'Created'} {created.fullName} ({created.reference}).</p>}
 
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label" htmlFor="reference">Technician reference</label>
-          <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} />
+          <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} disabled={isEdit} />
           {errorsFor('reference')}
         </div>
         <div className="col-md-6">
@@ -129,9 +145,9 @@ function TechnicianForm() {
       </div>
 
       <div className="alert alert-light border mt-4 mb-3" role="note">
-        This creates a Dispatch Service technician record only. It does not create a staff login account.
+        This {isEdit ? 'updates' : 'creates'} a Dispatch Service technician record only. It does not create a staff login account.
       </div>
-      <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? 'Creating...' : 'Create technician'}</button>
+      <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save changes' : 'Create technician')}</button>
     </form>
   )
 }

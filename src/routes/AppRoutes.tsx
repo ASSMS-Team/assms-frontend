@@ -13,6 +13,7 @@ import EditCustomerPage from '../pages/customers/EditCustomerPage'
 import CreateJobPage from '../pages/jobs/CreateJobPage'
 import CreateTechnicianPage from '../pages/technicians/CreateTechnicianPage'
 import TechnicianDetailPage from '../pages/technicians/TechnicianDetailPage'
+import EditTechnicianPage from '../pages/technicians/EditTechnicianPage'
 import TechnicianListPage from '../pages/technicians/TechnicianListPage'
 import JobsByStatusPage from '../pages/reports/JobsByStatusPage'
 import LoginPage from '../pages/auth/LoginPage'
@@ -45,6 +46,7 @@ function AppRoutes() {
           <Route path="/technicians" element={<TechnicianListPage />} />
           <Route path="/technicians/new" element={<CreateTechnicianPage />} />
           <Route path="/technicians/:id" element={<TechnicianDetailPage />} />
+          <Route path="/technicians/:id/edit" element={<EditTechnicianPage />} />
           <Route path="/reports/jobs-by-status" element={<JobsByStatusPage />} />
         </Route>
         </Route>
