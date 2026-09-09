@@ -14,3 +14,13 @@ export async function createTechnician(request: CreateTechnicianRequest): Promis
   const response = await dispatchApi.post<TechnicianResponse>('/api/technicians', request)
   return response.data
 }
+
+export async function getAllTechnicians(): Promise<TechnicianResponse[]> {
+  const response = await dispatchApi.get<TechnicianResponse[]>('/api/technicians')
+  return response.data
+}
+
+export async function getTechnicianById(id: string): Promise<TechnicianResponse> {
+  const response = await dispatchApi.get<TechnicianResponse>(`/api/technicians/${encodeURIComponent(id)}`)
+  return response.data
+}

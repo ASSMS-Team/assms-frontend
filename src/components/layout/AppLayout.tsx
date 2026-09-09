@@ -24,6 +24,7 @@ function AppLayout() {
             {hasRole('Agent', 'Manager') && <NavLink className="nav-link app-nav-link" to="/customers/new">New customer</NavLink>}
             {hasRole('Agent', 'Manager') && <NavLink className="nav-link app-nav-link" to="/assets/new">New asset</NavLink>}
             {hasRole('Agent', 'Dispatcher', 'Manager') && <NavLink className="nav-link app-nav-link" to="/jobs/new">New job</NavLink>}
+            {hasRole('Dispatcher', 'Manager') && <NavLink className="nav-link app-nav-link" to="/technicians">Technicians</NavLink>}
             {hasRole('Dispatcher', 'Manager') && <NavLink className="nav-link app-nav-link" to="/technicians/new">New technician</NavLink>}
             {hasRole('Dispatcher', 'Manager') && <NavLink className="nav-link app-nav-link" to="/reports/jobs-by-status">Jobs by status</NavLink>}
           </div>
