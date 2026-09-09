@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 import { attachAuth } from './authToken'
-import type { CreateTechnicianRequest, TechnicianResponse } from '../types/technician'
+import type { CreateTechnicianRequest, TechnicianResponse, UpdateTechnicianRequest } from '../types/technician'
 
 export const dispatchApi = axios.create({
   baseURL: import.meta.env.VITE_DISPATCH_API_URL,
@@ -22,5 +22,10 @@ export async function getAllTechnicians(): Promise<TechnicianResponse[]> {
 
 export async function getTechnicianById(id: string): Promise<TechnicianResponse> {
   const response = await dispatchApi.get<TechnicianResponse>(`/api/technicians/${encodeURIComponent(id)}`)
+  return response.data
+}
+
+export async function updateTechnician(id: string, request: UpdateTechnicianRequest): Promise<TechnicianResponse> {
+  const response = await dispatchApi.put<TechnicianResponse>(`/api/technicians/${encodeURIComponent(id)}`, request)
   return response.data
 }

@@ -12,6 +12,8 @@ export interface CreateTechnicianRequest {
   email: string | null
 }
 
+export type UpdateTechnicianRequest = Omit<CreateTechnicianRequest, 'reference'>
+
 export interface TechnicianResponse {
   id: string
   reference: string
