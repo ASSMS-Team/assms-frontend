@@ -1,19 +1,21 @@
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AxiosError } from 'axios'
 
 import TechnicianDetailPage from './TechnicianDetailPage'
 import TechnicianListPage from './TechnicianListPage'
-import { getAllTechnicians, getTechnicianById } from '../../services/dispatchService'
+import { deactivateTechnician, getAllTechnicians, getTechnicianById } from '../../services/dispatchService'
 
 vi.mock('../../services/dispatchService', () => ({
   getAllTechnicians: vi.fn(),
   getTechnicianById: vi.fn(),
+  deactivateTechnician: vi.fn(),
 }))
 
 const getAllTechniciansMock = vi.mocked(getAllTechnicians)
 const getTechnicianByIdMock = vi.mocked(getTechnicianById)
+const deactivateTechnicianMock = vi.mocked(deactivateTechnician)
 
 const technician = {
   id: 'technician-1', reference: 'TEC-001', fullName: 'Amal Perera', region: 'WESTERN' as const,
@@ -25,6 +27,8 @@ describe('Technician views', () => {
   beforeEach(() => {
     getAllTechniciansMock.mockReset()
     getTechnicianByIdMock.mockReset()
+    deactivateTechnicianMock.mockReset()
+    vi.restoreAllMocks()
   })
   afterEach(() => cleanup())
 
@@ -69,5 +73,29 @@ describe('Technician views', () => {
 
     expect(await screen.findByText('Technician not found')).toBeInTheDocument()
     expect(screen.getByText('unknown-id')).toBeInTheDocument()
+  })
+
+  it('confirms and soft-deactivates an active technician', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    getTechnicianByIdMock.mockResolvedValue(technician)
+    deactivateTechnicianMock.mockResolvedValue({ ...technician, status: 'INACTIVE' })
+    render(<MemoryRouter initialEntries={['/technicians/technician-1']}><Routes><Route path="/technicians/:id" element={<TechnicianDetailPage />} /></Routes></MemoryRouter>)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Deactivate' }))
+
+    await waitFor(() => expect(deactivateTechnicianMock).toHaveBeenCalledWith('technician-1'))
+    expect(screen.getAllByText('INACTIVE')).toHaveLength(2)
+    expect(screen.queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument()
+  })
+
+  it('explains when open assignments block deactivation', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    getTechnicianByIdMock.mockResolvedValue(technician)
+    deactivateTechnicianMock.mockRejectedValue(new AxiosError('Conflict', undefined, undefined, undefined, { status: 409, statusText: 'Conflict', headers: {}, config: {} as never, data: {} }))
+    render(<MemoryRouter initialEntries={['/technicians/technician-1']}><Routes><Route path="/technicians/:id" element={<TechnicianDetailPage />} /></Routes></MemoryRouter>)
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Deactivate' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Reassign or close those jobs')
   })
 })
