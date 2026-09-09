@@ -4,7 +4,7 @@ import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
 import { REGION_LABELS } from '../../constants/technician'
-import { getTechnicianById } from '../../services/dispatchService'
+import { deactivateTechnician, getTechnicianById } from '../../services/dispatchService'
 import type { TechnicianResponse } from '../../types/technician'
 import { formatDateTime } from '../../utils/formatDateTime'
 
@@ -14,6 +14,8 @@ function TechnicianDetailPage() {
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState('')
+  const [deactivating, setDeactivating] = useState(false)
+  const [deactivationError, setDeactivationError] = useState('')
 
   useEffect(() => {
     async function load() {
@@ -38,6 +40,26 @@ function TechnicianDetailPage() {
     void load()
   }, [id])
 
+  async function handleDeactivate() {
+    if (!technician || !window.confirm(
+      `Deactivate ${technician.fullName}? The Technician record and assignment history are retained, but no future work can be assigned.`,
+    )) return
+
+    setDeactivating(true)
+    setDeactivationError('')
+    try {
+      setTechnician(await deactivateTechnician(technician.id))
+    } catch (caught) {
+      if (axios.isAxiosError(caught) && caught.response?.status === 409) {
+        setDeactivationError('This technician has open assignments. Reassign or close those jobs before deactivation.')
+      } else {
+        setDeactivationError('Could not deactivate this technician. Please try again.')
+      }
+    } finally {
+      setDeactivating(false)
+    }
+  }
+
   return (
     <>
       <div className="page-head">
@@ -47,7 +69,12 @@ function TechnicianDetailPage() {
           {technician && <p className="page-sub">{technician.reference}</p>}
         </div>
         {technician && <StatusBadge status={technician.status} />}
-        {technician && <Link className="btn btn-primary" to={`/technicians/${technician.id}/edit`}>Edit</Link>}
+        {technician && <div className="d-flex gap-2">
+          <Link className="btn btn-primary" to={`/technicians/${technician.id}/edit`}>Edit</Link>
+          {technician.status === 'ACTIVE' && <button type="button" className="btn btn-outline-danger" disabled={deactivating} onClick={handleDeactivate}>
+            {deactivating ? 'Deactivating...' : 'Deactivate'}
+          </button>}
+        </div>}
       </div>
 
       <div className="card app-card">
@@ -58,16 +85,19 @@ function TechnicianDetailPage() {
         ) : error ? (
           <div className="state-block"><div className="alert alert-danger mb-0" role="alert">{error}</div></div>
         ) : technician && (
-          <dl className="detail-grid mb-0">
-            <div className="detail-row"><dt>Reference</dt><dd>{technician.reference}</dd></div>
-            <div className="detail-row"><dt>Region</dt><dd>{REGION_LABELS[technician.region] ?? technician.region}</dd></div>
-            <div className="detail-row"><dt>Skills</dt><dd>{technician.skills.join(', ')}</dd></div>
-            <div className="detail-row"><dt>State</dt><dd><StatusBadge status={technician.status} /></dd></div>
-            <div className="detail-row"><dt>Phone</dt><dd>{technician.phone ?? <span className="text-muted">Not provided</span>}</dd></div>
-            <div className="detail-row"><dt>Email</dt><dd>{technician.email ?? <span className="text-muted">Not provided</span>}</dd></div>
-            <div className="detail-row"><dt>Created</dt><dd>{formatDateTime(technician.createdAt)}</dd></div>
-            <div className="detail-row"><dt>Last updated</dt><dd>{formatDateTime(technician.updatedAt)}</dd></div>
-          </dl>
+          <>
+            {deactivationError && <div className="alert alert-warning" role="alert">{deactivationError}</div>}
+            <dl className="detail-grid mb-0">
+              <div className="detail-row"><dt>Reference</dt><dd>{technician.reference}</dd></div>
+              <div className="detail-row"><dt>Region</dt><dd>{REGION_LABELS[technician.region] ?? technician.region}</dd></div>
+              <div className="detail-row"><dt>Skills</dt><dd>{technician.skills.join(', ')}</dd></div>
+              <div className="detail-row"><dt>State</dt><dd><StatusBadge status={technician.status} /></dd></div>
+              <div className="detail-row"><dt>Phone</dt><dd>{technician.phone ?? <span className="text-muted">Not provided</span>}</dd></div>
+              <div className="detail-row"><dt>Email</dt><dd>{technician.email ?? <span className="text-muted">Not provided</span>}</dd></div>
+              <div className="detail-row"><dt>Created</dt><dd>{formatDateTime(technician.createdAt)}</dd></div>
+              <div className="detail-row"><dt>Last updated</dt><dd>{formatDateTime(technician.updatedAt)}</dd></div>
+            </dl>
+          </>
         )}
       </div>
     </>

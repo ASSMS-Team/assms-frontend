@@ -29,3 +29,8 @@ export async function updateTechnician(id: string, request: UpdateTechnicianRequ
   const response = await dispatchApi.put<TechnicianResponse>(`/api/technicians/${encodeURIComponent(id)}`, request)
   return response.data
 }
+
+export async function deactivateTechnician(id: string): Promise<TechnicianResponse> {
+  const response = await dispatchApi.post<TechnicianResponse>(`/api/technicians/${encodeURIComponent(id)}/deactivate`)
+  return response.data
+}
