@@ -23,6 +23,9 @@ function renderRoutes(path: string) {
             <Route element={<RoleRoute roles={['Manager']} />}>
               <Route path="/manager" element={<div>Manager function</div>} />
             </Route>
+            <Route element={<RoleRoute roles={['Dispatcher', 'Manager']} />}>
+              <Route path="/technicians" element={<div>Technician workspace</div>} />
+            </Route>
           </Route>
         </Routes>
       </AuthProvider>
@@ -49,6 +52,12 @@ describe('authentication routes', () => {
     sessionStorage.setItem('assms.staff.access-token', token('Technician'))
     renderRoutes('/manager')
     expect(screen.getByText('Access denied')).toBeInTheDocument()
+  })
+
+  it('allows a Dispatcher into the technician route', () => {
+    sessionStorage.setItem('assms.staff.access-token', token('Dispatcher'))
+    renderRoutes('/technicians')
+    expect(screen.getByText('Technician workspace')).toBeInTheDocument()
   })
 
   it('treats an expired token as unauthenticated', () => {
