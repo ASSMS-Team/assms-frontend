@@ -27,14 +27,16 @@
 
 ### The second backing service
 
-`VITE_JOB_API_URL=http://localhost:5252` — the port comes from the Job Service's
-`launchSettings.json`, not a guess. Declared in `vite-env.d.ts` as a required `string`,
-like `VITE_CUSTOMER_API_URL`, so there is no null check at every call site and no
-fallback URL to mask a missing `.env`.
+`VITE_API_BASE_URL=https://<assms-apim>.azure-api.net` is the APIM origin.
+The frontend appends `/jobs` or `/customer`; APIM then forwards the existing
+`/api/...` path to the matching service. It is declared in `vite-env.d.ts` as a
+required `string`, so there is no null check at every call site and no fallback
+URL to mask a missing `.env`.
 
 `jobService.ts` creates its **own axios instance**. The existing rule is one instance per
 backing service, not per resource — which is why `assetService.ts` shares the customer
-instance but this one does not. Two processes, two ports, two base URLs.
+instance but this one does not. Two processes still have separate clients,
+while the browser uses one managed gateway origin.
 
 **This form talks to both services.** The dropdowns are filled from the customer service;
 the submit goes to the job service. That matters for the failure modes in section 5.
@@ -294,4 +296,4 @@ customer's assets would sit behind the now-disabled select.
       currently unused by the UI
 - [ ] A "look up by reference" entry point; the service call exists, nothing calls it
 - [x] Route path — **`/jobs/new`**, nav link "New job"
-- [x] `VITE_JOB_API_URL` — **`http://localhost:5252`**, from the service's `launchSettings.json`
+- [x] `VITE_API_BASE_URL` — **the deployed Azure API Management gateway origin**

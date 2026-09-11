@@ -1,9 +1,10 @@
 import axios from 'axios'
 
 import type { LoginResponse } from '../types/auth'
+import { gatewayServiceUrl } from './apiGateway'
 
-const authApi = axios.create({
-  baseURL: import.meta.env.VITE_CUSTOMER_API_URL,
+export const authApi = axios.create({
+  baseURL: gatewayServiceUrl('customer'),
   headers: { 'Content-Type': 'application/json' },
 })
 

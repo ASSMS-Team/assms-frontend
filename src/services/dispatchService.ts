@@ -1,10 +1,11 @@
 import axios from 'axios'
 
 import { attachAuth } from './authToken'
+import { gatewayServiceUrl } from './apiGateway'
 import type { CreateTechnicianRequest, TechnicianResponse, UpdateTechnicianRequest } from '../types/technician'
 
 export const dispatchApi = axios.create({
-  baseURL: import.meta.env.VITE_DISPATCH_API_URL,
+  baseURL: gatewayServiceUrl('dispatch'),
   headers: { 'Content-Type': 'application/json' },
 })
 

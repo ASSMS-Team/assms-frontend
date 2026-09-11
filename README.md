@@ -14,15 +14,17 @@ interface in the system. It holds no data of its own — every screen is a view 
 the backing services, each of which owns its own database and is reached over HTTP.
 
 ```
-                    ┌─→ Customer & Asset Service  :5037   customers, assets
-assms-frontend  ────┼─→ Job Service               :5252   jobs
-                    ├─→ Dispatch Service          :5055   technicians, assignments
-                    └─→ Reporting Service         :5238   reports (read-only)
+assms-frontend  ────→ Azure API Management
+                          ├─→ Customer & Asset Service   customers, assets
+                          ├─→ Job Service                jobs
+                          ├─→ Dispatch Service           technicians, assignments
+                          └─→ Reporting Service          reports (read-only)
 ```
 
 One axios instance per **backing service**, not per resource — which is why
 `assetService.ts` shares the customer instance while `jobService.ts` and
-`reportService.ts` each have their own. Two processes mean two base URLs.
+`reportService.ts` each have their own. All clients use one public APIM origin
+and add a service prefix before their existing `/api/...` request path.
 
 ## Features
 
@@ -115,18 +117,14 @@ would quietly mask a missing `.env` by sending requests somewhere unexpected.
 
 | Variable | Local value | Purpose |
 |---|---|---|
-| `VITE_CUSTOMER_API_URL` | `http://localhost:5037` | Customer & Asset Service |
-| `VITE_JOB_API_URL` | `http://localhost:5252` | Job Service |
-| `VITE_REPORTING_API_URL` | `http://localhost:5238` | Reporting Service |
-| `VITE_DISPATCH_API_URL` | `http://localhost:5055` | Dispatch Service |
+| `VITE_API_BASE_URL` | `https://apim-assms-staging-XXXX.azure-api.net` | Azure API Management origin |
 
-Each port comes from that service's `launchSettings.json`. `.env` is gitignored;
-`.env.example` is the tracked template.
+The clients append `/customer`, `/jobs`, `/dispatch` and `/reports` to this
+single origin. APIM forwards the unchanged `/api/...` requests to the service
+that owns them. `.env` is gitignored; `.env.example` is the tracked template.
 
-Every service allows this app's origin explicitly through a named CORS policy reading
-`Cors:AllowedOrigins`, which is set to `http://localhost:5173` in each service's
-`appsettings.Development.json`. A new service needs that entry before the browser will talk
-to it — `curl` will work when the browser does not.
+APIM allows the deployed frontend origin through its CORS policy and forwards
+the bearer token. Each backend still validates the token and its role policies.
 
 ## Routes
 

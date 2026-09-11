@@ -2,13 +2,11 @@ import axios from 'axios'
 
 import type { CreateJobRequest, JobResponse } from '../types/job'
 import { attachAuth } from './authToken'
+import { gatewayServiceUrl } from './apiGateway'
 
-// Its own instance, not the customer one: the job service is a separate process
-// on a separate port, so it needs its own baseURL. As there, the URL comes from
-// the env var declared in vite-env.d.ts, which types it as a required string -
-// so there is no fallback here to quietly mask a missing .env.
+// APIM routes /jobs/api/... to the Job Service; the API path remains unchanged.
 export const jobApi = axios.create({
-  baseURL: import.meta.env.VITE_JOB_API_URL,
+  baseURL: gatewayServiceUrl('jobs'),
   headers: {
     'Content-Type': 'application/json',
   },

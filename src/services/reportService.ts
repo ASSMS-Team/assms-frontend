@@ -2,14 +2,11 @@ import axios from 'axios'
 
 import type { JobsByStatusReport } from '../types/report'
 import { attachAuth } from './authToken'
+import { gatewayServiceUrl } from './apiGateway'
 
-// A third instance, alongside the customer and job ones: the reporting service
-// is another separate process on another port, so it needs its own baseURL. As
-// there, the URL comes from the env var declared in vite-env.d.ts, which types
-// it as a required string - so there is no fallback here to quietly mask a
-// missing .env.
+// APIM routes /reports/api/... to Reporting while preserving its API path.
 export const reportingApi = axios.create({
-  baseURL: import.meta.env.VITE_REPORTING_API_URL,
+  baseURL: gatewayServiceUrl('reports'),
   headers: {
     'Content-Type': 'application/json',
   },

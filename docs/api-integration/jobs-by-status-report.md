@@ -29,10 +29,11 @@ No form component. Unlike US-03 the whole screen is two inputs and a table, so s
 
 ### The third backing service
 
-`VITE_REPORTING_API_URL=http://localhost:5238` — the port comes from the Reporting
-Service's `launchSettings.json`, not a guess. Declared in `vite-env.d.ts` as a required
-`string`, like the other two, so there is no null check at every call site and no fallback
-URL to mask a missing `.env`.
+`VITE_API_BASE_URL=https://<assms-apim>.azure-api.net` is the APIM origin.
+The report client appends `/reports` and APIM forwards its existing `/api/...`
+path to Reporting Service. It is declared in `vite-env.d.ts` as a required
+`string`, so there is no null check at every call site and no fallback URL to
+mask a missing `.env`.
 
 `reportService.ts` creates its **own axios instance**. Third application of the rule: one
 instance per backing service, not per resource.
@@ -286,5 +287,5 @@ The preflight matters: the axios instance sets `Content-Type`, so the browser se
 - [ ] A clear-filters button; today the dates are cleared by emptying both inputs and
       pressing Apply
 - [x] Route path — **`/reports/jobs-by-status`**, nav link "Jobs by status"
-- [x] `VITE_REPORTING_API_URL` — **`http://localhost:5238`**, from the service's
+- [x] `VITE_API_BASE_URL` — **the deployed Azure API Management gateway origin**
       `launchSettings.json`

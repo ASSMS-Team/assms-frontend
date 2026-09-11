@@ -31,7 +31,7 @@ jobs:
       AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       FRONTEND_APP_NAME: ${{ vars.FRONTEND_APP_NAME }}
       FRONTEND_URL: ${{ vars.FRONTEND_URL }}
-      VITE_CUSTOMER_API_URL: ${{ vars.VITE_CUSTOMER_API_URL }}
+      VITE_API_BASE_URL: ${{ vars.VITE_API_BASE_URL }}
 
     steps:
       - name: Checkout exact requested commit
@@ -79,7 +79,7 @@ jobs:
             --type zip \
             --async false
 
-      - name: Verify SPA hosting and Customer API configuration
+      - name: Verify SPA hosting and API Management configuration
         run: |
           startup_command="$(az webapp config show \
             --resource-group "$AZURE_RESOURCE_GROUP" \
@@ -91,4 +91,4 @@ jobs:
             grep -F '<div id="root"></div>' <<< "$body"
           done
           curl --fail --silent --show-error --retry 6 \
-            "${VITE_CUSTOMER_API_URL}/api/health" > /dev/null
+            "${VITE_API_BASE_URL}/customer/api/health" > /dev/null

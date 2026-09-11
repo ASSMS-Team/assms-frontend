@@ -6,12 +6,12 @@ import type {
   UpdateCustomerRequest,
 } from '../types/customer'
 import { attachAuth } from './authToken'
+import { gatewayServiceUrl } from './apiGateway'
 
-// baseURL comes from the env var declared in vite-env.d.ts, which types it as a
-// required string - so there is no fallback URL here to quietly mask a missing
-// .env and send requests somewhere unexpected.
+// APIM routes /customer/api/... to the Customer & Asset Service. There is no
+// fallback direct-service URL: browser traffic must use the gateway.
 export const customerApi = axios.create({
-  baseURL: import.meta.env.VITE_CUSTOMER_API_URL,
+  baseURL: gatewayServiceUrl('customer'),
   headers: {
     'Content-Type': 'application/json',
   },

@@ -20,7 +20,7 @@ Create these GitHub **Actions variables** in this repository:
 | `AZURE_RESOURCE_GROUP` | `rg-assms-staging`. |
 | `FRONTEND_APP_NAME` | `app-assms-frontend-staging-45ff260826`. |
 | `FRONTEND_URL` | `https://app-assms-frontend-staging-45ff260826.azurewebsites.net` |
-| `VITE_CUSTOMER_API_URL` | `https://assms-customer-staging-45ff260826.southeastasia.cloudapp.azure.com` |
+| `VITE_API_BASE_URL` | `https://apim-assms-staging-XXXX.azure-api.net` |
 
 This workflow needs no application secret. Do not store MySQL credentials,
 customer VM environment files, TLS private keys, or deployment SSH keys in
@@ -51,8 +51,8 @@ GitHub variables. No Azure client secret is used.
 
 ## Deployment Flow
 
-1. Set `VITE_CUSTOMER_API_URL` only for the staging build; `.env.example` is
-   unchanged.
+1. Set `VITE_API_BASE_URL` for the staging build after APIM is deployed;
+   `.env.example` is a safe placeholder rather than staging configuration.
 2. Run `npm ci`, `npm run lint`, and `npm run build` on Node.js 22.
 3. Require `dist/index.html`, ZIP the compiled `dist` contents, and deploy with
    `az webapp deploy` rather than FTP or basic publishing.
