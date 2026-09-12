@@ -43,6 +43,22 @@ describe('Technician views', () => {
     expect(screen.getByText('ACTIVE')).toBeInTheDocument()
   })
 
+  it('filters technician capability records by state and preserves the selected filter in the route', async () => {
+    getAllTechniciansMock.mockResolvedValue([
+      technician,
+      { ...technician, id: 'technician-2', reference: 'TEC-002', fullName: 'Saman Silva', status: 'INACTIVE' as const },
+    ])
+    render(<MemoryRouter initialEntries={['/technicians?status=ACTIVE']}><TechnicianListPage /></MemoryRouter>)
+
+    expect(await screen.findByRole('link', { name: 'Amal Perera' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Saman Silva' })).not.toBeInTheDocument()
+
+    fireEvent.change(screen.getByLabelText('Filter by state'), { target: { value: 'INACTIVE' } })
+
+    expect(await screen.findByRole('link', { name: 'Saman Silva' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Amal Perera' })).not.toBeInTheDocument()
+  })
+
   it('explains an empty list', async () => {
     getAllTechniciansMock.mockResolvedValue([])
     render(<MemoryRouter><TechnicianListPage /></MemoryRouter>)
