@@ -18,7 +18,11 @@ function AppLayout() {
     <div className="app-shell">
       <aside className={`operations-sidebar${menuOpen ? ' operations-sidebar-open' : ''}`} aria-label="Primary navigation">
         <Link className="operations-brand" to="/customers" onClick={closeMenu}>
-          <img src="/assets/assms-logo.png" alt="ASSMS" />
+          <img className="app-brand-mark" src="/assets/assms-mark.png" alt="" />
+          <span className="operations-brand-copy">
+            <strong>ASSMS</strong>
+            <small>Service operations</small>
+          </span>
         </Link>
 
         <nav className="operations-nav">
