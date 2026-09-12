@@ -19,7 +19,7 @@ body { background: var(--app-bg); color: var(--app-ink); }
 
 .operations-sidebar { position: sticky; top: 0; height: 100svh; display: flex; flex-direction: column; background: #183d32; color: #d9e6d9; padding: 2rem 1rem 1.1rem; }
 .operations-brand { display: flex; align-items: center; gap: .8rem; padding: 0 .65rem 2.7rem; color: #fff; text-decoration: none; }
-.app-brand-mark { width: 38px; height: 38px; object-fit: contain; }
+.app-brand-mark { width: 38px; height: 38px; padding: 5px; object-fit: contain; background: #fff; border-radius: 9px; }
 .operations-brand-copy strong { display: block; font: 800 1rem/1 'Manrope', sans-serif; letter-spacing: .09em; }
 .operations-brand-copy small { display: block; margin-top: .35rem; color: #96b4a2; font-size: .68rem; letter-spacing: .02em; }
 .operations-nav { display: grid; gap: .18rem; }

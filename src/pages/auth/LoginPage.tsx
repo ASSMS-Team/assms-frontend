@@ -35,7 +35,10 @@ export default function LoginPage() {
   return (
     <main className="auth-page">
       <section className="auth-story" aria-label="ASSMS introduction">
-        <div className="auth-brand"><span className="app-brand-mark">A</span> ASSMS</div>
+        <div className="auth-brand">
+          <span className="auth-brand-mark"><img src="/assets/assms-mark.png" alt="" /></span>
+          <span>ASSMS</span>
+        </div>
         <div>
           <p className="auth-kicker">Internal service workspace</p>
           <h1>Keep every service request moving.</h1>
