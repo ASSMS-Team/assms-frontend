@@ -10,6 +10,14 @@ import type { JobsByTechnicianReport } from '../../types/report'
 interface AppliedFilters { from: string; to: string; region: string }
 const NO_FILTERS: AppliedFilters = { from: '', to: '', region: '' }
 
+// datetime-local returns a local wall-clock time. Convert it at the boundary
+// so the API always receives its RFC 3339 UTC contract value.
+function asUtcTimestamp(value: string) {
+  if (!value) return ''
+  const date = new Date(value)
+  return Number.isNaN(date.valueOf()) ? value : date.toISOString()
+}
+
 function JobsByTechnicianPage() {
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
@@ -47,7 +55,7 @@ function JobsByTechnicianPage() {
 
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setLoading(true); setError(null); setFieldErrors({})
-    setApplied({ from: from.trim(), to: to.trim(), region })
+    setApplied({ from: asUtcTimestamp(from), to: asUtcTimestamp(to), region })
   }
 
   function fieldError(field: string) {
@@ -60,11 +68,11 @@ function JobsByTechnicianPage() {
   return <>
     <div className="page-head"><div><h1 className="page-title">Jobs by technician</h1><p className="page-sub">Assignment workload from the Reporting Service event-fed read model.</p></div></div>
     <div className="card app-card app-card-padded mb-3"><form onSubmit={apply} noValidate><div className="row g-3 align-items-end">
-      <div className="col-lg-4"><label className="form-label" htmlFor="assignment-from">From (UTC)</label><input id="assignment-from" className={`form-control${fieldErrors.from ? ' is-invalid' : ''}`} value={from} onChange={(e) => setFrom(e.target.value)} placeholder="2026-09-15T10:00:00Z" disabled={loading} />{fieldError('from')}</div>
-      <div className="col-lg-4"><label className="form-label" htmlFor="assignment-to">To (UTC)</label><input id="assignment-to" className={`form-control${fieldErrors.to ? ' is-invalid' : ''}`} value={to} onChange={(e) => setTo(e.target.value)} placeholder="2026-09-16T10:00:00Z" disabled={loading} />{fieldError('to')}</div>
+      <div className="col-lg-4"><label className="form-label" htmlFor="assignment-from">From</label><input id="assignment-from" type="datetime-local" className={`form-control${fieldErrors.from ? ' is-invalid' : ''}`} value={from} onChange={(e) => setFrom(e.target.value)} disabled={loading} />{fieldError('from')}</div>
+      <div className="col-lg-4"><label className="form-label" htmlFor="assignment-to">To</label><input id="assignment-to" type="datetime-local" className={`form-control${fieldErrors.to ? ' is-invalid' : ''}`} value={to} onChange={(e) => setTo(e.target.value)} disabled={loading} />{fieldError('to')}</div>
       <div className="col-lg-2"><label className="form-label" htmlFor="assignment-region">Region</label><select id="assignment-region" className={`form-select${fieldErrors.region ? ' is-invalid' : ''}`} value={region} onChange={(e) => setRegion(e.target.value)} disabled={loading}><option value="">All regions</option>{REGIONS.map((value) => <option key={value} value={value}>{REGION_LABELS[value]}</option>)}</select>{fieldError('region')}</div>
       <div className="col-lg-2"><button className="btn btn-primary w-100" disabled={loading} type="submit">{loading ? 'Loading...' : 'Apply'}</button></div>
-    </div><p className="form-text mb-0 mt-2">Use RFC 3339 UTC timestamps. From is inclusive; To is exclusive. Filters combine using AND.</p></form></div>
+    </div><p className="form-text mb-0 mt-2">Select dates and times in your local time. The report converts them to UTC automatically. From is inclusive; To is exclusive. Filters combine using AND.</p></form></div>
     <div className="card app-card">{loading ? <div className="state-block"><div className="spinner-border text-primary" role="status" /><p className="state-text">Loading report...</p></div>
       : error ? <div className="state-block"><div className="alert alert-danger mb-0" role="alert">{error}</div></div>
         : Object.keys(fieldErrors).length > 0 ? <div className="state-block"><p className="state-title">The report was not run</p><p className="state-text">Correct the filters above and apply again.</p></div>
