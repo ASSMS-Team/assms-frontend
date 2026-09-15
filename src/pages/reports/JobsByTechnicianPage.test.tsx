@@ -29,14 +29,16 @@ describe('Jobs by technician report', () => {
     render(<JobsByTechnicianPage />)
 
     await screen.findByText('No assignments match these filters')
-    fireEvent.change(screen.getByLabelText('From (UTC)'), { target: { value: '2026-09-15T10:00:00Z' } })
-    fireEvent.change(screen.getByLabelText('To (UTC)'), { target: { value: '2026-09-15T11:00:00Z' } })
+    fireEvent.change(screen.getByLabelText('From date'), { target: { value: '2026-09-15' } })
+    fireEvent.change(screen.getByLabelText('From time'), { target: { value: '10:00' } })
+    fireEvent.change(screen.getByLabelText('To date'), { target: { value: '2026-09-15' } })
+    fireEvent.change(screen.getByLabelText('To time'), { target: { value: '11:00' } })
     fireEvent.change(screen.getByLabelText('Region'), { target: { value: 'WESTERN' } })
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
     await waitFor(() => expect(getJobsByTechnicianMock).toHaveBeenLastCalledWith({
-      from: '2026-09-15T10:00:00Z',
-      to: '2026-09-15T11:00:00Z',
+      from: new Date('2026-09-15T10:00').toISOString(),
+      to: new Date('2026-09-15T11:00').toISOString(),
       region: 'WESTERN',
     }))
   })
