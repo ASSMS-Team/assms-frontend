@@ -17,6 +17,11 @@ export async function createTechnician(request: CreateTechnicianRequest): Promis
 
 export async function getAllTechnicians(): Promise<TechnicianResponse[]> {
   const response = await dispatchApi.get<TechnicianResponse[]>('/api/technicians')
+
+  if (!Array.isArray(response.data)) {
+    throw new Error('Dispatch Service returned an invalid technician list response.')
+  }
+
   return response.data
 }
 

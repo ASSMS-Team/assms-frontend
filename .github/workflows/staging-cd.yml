@@ -32,6 +32,9 @@ jobs:
       FRONTEND_APP_NAME: ${{ vars.FRONTEND_APP_NAME }}
       FRONTEND_URL: ${{ vars.FRONTEND_URL }}
       VITE_CUSTOMER_API_URL: ${{ vars.VITE_CUSTOMER_API_URL }}
+      VITE_JOB_API_URL: ${{ vars.VITE_JOB_API_URL }}
+      VITE_DISPATCH_API_URL: ${{ vars.VITE_DISPATCH_API_URL }}
+      VITE_REPORTING_API_URL: ${{ vars.VITE_REPORTING_API_URL }}
 
     steps:
       - name: Checkout exact requested commit
@@ -79,7 +82,7 @@ jobs:
             --type zip \
             --async false
 
-      - name: Verify SPA hosting and Customer API configuration
+      - name: Verify SPA hosting and backend API configuration
         run: |
           startup_command="$(az webapp config show \
             --resource-group "$AZURE_RESOURCE_GROUP" \
@@ -90,5 +93,12 @@ jobs:
             body="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 "${FRONTEND_URL}${route}")"
             grep -F '<div id="root"></div>' <<< "$body"
           done
-          curl --fail --silent --show-error --retry 6 \
-            "${VITE_CUSTOMER_API_URL}/api/health" > /dev/null
+          for api_url in \
+            "$VITE_CUSTOMER_API_URL" \
+            "$VITE_JOB_API_URL" \
+            "$VITE_DISPATCH_API_URL" \
+            "$VITE_REPORTING_API_URL"; do
+            test -n "$api_url"
+            curl --fail --silent --show-error --retry 6 \
+              "${api_url}/api/health" > /dev/null
+          done
