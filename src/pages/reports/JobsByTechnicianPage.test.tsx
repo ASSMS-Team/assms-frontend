@@ -29,8 +29,10 @@ describe('Jobs by technician report', () => {
     render(<JobsByTechnicianPage />)
 
     await screen.findByText('No assignments match these filters')
-    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-15T10:00' } })
-    fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-09-15T11:00' } })
+    fireEvent.change(screen.getByLabelText('From date'), { target: { value: '2026-09-15' } })
+    fireEvent.change(screen.getByLabelText('From time'), { target: { value: '10:00' } })
+    fireEvent.change(screen.getByLabelText('To date'), { target: { value: '2026-09-15' } })
+    fireEvent.change(screen.getByLabelText('To time'), { target: { value: '11:00' } })
     fireEvent.change(screen.getByLabelText('Region'), { target: { value: 'WESTERN' } })
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
