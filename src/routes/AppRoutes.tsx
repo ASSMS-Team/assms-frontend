@@ -11,6 +11,8 @@ import CustomerDetailPage from '../pages/customers/CustomerDetailPage'
 import CustomerListPage from '../pages/customers/CustomerListPage'
 import EditCustomerPage from '../pages/customers/EditCustomerPage'
 import CreateJobPage from '../pages/jobs/CreateJobPage'
+import JobDetailPage from '../pages/jobs/JobDetailPage'
+import JobListPage from '../pages/jobs/JobListPage'
 import CreateTechnicianPage from '../pages/technicians/CreateTechnicianPage'
 import TechnicianDetailPage from '../pages/technicians/TechnicianDetailPage'
 import EditTechnicianPage from '../pages/technicians/EditTechnicianPage'
@@ -43,6 +45,8 @@ function AppRoutes() {
           <Route path="/jobs/new" element={<CreateJobPage />} />
         </Route>
         <Route element={<RoleRoute roles={['Dispatcher', 'Manager']} />}>
+          <Route path="/jobs" element={<JobListPage />} />
+          <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/technicians" element={<TechnicianListPage />} />
           <Route path="/technicians/new" element={<CreateTechnicianPage />} />
           <Route path="/technicians/:id" element={<TechnicianDetailPage />} />

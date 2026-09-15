@@ -46,7 +46,20 @@ export interface JobResponse {
   // later sprints, and a value the frontend has not heard of should render
   // rather than fail to type-check against a stale union.
   status: string
+  assignment: JobAssignment | null
   // ISO 8601 UTC strings, not Date objects - JSON has no date type.
   createdAt: string
   updatedAt: string
+}
+
+export interface JobAssignment {
+  id: string
+  technicianId: string
+  technicianReference: string
+  assignedAt: string
+}
+
+export interface JobListFilters {
+  status?: string
+  assignedTechnicianId?: string
 }
