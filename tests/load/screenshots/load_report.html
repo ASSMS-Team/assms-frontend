@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ASSMS Load & Performance Benchmark Dashboard</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0b0f19;
+      color: #f1f5f9;
+      padding: 35px;
+      margin: 0;
+    }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+    }
+    .header {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 24px 30px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    h1 {
+      font-size: 24px;
+      margin: 0 0 6px 0;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: #94a3b8;
+      font-size: 13.5px;
+    }
+    .overall-badge {
+      background: rgba(16, 185, 129, 0.16);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #34d399;
+      padding: 10px 20px;
+      border-radius: 30px;
+      font-weight: 700;
+      font-size: 15px;
+      letter-spacing: 0.3px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+    .scenario-card {
+      background: #151d2f;
+      border: 1px solid #23314e;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .scenario-id {
+      font-size: 12px;
+      font-weight: 800;
+      color: #38bdf8;
+      letter-spacing: 1px;
+    }
+    .scenario-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #ffffff;
+      margin-bottom: 16px;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+    }
+    .badge-pass {
+      background: rgba(16, 185, 129, 0.2);
+      color: #10b981;
+    }
+    .badge-fail {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      background: #0c1322;
+      border-radius: 8px;
+      padding: 12px;
+      border: 1px solid #1a2742;
+    }
+    .stat-box {
+      text-align: center;
+    }
+    .stat-label {
+      font-size: 10.5px;
+      color: #64748b;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+    .stat-val {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f8fafc;
+      font-family: monospace;
+    }
+    .stat-val.highlight {
+      color: #38bdf8;
+    }
+    .stat-val.success {
+      color: #34d399;
+    }
+    .stat-val .unit {
+      font-size: 10px;
+      color: #94a3b8;
+      font-weight: normal;
+    }
+    .footer-meta {
+      margin-top: 14px;
+      font-size: 11.5px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div>
+        <h1>ASSMS Sprint 2 - Automated Load & Performance Benchmark</h1>
+        <div class="subtitle">Concurrent Microservice Traffic Evaluation &bull; 2026-09-16 22:50:09</div>
+      </div>
+      <div class="overall-badge">
+        SCORE: 4/4 PASSED (100%)
+      </div>
+    </div>
+    <div class="grid">
+      
+            <div class="scenario-card">
+              <div class="card-header">
+                <span class="scenario-id">LOAD-01</span>
+                <span class="badge badge-pass">PASS</span>
+              </div>
+              <div class="scenario-title">Staff JWT Auth Token Issuance Burst</div>
+              <div class="stats-grid">
+                <div class="stat-box">
+                  <div class="stat-label">Throughput</div>
+                  <div class="stat-val highlight">153.7 <span class="unit">req/s</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Success Rate</div>
+                  <div class="stat-val success">100.0%</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Median (p50)</div>
+                  <div class="stat-val">49.0 <span class="unit">ms</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">95th %ile (p95)</div>
+                  <div class="stat-val">93.9 <span class="unit">ms</span></div>
+                </div>
+              </div>
+              <div class="footer-meta">
+                <span>Concurrency: 10 threads</span> &bull; 
+                <span>Requests: 50</span> &bull; 
+                <span>Max Latency: 105.7ms</span>
+              </div>
+            </div>
+            
+            <div class="scenario-card">
+              <div class="card-header">
+                <span class="scenario-id">LOAD-02</span>
+                <span class="badge badge-pass">PASS</span>
+              </div>
+              <div class="scenario-title">Dispatch Service Technician Concurrent Reads</div>
+              <div class="stats-grid">
+                <div class="stat-box">
+                  <div class="stat-label">Throughput</div>
+                  <div class="stat-val highlight">717.4 <span class="unit">req/s</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Success Rate</div>
+                  <div class="stat-val success">100.0%</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Median (p50)</div>
+                  <div class="stat-val">9.8 <span class="unit">ms</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">95th %ile (p95)</div>
+                  <div class="stat-val">67.7 <span class="unit">ms</span></div>
+                </div>
+              </div>
+              <div class="footer-meta">
+                <span>Concurrency: 15 threads</span> &bull; 
+                <span>Requests: 80</span> &bull; 
+                <span>Max Latency: 88.4ms</span>
+              </div>
+            </div>
+            
+            <div class="scenario-card">
+              <div class="card-header">
+                <span class="scenario-id">LOAD-03</span>
+                <span class="badge badge-pass">PASS</span>
+              </div>
+              <div class="scenario-title">Reporting Aggregation Projection Queries</div>
+              <div class="stats-grid">
+                <div class="stat-box">
+                  <div class="stat-label">Throughput</div>
+                  <div class="stat-val highlight">691.2 <span class="unit">req/s</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Success Rate</div>
+                  <div class="stat-val success">100.0%</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Median (p50)</div>
+                  <div class="stat-val">7.6 <span class="unit">ms</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">95th %ile (p95)</div>
+                  <div class="stat-val">62.0 <span class="unit">ms</span></div>
+                </div>
+              </div>
+              <div class="footer-meta">
+                <span>Concurrency: 12 threads</span> &bull; 
+                <span>Requests: 60</span> &bull; 
+                <span>Max Latency: 65.1ms</span>
+              </div>
+            </div>
+            
+            <div class="scenario-card">
+              <div class="card-header">
+                <span class="scenario-id">LOAD-04</span>
+                <span class="badge badge-pass">PASS</span>
+              </div>
+              <div class="scenario-title">Cross-Microservice Mixed Operations Under Load</div>
+              <div class="stats-grid">
+                <div class="stat-box">
+                  <div class="stat-label">Throughput</div>
+                  <div class="stat-val highlight">1132.8 <span class="unit">req/s</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Success Rate</div>
+                  <div class="stat-val success">100.0%</div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">Median (p50)</div>
+                  <div class="stat-val">12.1 <span class="unit">ms</span></div>
+                </div>
+                <div class="stat-box">
+                  <div class="stat-label">95th %ile (p95)</div>
+                  <div class="stat-val">23.1 <span class="unit">ms</span></div>
+                </div>
+              </div>
+              <div class="footer-meta">
+                <span>Concurrency: 20 threads</span> &bull; 
+                <span>Requests: 100</span> &bull; 
+                <span>Max Latency: 28.0ms</span>
+              </div>
+            </div>
+            
+    </div>
+  </div>
+</body>
+</html>
