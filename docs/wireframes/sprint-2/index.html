@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="ASSMS Sprint 2 interactive wireframes for technician, dispatch, assignment, and reporting workflows."
+    />
+    <title>ASSMS Sprint 2 Wireframes</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="prototype-banner">
+      <span>ASSMS-28 · Review prototype</span>
+      <span>Sample data · no API calls</span>
+    </div>
+
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <a class="brand" href="#technicians" data-route="technicians">
+          <span class="brand-mark" aria-hidden="true">A</span>
+          <span><strong>ASSMS</strong><small>Service operations</small></span>
+        </a>
+
+        <nav class="primary-nav">
+          <p class="nav-label">Workspace</p>
+          <a href="#overview" data-route="overview"><span class="nav-icon">01</span>Overview</a>
+          <a href="#jobs" data-route="jobs"><span class="nav-icon">02</span>Job board <b>7</b></a>
+          <a href="#technicians" data-route="technicians"><span class="nav-icon">03</span>Technicians</a>
+          <a href="#report" data-route="report"><span class="nav-icon">04</span>Reports</a>
+          <p class="nav-label nav-section">Records</p>
+          <a href="#customers" data-route="customers"><span class="nav-icon">05</span>Customers</a>
+          <a href="#assets" data-route="assets"><span class="nav-icon">06</span>Assets</a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <span class="avatar">HP</span>
+          <span><strong>Hiruna Perera</strong><small>Dispatcher</small></span>
+          <button type="button" aria-label="Open account menu">•••</button>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <button class="menu-button" type="button" aria-label="Toggle navigation">Menu</button>
+          <div class="environment"><span></span> Staging</div>
+          <button class="search-button" type="button"><kbd>/</kbd> Search jobs, people, assets</button>
+          <div class="topbar-actions">
+            <button type="button" aria-label="Notifications">Bell <span class="notification-dot"></span></button>
+            <span class="role-pill">Dispatcher</span>
+          </div>
+        </header>
+
+        <section class="page active" data-page="technicians" aria-labelledby="technicians-title">
+          <div class="page-heading">
+            <div>
+              <p class="eyebrow">Dispatch team</p>
+              <h1 id="technicians-title">Technicians</h1>
+              <p>Manage coverage, skills, and availability for automatic assignment.</p>
+            </div>
+            <button class="button button-primary" type="button" data-open="technician-form">+ Add technician</button>
+          </div>
+
+          <div class="metrics" aria-label="Technician summary">
+            <article><span>Active</span><strong>18</strong><small><i class="good"></i>Ready for assignment</small></article>
+            <article><span>Open jobs</span><strong>42</strong><small>2.3 average per technician</small></article>
+            <article><span>Regions covered</span><strong>7</strong><small>All active service regions</small></article>
+            <article class="attention"><span>Needs attention</span><strong>2</strong><small><i></i>At workload threshold</small></article>
+          </div>
+
+          <div class="panel">
+            <div class="toolbar">
+              <label class="search-field">
+                <span class="sr-only">Search technicians</span>
+                <input id="technician-search" type="search" placeholder="Search name or reference" />
+              </label>
+              <label>
+                <span class="sr-only">Filter by region</span>
+                <select id="technician-region">
+                  <option value="all">All regions</option>
+                  <option>Colombo</option><option>Gampaha</option><option>Kandy</option>
+                </select>
+              </label>
+              <label>
+                <span class="sr-only">Filter by status</span>
+                <select id="technician-status">
+                  <option value="all">Any status</option><option>Active</option><option>Inactive</option>
+                </select>
+              </label>
+              <button class="button button-quiet" type="button" data-demo-state>Review states</button>
+              <span class="result-count">20 technicians</span>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Technician</th><th>Region</th><th>Skills</th><th>Open jobs</th><th>Status</th><th><span class="sr-only">Actions</span></th></tr></thead>
+                <tbody id="technician-rows">
+                  <tr data-name="nimal perera tec-014" data-region="Colombo" data-status="Active">
+                    <td><button class="person-link" type="button" data-open="technician-detail"><span class="avatar blue">NP</span><span><strong>Nimal Perera</strong><small>TEC-014</small></span></button></td>
+                    <td>Colombo</td><td><span class="tag">Electrical</span><span class="tag">AC</span></td><td><span class="load load-low">2</span></td><td><span class="status active">Active</span></td><td><button class="row-action" type="button" aria-label="Actions for Nimal Perera">•••</button></td>
+                  </tr>
+                  <tr data-name="dilani fernando tec-022" data-region="Gampaha" data-status="Active">
+                    <td><button class="person-link" type="button" data-open="technician-detail"><span class="avatar amber">DF</span><span><strong>Dilani Fernando</strong><small>TEC-022</small></span></button></td>
+                    <td>Gampaha</td><td><span class="tag">Plumbing</span><span class="tag">Pumps</span></td><td><span class="load load-mid">4</span></td><td><span class="status active">Active</span></td><td><button class="row-action" type="button" aria-label="Actions for Dilani Fernando">•••</button></td>
+                  </tr>
+                  <tr data-name="kasun bandara tec-008" data-region="Kandy" data-status="Inactive">
+                    <td><button class="person-link" type="button" data-open="technician-detail"><span class="avatar green">KB</span><span><strong>Kasun Bandara</strong><small>TEC-008</small></span></button></td>
+                    <td>Kandy</td><td><span class="tag">Appliance</span></td><td><span class="load">0</span></td><td><span class="status inactive">Inactive</span></td><td><button class="row-action" type="button" aria-label="Actions for Kasun Bandara">•••</button></td>
+                  </tr>
+                  <tr data-name="amaya silva tec-031" data-region="Colombo" data-status="Active">
+                    <td><button class="person-link" type="button" data-open="technician-detail"><span class="avatar violet">AS</span><span><strong>Amaya Silva</strong><small>TEC-031</small></span></button></td>
+                    <td>Colombo</td><td><span class="tag">Electrical</span><span class="tag">Solar</span></td><td><span class="load load-high">6</span></td><td><span class="status active">Active</span></td><td><button class="row-action" type="button" aria-label="Actions for Amaya Silva">•••</button></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="empty-table" id="technician-empty" hidden><span>0</span><h3>No technicians match</h3><p>Clear one or more filters and try again.</p></div>
+            </div>
+            <div class="pagination"><span>Showing 1–4 of 20</span><div><button disabled>Previous</button><button>Next</button></div></div>
+          </div>
+        </section>
+
+        <section class="page" data-page="technician-form" aria-labelledby="technician-form-title">
+          <button class="back-link" type="button" data-back="technicians">← Technicians</button>
+          <div class="page-heading compact">
+            <div><p class="eyebrow">New record</p><h1 id="technician-form-title">Add technician</h1><p>Create the service record used for assignment. This does not create a login account.</p></div>
+          </div>
+          <form class="form-layout" id="technician-form" novalidate>
+            <div class="panel form-panel">
+              <div class="section-heading"><span>01</span><div><h2>Basic information</h2><p>Reference and name identify this technician in dispatch.</p></div></div>
+              <div class="form-grid">
+                <label class="field"><span>Technician reference <b>*</b></span><input name="reference" placeholder="e.g. TEC-032" /><small>Must be unique.</small><em>Enter a technician reference.</em></label>
+                <label class="field"><span>Full name <b>*</b></span><input name="name" placeholder="e.g. Tharindu Jayasena" /><em>Enter the technician's full name.</em></label>
+                <label class="field"><span>Region <b>*</b></span><select name="region"><option value="">Select region</option><option>Colombo</option><option>Gampaha</option><option>Kandy</option><option>Galle</option></select><em>Select a valid region.</em></label>
+                <label class="field"><span>Status</span><select name="status"><option>Active</option><option>Inactive</option></select><small>Active technicians can be considered for new work.</small></label>
+              </div>
+
+              <div class="section-heading divided"><span>02</span><div><h2>Skills and contact</h2><p>Add at least one assignment skill. Contact details are optional.</p></div></div>
+              <fieldset class="field skill-field"><legend>Skills <b>*</b></legend><div class="skill-options"><label><input type="checkbox" name="skills" value="Electrical" /><span>Electrical</span></label><label><input type="checkbox" name="skills" value="Plumbing" /><span>Plumbing</span></label><label><input type="checkbox" name="skills" value="AC" /><span>AC</span></label><label><input type="checkbox" name="skills" value="Appliance" /><span>Appliance</span></label><label><input type="checkbox" name="skills" value="Solar" /><span>Solar</span></label><label><input type="checkbox" name="skills" value="Pumps" /><span>Pumps</span></label></div><em>Select at least one skill.</em></fieldset>
+              <div class="form-grid contact-grid"><label class="field"><span>Phone <i>Optional</i></span><input type="tel" placeholder="+94 77 123 4567" /></label><label class="field"><span>Email <i>Optional</i></span><input type="email" placeholder="name@assms.lk" /></label></div>
+            </div>
+            <aside class="form-aside">
+              <div class="aside-note"><strong>Record boundary</strong><p>A technician belongs to Dispatch Service. Login access is managed separately.</p></div>
+              <div class="form-actions"><button class="button button-primary" type="submit">Create technician</button><button class="button button-secondary" type="button" data-back="technicians">Cancel</button></div>
+            </aside>
+          </form>
+        </section>
+
+        <section class="page" data-page="technician-detail" aria-labelledby="technician-detail-title">
+          <button class="back-link" type="button" data-back="technicians">← Technicians</button>
+          <div class="detail-hero">
+            <div class="detail-person"><span class="avatar blue large">NP</span><div><p class="eyebrow">TEC-014</p><h1 id="technician-detail-title">Nimal Perera</h1><div><span class="status active">Active</span><span class="muted-dot">•</span><span>Colombo region</span></div></div></div>
+            <div class="detail-actions"><button class="button button-secondary" type="button">Edit record</button><button class="button button-danger" type="button" data-deactivate>Deactivate</button></div>
+          </div>
+          <div class="detail-layout">
+            <div>
+              <div class="panel detail-panel"><div class="panel-title"><h2>Technician profile</h2><span>Assignment data</span></div><dl class="definition-grid"><div><dt>Region</dt><dd>Colombo</dd></div><div><dt>Current workload</dt><dd>2 open jobs</dd></div><div><dt>Phone</dt><dd>+94 77 348 0912</dd></div><div><dt>Email</dt><dd>nimal.perera@assms.lk</dd></div><div class="wide"><dt>Skills</dt><dd><span class="tag">Electrical</span><span class="tag">AC</span><span class="tag">Solar</span></dd></div></dl></div>
+              <div class="panel"><div class="panel-title"><div><h2>Current assignments</h2><p>Open jobs block technician deactivation.</p></div><span class="count-chip">2 open</span></div><div class="assignment-list"><article><span class="priority urgent">Urgent</span><div><strong>JOB-1048 · Cooling failure</strong><p>FreshMart · Borella · Assigned 2h ago</p></div><span class="status progress">In progress</span></article><article><span class="priority normal">Normal</span><div><strong>JOB-1031 · Panel inspection</strong><p>Lanka Holdings · Rajagiriya · Assigned yesterday</p></div><span class="status assigned">Assigned</span></article></div></div>
+            </div>
+            <aside><div class="panel activity"><div class="panel-title"><h2>Recent activity</h2></div><ol><li><i></i><div><strong>Job JOB-1048 assigned</strong><small>Today, 08:42 UTC</small></div></li><li><i></i><div><strong>Skills updated</strong><small>02 Sep, 11:15 UTC</small></div></li><li><i></i><div><strong>Technician created</strong><small>21 Aug, 06:30 UTC</small></div></li></ol></div></aside>
+          </div>
+          <div class="toast danger-toast" id="deactivate-toast" role="alert" hidden><strong>Technician cannot be deactivated</strong><p>Two open jobs must be reassigned, completed, or cancelled first.</p><button type="button" data-close-toast aria-label="Dismiss">×</button></div>
+        </section>
+
+        <section class="page" data-page="jobs" aria-labelledby="jobs-title">
+          <div class="page-heading"><div><p class="eyebrow">Live operations</p><h1 id="jobs-title">Job board</h1><p>Find work requiring attention and follow automatic assignment.</p></div><button class="button button-primary">+ Create job</button></div>
+          <div class="assignment-strip"><div class="pulse"><span></span></div><div><strong>Automatic assignment is active</strong><p>Last event processed 18 seconds ago · No pending delivery failures</p></div><button class="button button-quiet" type="button" data-open="assignment-feedback">View latest assignment</button></div>
+          <div class="panel">
+            <div class="toolbar job-toolbar"><label class="search-field"><span class="sr-only">Search jobs</span><input type="search" placeholder="Search job reference or customer" /></label><label><span class="filter-label">Status</span><select id="job-status"><option value="all">All statuses</option><option>Created</option><option>Assigned</option><option>In progress</option><option>Completed</option><option>Cancelled</option></select></label><label><span class="filter-label">Assigned technician</span><select id="job-technician"><option value="all">All technicians</option><option value="unassigned">Unassigned</option><option>Nimal Perera</option><option>Dilani Fernando</option></select></label><button class="button button-secondary">Apply filters</button></div>
+            <div class="filter-summary"><span>Showing all authorized jobs</span><button type="button">Clear filters</button></div>
+            <div class="table-wrap"><table><thead><tr><th>Job</th><th>Customer / Location</th><th>Priority</th><th>Assignment</th><th>Status</th><th>Updated</th></tr></thead><tbody><tr><td><button class="job-link" type="button">JOB-1054<small>AC inspection</small></button></td><td>Serendib Foods<small>Colombo 03</small></td><td><span class="priority urgent">Urgent</span></td><td><div class="mini-person"><span class="avatar blue">NP</span><span>Nimal Perera<small>TEC-014</small></span></div></td><td><span class="status assigned">Assigned</span></td><td>4m ago</td></tr><tr class="attention-row"><td><button class="job-link" type="button">JOB-1053<small>Pump not starting</small></button></td><td>Hilltop Hotel<small>Nuwara Eliya</small></td><td><span class="priority high">High</span></td><td><span class="needs-attention">! No eligible technician</span></td><td><span class="status waiting">Needs attention</span></td><td>18m ago</td></tr><tr><td><button class="job-link" type="button">JOB-1048<small>Cooling failure</small></button></td><td>FreshMart<small>Borella</small></td><td><span class="priority urgent">Urgent</span></td><td><div class="mini-person"><span class="avatar blue">NP</span><span>Nimal Perera<small>TEC-014</small></span></div></td><td><span class="status progress">In progress</span></td><td>2h ago</td></tr><tr><td><button class="job-link" type="button">JOB-1047<small>Routine service</small></button></td><td>Ocean View<small>Negombo</small></td><td><span class="priority normal">Normal</span></td><td><div class="mini-person"><span class="avatar amber">DF</span><span>Dilani Fernando<small>TEC-022</small></span></div></td><td><span class="status assigned">Assigned</span></td><td>3h ago</td></tr></tbody></table></div>
+          </div>
+        </section>
+
+        <section class="page" data-page="assignment-feedback" aria-labelledby="assignment-title">
+          <button class="back-link" type="button" data-back="jobs">← Job board</button>
+          <div class="page-heading compact"><div><p class="eyebrow">Automatic assignment</p><h1 id="assignment-title">JOB-1054 assigned</h1><p>The job was matched and recorded successfully.</p></div><span class="status active large-status">Complete</span></div>
+          <div class="assignment-success"><div class="success-mark">✓</div><div><p class="eyebrow">Selected technician</p><h2>Nimal Perera <small>TEC-014</small></h2><p>Matches Electrical skill and Colombo region. Selected with the lowest open-job count.</p></div><div class="assignment-result"><span>Workload before</span><strong>1 open job</strong><span>Workload now</span><strong>2 open jobs</strong></div></div>
+          <div class="detail-layout assignment-layout"><div class="panel"><div class="panel-title"><h2>Selection audit</h2><span>Deterministic result</span></div><div class="audit-steps"><article class="done"><span>1</span><div><strong>JobCreated received</strong><p>Required skill: Electrical · Region: Colombo</p></div><small>08:42:14</small></article><article class="done"><span>2</span><div><strong>3 eligible technicians found</strong><p>Active technicians matching both skill and normalized region</p></div><small>08:42:14</small></article><article class="done"><span>3</span><div><strong>Lowest workload selected</strong><p>Nimal Perera had 1 open job before assignment</p></div><small>08:42:15</small></article><article class="done"><span>4</span><div><strong>Assignment and event saved</strong><p>JobAssigned is acknowledged by Kafka</p></div><small>08:42:15</small></article></div></div><aside class="panel candidate-panel"><div class="panel-title"><h2>Candidates</h2></div><ol><li class="selected"><span>1</span><div><strong>Nimal Perera</strong><small>1 open job · oldest assignment</small></div><b>Selected</b></li><li><span>2</span><div><strong>Amaya Silva</strong><small>6 open jobs</small></div></li><li><span>3</span><div><strong>Ruwan Jay</strong><small>6 open jobs</small></div></li></ol></aside></div>
+        </section>
+
+        <section class="page" data-page="report" aria-labelledby="report-title">
+          <div class="page-heading"><div><p class="eyebrow">Workload intelligence</p><h1 id="report-title">Jobs by technician</h1><p>Assignment distribution from the Reporting Service read model.</p></div><button class="button button-secondary" type="button">Export CSV</button></div>
+          <form class="panel report-filters" id="report-filters"><label class="field"><span>From <i>UTC · inclusive</i></span><input type="datetime-local" name="from" value="2026-09-01T00:00" /></label><label class="field"><span>To <i>UTC · exclusive</i></span><input type="datetime-local" name="to" value="2026-09-08T00:00" /></label><label class="field"><span>Region</span><select name="region"><option>All regions</option><option>Colombo</option><option>Gampaha</option><option>Kandy</option></select></label><button class="button button-primary" type="submit">Apply filters</button><button class="button button-quiet" type="reset">Reset</button></form>
+          <div class="report-summary"><article><span>Total assignments</span><strong>42</strong><small>01–07 Sep 2026 UTC</small></article><article><span>Active technicians</span><strong>18</strong><small>Across all regions</small></article><article><span>Average workload</span><strong>2.3</strong><small>Jobs per technician</small></article><article><span>Workload spread</span><strong>0–6</strong><small>Lowest to highest</small></article></div>
+          <div class="report-layout"><div class="panel chart-panel"><div class="panel-title"><div><h2>Assignment distribution</h2><p>Grouped by technician</p></div><span class="freshness"><i></i>Updated 26s ago</span></div><div class="bar-chart" aria-label="Horizontal bar chart of jobs by technician"><div><label>Nimal Perera <small>TEC-014</small></label><span><i style="--value: 33%"></i></span><strong>2</strong></div><div><label>Dilani Fernando <small>TEC-022</small></label><span><i style="--value: 67%"></i></span><strong>4</strong></div><div><label>Amaya Silva <small>TEC-031</small></label><span><i style="--value: 100%"></i></span><strong>6</strong></div><div><label>Ruwan Jay <small>TEC-017</small></label><span><i style="--value: 50%"></i></span><strong>3</strong></div><div><label>Saman Kumara <small>TEC-005</small></label><span><i style="--value: 17%"></i></span><strong>1</strong></div></div></div><aside class="panel insight-panel"><div class="panel-title"><h2>Workload notes</h2></div><div class="insight amber-insight"><span>!</span><div><strong>2 technicians at threshold</strong><p>Review before manual assignment.</p></div></div><div class="insight"><span>↓</span><div><strong>3 technicians have no jobs</strong><p>Available for future matching.</p></div></div><div class="contract-note"><strong>Filter contract</strong><p>All supplied filters combine with AND. An empty result is valid and displays total 0.</p></div></aside></div>
+        </section>
+
+        <section class="page placeholder-page" data-page="overview"><p class="eyebrow">Workspace</p><h1>Operations overview</h1><p>This page is outside ASSMS-28. Its navigation placement shows how the Sprint 2 screens fit into the upgraded shell.</p><button class="button button-primary" data-back="jobs">Open job board</button></section>
+        <section class="page placeholder-page" data-page="customers"><p class="eyebrow">Sprint 1</p><h1>Customers</h1><p>The current customer flow will inherit this shell and visual system during implementation.</p></section>
+        <section class="page placeholder-page" data-page="assets"><p class="eyebrow">Sprint 1</p><h1>Assets</h1><p>The current asset flow will inherit this shell and visual system during implementation.</p></section>
+      </main>
+    </div>
+
+    <div class="state-review" id="state-review" hidden>
+      <div class="state-dialog" role="dialog" aria-modal="true" aria-labelledby="state-title">
+        <div class="panel-title"><div><p class="eyebrow">QA reference</p><h2 id="state-title">List states</h2></div><button type="button" data-close-state aria-label="Close">×</button></div>
+        <div class="state-grid"><article><div class="skeleton"><i></i><i></i><i></i></div><strong>Loading</strong><p>Keep headings and controls stable while rows load.</p></article><article><div class="mini-empty"><span>0</span></div><strong>Empty result</strong><p>Explain that no records match and offer a recovery action.</p></article><article><div class="mini-error">!</div><strong>Service error</strong><p>Keep a non-sensitive message and provide Retry.</p></article><article><div class="mini-error invalid">×</div><strong>Invalid filter</strong><p>Attach the API message to the relevant control.</p></article></div>
+      </div>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>

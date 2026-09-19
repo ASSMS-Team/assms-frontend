@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ASSMS Smoke Test Report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f172a; color: #f8fafc; padding: 40px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; max-width: 960px; margin: 0 auto; }
+    h1 { font-size: 22px; margin-bottom: 6px; color: #fff; }
+    .sub { color: #94a3b8; font-size: 14px; margin-bottom: 24px; }
+    .score { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 700; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); margin-bottom: 24px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px; background: #0f172a; color: #94a3b8; font-size: 12px; text-transform: uppercase; }
+    td { padding: 12px; border-top: 1px solid #334155; font-size: 13.5px; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-weight: 600; font-size: 11px; }
+    .badge-pass { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+    .badge-fail { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>ASSMS Sprint 2 - Automated Smoke Testing Dashboard</h1>
+    <div class="sub">Executed on 2026-09-16 22:59:43 &bull; Target: Local Microservice Cluster</div>
+    <div class="score">SMOKE STATUS: 10/10 PROBES HEALTHY (100%)</div>
+    <table>
+      <thead>
+        <tr><th>Test ID</th><th>Component / Probe</th><th>Status</th><th>Latency</th><th>Evidence Detail</th></tr>
+      </thead>
+      <tbody>
+        
+            <tr>
+              <td><strong>SMOKE-01</strong></td>
+              <td>Frontend Web Application</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">74.4 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (Vite Single Page Application Ready)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-02</strong></td>
+              <td>Customer & Asset Service Liveness</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">3.3 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (Service Healthy)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-03</strong></td>
+              <td>Dispatch Service Liveness</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">29.0 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (Service Healthy)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-04</strong></td>
+              <td>Job Service Liveness</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">18.9 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (Service Healthy)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-05</strong></td>
+              <td>Reporting Service Liveness</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">5.3 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (Service Healthy)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-06</strong></td>
+              <td>MySQL Persistence Connectivity</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">43.5 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (MySQL 8.0 Port 3307 Healthy)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-07</strong></td>
+              <td>Staff JWT Authentication Endpoint</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">32.8 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (JWT Bearer Token Issued)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-08</strong></td>
+              <td>Dispatch Protected Route (Bearer Auth)</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">22.2 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (JWT Validated by Dispatch Service)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-09</strong></td>
+              <td>Reporting Read-Model Projection Store</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">32.6 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">HTTP 200 OK (Projections Dynamic Store Active)</td>
+            </tr>
+            
+            <tr>
+              <td><strong>SMOKE-10</strong></td>
+              <td>Kafka Event Bus Broker Liveness</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace;">0.4 ms</td>
+              <td style="color: #94a3b8; font-size: 12px;">TCP Handshake Connected (Port 9092)</td>
+            </tr>
+            
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>

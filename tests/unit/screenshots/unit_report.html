@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ASSMS Sprint 2 - Automated Unit Test Dashboard</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0b0f19;
+      color: #f8fafc;
+      padding: 30px;
+    }
+    .container {
+      max-width: 1080px;
+      margin: 0 auto;
+      background: #151d30;
+      border: 1px solid #1e293b;
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #2d3748;
+      padding-bottom: 24px;
+      margin-bottom: 24px;
+    }
+    .title-area h1 {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 6px;
+    }
+    .title-area p {
+      color: #94a3b8;
+      font-size: 13.5px;
+    }
+    .score-banner {
+      text-align: right;
+    }
+    .score-badge {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      color: #10b981;
+      font-size: 18px;
+      font-weight: 800;
+      padding: 10px 20px;
+      border-radius: 30px;
+      letter-spacing: 0.5px;
+    }
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      background: #1a233a;
+      border: 1px solid #2d3748;
+      border-radius: 12px;
+      padding: 16px 20px;
+    }
+    .kpi-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #94a3b8;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+    .kpi-val {
+      font-size: 26px;
+      font-weight: 800;
+      color: #ffffff;
+    }
+    .kpi-val.green { color: #34d399; }
+    .kpi-val.blue { color: #60a5fa; }
+    .kpi-val.purple { color: #c084fc; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th {
+      text-align: left;
+      padding: 14px 16px;
+      background: #0f172a;
+      color: #94a3b8;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      border-top: 1px solid #2d3748;
+      border-bottom: 1px solid #2d3748;
+    }
+    td {
+      padding: 16px;
+      border-bottom: 1px solid #1f293d;
+      font-size: 13.5px;
+      vertical-align: middle;
+    }
+    tr:hover td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+    }
+    .badge-pass {
+      background: rgba(16, 185, 129, 0.2);
+      color: #34d399;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .badge-fail {
+      background: rgba(239, 68, 68, 0.2);
+      color: #f87171;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .category-tag {
+      display: inline-block;
+      background: #28354e;
+      color: #cbd5e1;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .footer {
+      margin-top: 24px;
+      border-top: 1px solid #2d3748;
+      padding-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      color: #64748b;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="title-area">
+        <h1>ASSMS Sprint 2 - Automated Unit Testing Suite</h1>
+        <p>Execution: 2026-09-17 00:03:19 &bull; Frameworks: .NET 8.0 xUnit + Vitest / React Testing Library</p>
+      </div>
+      <div class="score-banner">
+        <div class="score-badge">SCORE: 155/155 (100% PASS)</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Unit Tests</div>
+        <div class="kpi-val blue">155</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Passed Tests</div>
+        <div class="kpi-val green">155</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Success Rate</div>
+        <div class="kpi-val green">100%</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Execution Time</div>
+        <div class="kpi-val purple">24.93s</div>
+      </div>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Suite ID</th>
+          <th>Service / Test Fixture</th>
+          <th>Category</th>
+          <th style="text-align: center;">Tests</th>
+          <th style="text-align: center;">Passed</th>
+          <th>Status</th>
+          <th>Duration</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+            <tr>
+              <td><strong>UNIT-01</strong></td>
+              <td><strong>CustomerAssetService.Tests</strong><br><span style="color: #94a3b8; font-size: 12px;">70/70 tests passed across CustomerAssetService.Tests test fixtures.</span></td>
+              <td><span class="category-tag">Domain & Model</span></td>
+              <td style="text-align: center; font-weight: 600;">70</td>
+              <td style="text-align: center; color: #34d399; font-weight: 700;">70</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace; font-size: 12px;">4.01s</td>
+            </tr>
+            
+            <tr>
+              <td><strong>UNIT-02</strong></td>
+              <td><strong>JobService.Tests</strong><br><span style="color: #94a3b8; font-size: 12px;">22/22 tests passed across JobService.Tests test fixtures.</span></td>
+              <td><span class="category-tag">Business Logic</span></td>
+              <td style="text-align: center; font-weight: 600;">22</td>
+              <td style="text-align: center; color: #34d399; font-weight: 700;">22</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace; font-size: 12px;">3.16s</td>
+            </tr>
+            
+            <tr>
+              <td><strong>UNIT-03</strong></td>
+              <td><strong>ReportingService.Tests</strong><br><span style="color: #94a3b8; font-size: 12px;">47/47 tests passed across ReportingService.Tests test fixtures.</span></td>
+              <td><span class="category-tag">CQRS Projection</span></td>
+              <td style="text-align: center; font-weight: 600;">47</td>
+              <td style="text-align: center; color: #34d399; font-weight: 700;">47</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace; font-size: 12px;">8.20s</td>
+            </tr>
+            
+            <tr>
+              <td><strong>UNIT-04</strong></td>
+              <td><strong>DispatchService.Tests</strong><br><span style="color: #94a3b8; font-size: 12px;">1/1 tests passed across DispatchService.Tests test fixtures.</span></td>
+              <td><span class="category-tag">Dispatch Engine</span></td>
+              <td style="text-align: center; font-weight: 600;">1</td>
+              <td style="text-align: center; color: #34d399; font-weight: 700;">1</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace; font-size: 12px;">3.01s</td>
+            </tr>
+            
+            <tr>
+              <td><strong>UNIT-05</strong></td>
+              <td><strong>Frontend Component & Auth Tests</strong><br><span style="color: #94a3b8; font-size: 12px;">15/15 tests passed (AuthRoutes, TechnicianForm, TechnicianViews).</span></td>
+              <td><span class="category-tag">React / Vitest</span></td>
+              <td style="text-align: center; font-weight: 600;">15</td>
+              <td style="text-align: center; color: #34d399; font-weight: 700;">15</td>
+              <td><span class="badge badge-pass">PASS</span></td>
+              <td style="font-family: monospace; font-size: 12px;">6.54s</td>
+            </tr>
+            
+      </tbody>
+    </table>
+
+    <div class="footer">
+      <div>Target Services: CustomerAssetService, JobService, ReportingService, DispatchService, Frontend</div>
+      <div>ASSET 360 Sprint 2 QA Compliance &bull; Automated Verification Suite</div>
+    </div>
+  </div>
+</body>
+</html>

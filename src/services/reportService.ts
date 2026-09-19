@@ -1,6 +1,7 @@
 import axios from 'axios'
 
-import type { JobsByStatusReport } from '../types/report'
+import type { JobsByStatusReport, JobsByTechnicianFilters, JobsByTechnicianReport } from '../types/report'
+import { attachAuth } from './authToken'
 
 // A third instance, alongside the customer and job ones: the reporting service
 // is another separate process on another port, so it needs its own baseURL. As
@@ -13,6 +14,7 @@ export const reportingApi = axios.create({
     'Content-Type': 'application/json',
   },
 })
+attachAuth(reportingApi)
 
 // The jobs-by-status report. Both bounds are optional and independent: with
 // neither, every projected job is counted; with both, the jobs created between
@@ -42,6 +44,24 @@ export async function getJobsByStatus(
 
   const response = await reportingApi.get<JobsByStatusReport>(
     '/api/reports/jobs-by-status',
+    { params },
+  )
+
+  return response.data
+}
+
+// Assignment-time report. The API validates RFC 3339 values and the exact
+// normalized region; omitted values are left off the query entirely.
+export async function getJobsByTechnician(
+  filters: JobsByTechnicianFilters = {},
+): Promise<JobsByTechnicianReport> {
+  const params: Record<string, string> = {}
+  if (filters.from) params.from = filters.from
+  if (filters.to) params.to = filters.to
+  if (filters.region) params.region = filters.region
+
+  const response = await reportingApi.get<JobsByTechnicianReport>(
+    '/api/reports/jobs-by-technician',
     { params },
   )
 

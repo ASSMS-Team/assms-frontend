@@ -1,43 +1,86 @@
+import { useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
+import { useAuth } from '../../auth/useAuth'
 
-// Chrome shared by every page: the top bar and the centred content column.
-// Pages render into the Outlet and worry only about their own content.
 function AppLayout() {
+  const { staff, signOut, hasRole } = useAuth()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const canManageCustomers = hasRole('Agent', 'Manager')
+  const canDispatch = hasRole('Dispatcher', 'Manager')
+  const navClass = ({ isActive }: { isActive: boolean }) =>
+    `operations-nav-link${isActive ? ' active' : ''}`
+
+  function closeMenu() {
+    setMenuOpen(false)
+  }
+
   return (
     <div className="app-shell">
-      <nav className="navbar navbar-expand app-navbar sticky-top">
-        <div className="container">
-          <Link className="navbar-brand app-brand" to="/customers">
-            <span className="app-brand-mark">A</span>
-            <span>
-              ASSMS
-              <small className="app-brand-sub">Customer &amp; Asset</small>
-            </span>
-          </Link>
+      <aside className={`operations-sidebar${menuOpen ? ' operations-sidebar-open' : ''}`} aria-label="Primary navigation">
+        <Link className="operations-brand" to="/customers" onClick={closeMenu}>
+          <img className="app-brand-mark" src="/assets/assms-mark.png" alt="" />
+          <span className="operations-brand-copy">
+            <strong>ASSMS</strong>
+            <small>Service operations</small>
+          </span>
+        </Link>
 
-          <div className="navbar-nav ms-auto">
-            <NavLink className="nav-link app-nav-link" to="/customers" end>
-              Customers
+        <nav className="operations-nav">
+          <p className="operations-nav-label">Workspace</p>
+          <NavLink className={navClass} to="/customers" end onClick={closeMenu}>
+            <span aria-hidden="true">◈</span> Customers
+          </NavLink>
+          {canManageCustomers && <NavLink className={navClass} to="/customers/new" onClick={closeMenu}>
+            <span aria-hidden="true">＋</span> Register customer
+          </NavLink>}
+          {canManageCustomers && <NavLink className={navClass} to="/assets/new" onClick={closeMenu}>
+            <span aria-hidden="true">◇</span> Register asset
+          </NavLink>}
+
+          <p className="operations-nav-label">Dispatch</p>
+          {canDispatch && <NavLink className={navClass} to="/jobs" onClick={closeMenu}>
+            <span aria-hidden="true">▤</span> Jobs
+          </NavLink>}
+          {hasRole('Agent', 'Dispatcher', 'Manager') && <NavLink className={navClass} to="/jobs/new" onClick={closeMenu}>
+            <span aria-hidden="true">↗</span> New service job
+          </NavLink>}
+          {canDispatch && <NavLink className={navClass} to="/technicians" onClick={closeMenu}>
+            <span aria-hidden="true">◎</span> Technicians
+          </NavLink>}
+          {canDispatch && <NavLink className={navClass} to="/technicians/new" onClick={closeMenu}>
+            <span aria-hidden="true">＋</span> Add technician
+          </NavLink>}
+
+          {canDispatch && <>
+            <p className="operations-nav-label">Insight</p>
+            <NavLink className={navClass} to="/reports/jobs-by-status" onClick={closeMenu}>
+              <span aria-hidden="true">▤</span> Jobs by status
             </NavLink>
-            <NavLink className="nav-link app-nav-link" to="/customers/new">
-              New customer
-            </NavLink>
-            <NavLink className="nav-link app-nav-link" to="/assets/new">
-              New asset
-            </NavLink>
-            <NavLink className="nav-link app-nav-link" to="/jobs/new">
-              New job
-            </NavLink>
-            <NavLink className="nav-link app-nav-link" to="/reports/jobs-by-status">
-              Jobs by status
-            </NavLink>
-          </div>
+            {hasRole('Manager') && <NavLink className={navClass} to="/reports/jobs-by-technician" onClick={closeMenu}>
+              <span aria-hidden="true">▤</span> Jobs by technician
+            </NavLink>}
+          </>}
+        </nav>
+
+        <div className="operations-sidebar-footer">
+          <span className="operations-avatar" aria-hidden="true">{staff?.username.slice(0, 2).toUpperCase()}</span>
+          <span><strong>{staff?.username}</strong><small>{staff?.role}</small></span>
+          <button type="button" onClick={signOut}>Sign out</button>
         </div>
-      </nav>
+      </aside>
 
-      <main className="container app-main">
-        <Outlet />
-      </main>
+      <div className="operations-workspace">
+        <header className="operations-topbar">
+          <button className="operations-menu" type="button" aria-label="Open navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>☰</button>
+          <div className="environment-indicator"><i aria-hidden="true" /> Staging workspace</div>
+          <p className="operations-context">ASSMS <span>/</span> Service delivery</p>
+          <div className="operations-topbar-role">{staff?.role}</div>
+        </header>
+
+        <main className="operations-main">
+          <Outlet />
+        </main>
+      </div>
     </div>
   )
 }
