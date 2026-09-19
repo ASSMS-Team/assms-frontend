@@ -13,6 +13,7 @@ import EditCustomerPage from '../pages/customers/EditCustomerPage'
 import CreateJobPage from '../pages/jobs/CreateJobPage'
 import JobDetailPage from '../pages/jobs/JobDetailPage'
 import JobListPage from '../pages/jobs/JobListPage'
+import MyJobsPage from '../pages/dispatch/MyJobsPage'
 import CreateTechnicianPage from '../pages/technicians/CreateTechnicianPage'
 import TechnicianDetailPage from '../pages/technicians/TechnicianDetailPage'
 import EditTechnicianPage from '../pages/technicians/EditTechnicianPage'
@@ -36,6 +37,9 @@ function AppRoutes() {
         <Route path="/customers/:id" element={<CustomerDetailPage />} />
         <Route path="/assets/:id" element={<AssetDetailPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
+        {/* Job detail is accessible to all authenticated roles: Technicians
+            navigate here from /my-jobs; Dispatchers/Managers from /jobs. */}
+        <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route element={<RoleRoute roles={['Agent', 'Manager']} />}>
           <Route path="/customers/new" element={<CreateCustomerPage />} />
           <Route path="/customers/:id/edit" element={<EditCustomerPage />} />
@@ -45,9 +49,12 @@ function AppRoutes() {
         <Route element={<RoleRoute roles={['Agent', 'Dispatcher', 'Manager']} />}>
           <Route path="/jobs/new" element={<CreateJobPage />} />
         </Route>
+        {/* Technician-only: their personal assignment queue. */}
+        <Route element={<RoleRoute roles={['Technician']} />}>
+          <Route path="/my-jobs" element={<MyJobsPage />} />
+        </Route>
         <Route element={<RoleRoute roles={['Dispatcher', 'Manager']} />}>
           <Route path="/jobs" element={<JobListPage />} />
-          <Route path="/jobs/:id" element={<JobDetailPage />} />
           <Route path="/technicians" element={<TechnicianListPage />} />
           <Route path="/technicians/new" element={<CreateTechnicianPage />} />
           <Route path="/technicians/:id" element={<TechnicianDetailPage />} />

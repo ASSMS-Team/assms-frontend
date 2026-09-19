@@ -38,6 +38,9 @@ function AppLayout() {
           </NavLink>}
 
           <p className="operations-nav-label">Dispatch</p>
+          {hasRole('Technician') && <NavLink className={navClass} to="/my-jobs" onClick={closeMenu}>
+            <span aria-hidden="true">▤</span> My jobs
+          </NavLink>}
           {canDispatch && <NavLink className={navClass} to="/jobs" onClick={closeMenu}>
             <span aria-hidden="true">▤</span> Jobs
           </NavLink>}
