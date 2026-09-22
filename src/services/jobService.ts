@@ -64,3 +64,19 @@ export async function getJobByReference(
 
   return response.data
 }
+
+// Starts an assigned job (moves status from ASSIGNED to IN_PROGRESS).
+// The caller provides the technician's id. Throws on 403 (not assignee),
+// 404 (not found), or 409 (not assigned / invalid transition).
+export async function startJob(
+  id: string,
+  technicianId: string,
+): Promise<JobResponse> {
+  const response = await jobApi.post<JobResponse>(
+    `/api/jobs/${encodeURIComponent(id)}/start`,
+    { technicianId },
+  )
+
+  return response.data
+}
+

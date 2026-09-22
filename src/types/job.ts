@@ -47,6 +47,8 @@ export interface JobResponse {
   // rather than fail to type-check against a stale union.
   status: string
   assignment: JobAssignment | null
+  // When the active assignee moved the job to IN_PROGRESS, or null until that transition happens.
+  startedAt?: string | null
   // ISO 8601 UTC strings, not Date objects - JSON has no date type.
   createdAt: string
   updatedAt: string

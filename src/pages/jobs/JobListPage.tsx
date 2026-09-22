@@ -60,7 +60,7 @@ function JobListPage() {
 
       <form className="card app-card p-3 mb-3" onSubmit={applyFilters}>
         <div className="row g-3 align-items-end">
-          <div className="col-md-4"><label className="form-label" htmlFor="job-status">Status</label><select className="form-select" id="job-status" value={draftStatus} onChange={(event) => setDraftStatus(event.target.value)}><option value="">All statuses</option><option value="CREATED">Created</option><option value="ASSIGNED">Assigned</option></select></div>
+          <div className="col-md-4"><label className="form-label" htmlFor="job-status">Status</label><select className="form-select" id="job-status" value={draftStatus} onChange={(event) => setDraftStatus(event.target.value)}><option value="">All statuses</option><option value="CREATED">Created</option><option value="ASSIGNED">Assigned</option><option value="IN_PROGRESS">In Progress</option></select></div>
           <div className="col-md-5"><label className="form-label" htmlFor="assigned-technician-id">Assigned technician ID</label><input className="form-control" id="assigned-technician-id" value={draftTechnicianId} onChange={(event) => setDraftTechnicianId(event.target.value)} placeholder="Technician GUID" /></div>
           <div className="col-md-3 d-flex gap-2"><button className="btn btn-primary flex-grow-1" type="submit">Apply filters</button><button className="btn btn-outline-secondary" type="button" onClick={clearFilters}>Clear</button></div>
         </div>
