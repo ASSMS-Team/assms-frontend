@@ -4,17 +4,33 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios'
 
 import JobDetailPage from './JobDetailPage'
+<<<<<<< Updated upstream
 import { getJobById, startJob } from '../../services/jobService'
 import { AuthContext } from '../../auth/authContext'
 import type { JobResponse } from '../../types/job'
+=======
+import { addWorkRecord, getJobById, getWorkRecords, startJob } from '../../services/jobService'
+import { AuthContext } from '../../auth/authContext'
+import type { JobResponse, ServiceWorkRecordResponse } from '../../types/job'
+>>>>>>> Stashed changes
 
 vi.mock('../../services/jobService', () => ({
   getJobById: vi.fn(),
   startJob: vi.fn(),
+<<<<<<< Updated upstream
+=======
+  addWorkRecord: vi.fn(),
+  getWorkRecords: vi.fn(),
+>>>>>>> Stashed changes
 }))
 
 const getJobByIdMock = vi.mocked(getJobById)
 const startJobMock = vi.mocked(startJob)
+<<<<<<< Updated upstream
+=======
+const addWorkRecordMock = vi.mocked(addWorkRecord)
+const getWorkRecordsMock = vi.mocked(getWorkRecords)
+>>>>>>> Stashed changes
 
 const technicianId = 'af5d2057-6646-4322-afce-b4b026a90aba'
 
@@ -40,6 +56,26 @@ const assignedJob: JobResponse = {
   updatedAt: '2026-09-15T10:30:00Z',
 }
 
+<<<<<<< Updated upstream
+=======
+const inProgressJob: JobResponse = {
+  ...assignedJob,
+  status: 'IN_PROGRESS',
+  startedAt: '2026-09-15T11:00:00Z',
+}
+
+const sampleWorkRecord: ServiceWorkRecordResponse = {
+  id: 'rec-1',
+  jobId: 'job-1',
+  jobReference: 'JOB-1ARDN1',
+  technicianId,
+  technicianReference: 'TEC-032',
+  content: 'Checked coolant levels and tightened valves.',
+  recordedAt: '2026-09-15T11:30:00Z',
+  createdAt: '2026-09-15T11:30:00Z',
+}
+
+>>>>>>> Stashed changes
 const authContextValue = {
   staff: {
     id: technicianId,
@@ -68,7 +104,11 @@ function renderWithRouter(jobId = 'job-1', auth = authContextValue) {
 }
 
 function createAxiosError(status: number, data: unknown = {}) {
+<<<<<<< Updated upstream
   const error = new AxiosError(
+=======
+  return new AxiosError(
+>>>>>>> Stashed changes
     `Request failed with status code ${status}`,
     String(status),
     {} as InternalAxiosRequestConfig,
@@ -81,12 +121,19 @@ function createAxiosError(status: number, data: unknown = {}) {
       config: {} as InternalAxiosRequestConfig,
     } as AxiosResponse,
   )
+<<<<<<< Updated upstream
   return error
+=======
+>>>>>>> Stashed changes
 }
 
 describe('JobDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+<<<<<<< Updated upstream
+=======
+    getWorkRecordsMock.mockResolvedValue([])
+>>>>>>> Stashed changes
   })
 
   afterEach(() => {
@@ -105,6 +152,7 @@ describe('JobDetailPage', () => {
     expect(screen.getByRole('button', { name: 'Start Job' })).toBeInTheDocument()
   })
 
+<<<<<<< Updated upstream
   it('does not display the Start Job button if job is already IN_PROGRESS', async () => {
     const inProgressJob: JobResponse = {
       ...assignedJob,
@@ -112,6 +160,11 @@ describe('JobDetailPage', () => {
       startedAt: '2026-09-15T11:00:00Z',
     }
     getJobByIdMock.mockResolvedValue(inProgressJob)
+=======
+  it('does not display Start Job button when job is IN_PROGRESS, but shows Service Work Records', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+>>>>>>> Stashed changes
 
     renderWithRouter()
 
@@ -119,6 +172,7 @@ describe('JobDetailPage', () => {
     expect(screen.getByText('IN_PROGRESS')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Start Job' })).not.toBeInTheDocument()
     expect(screen.getByText('Started at')).toBeInTheDocument()
+<<<<<<< Updated upstream
   })
 
   it('successfully starts the job on click, moving it to IN_PROGRESS and showing Started at', async () => {
@@ -129,6 +183,17 @@ describe('JobDetailPage', () => {
       startedAt: '2026-09-15T11:00:00Z',
     }
     startJobMock.mockResolvedValue(updatedJob)
+=======
+
+    // Service work records section
+    expect(await screen.findByText('Service Work Records')).toBeInTheDocument()
+    expect(screen.getByText('Checked coolant levels and tightened valves.')).toBeInTheDocument()
+  })
+
+  it('successfully starts the job and switches to IN_PROGRESS', async () => {
+    getJobByIdMock.mockResolvedValue(assignedJob)
+    startJobMock.mockResolvedValue(inProgressJob)
+>>>>>>> Stashed changes
 
     renderWithRouter()
 
@@ -143,6 +208,7 @@ describe('JobDetailPage', () => {
       await screen.findByText('Job started successfully and is now in progress.'),
     ).toBeInTheDocument()
     expect(screen.getByText('IN_PROGRESS')).toBeInTheDocument()
+<<<<<<< Updated upstream
     expect(screen.getByText('Started at')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Start Job' })).not.toBeInTheDocument()
   })
@@ -172,6 +238,66 @@ describe('JobDetailPage', () => {
 
     expect(
       await screen.findByText(/Job cannot be started because it is not in ASSIGNED status/),
+=======
+  })
+
+  it('allows active technician to add a service work record on in-progress job', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([])
+    addWorkRecordMock.mockResolvedValue(sampleWorkRecord)
+
+    renderWithRouter()
+
+    expect(await screen.findByText('Service Work Records')).toBeInTheDocument()
+
+    const textarea = screen.getByLabelText('Record Work Performed')
+    fireEvent.change(textarea, { target: { value: 'Checked coolant levels and tightened valves.' } })
+
+    const submitBtn = screen.getByRole('button', { name: 'Add Work Record' })
+    fireEvent.click(submitBtn)
+
+    await waitFor(() => {
+      expect(addWorkRecordMock).toHaveBeenCalledWith('job-1', {
+        technicianId,
+        content: 'Checked coolant levels and tightened valves.',
+      })
+    })
+
+    expect(await screen.findByText('Work record added successfully.')).toBeInTheDocument()
+    expect(screen.getByText('Checked coolant levels and tightened valves.')).toBeInTheDocument()
+  })
+
+  it('rejects submitting empty work record content with validation error', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([])
+
+    renderWithRouter()
+
+    expect(await screen.findByText('Service Work Records')).toBeInTheDocument()
+
+    const submitBtn = screen.getByRole('button', { name: 'Add Work Record' })
+    fireEvent.click(submitBtn)
+
+    expect(await screen.findByText('Work record content is required.')).toBeInTheDocument()
+    expect(addWorkRecordMock).not.toHaveBeenCalled()
+  })
+
+  it('displays forbidden error when non-assignee attempts to add work record', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([])
+    addWorkRecordMock.mockRejectedValue(createAxiosError(403))
+
+    renderWithRouter()
+
+    const textarea = await screen.findByLabelText('Record Work Performed')
+    fireEvent.change(textarea, { target: { value: 'Some work' } })
+
+    const submitBtn = screen.getByRole('button', { name: 'Add Work Record' })
+    fireEvent.click(submitBtn)
+
+    expect(
+      await screen.findByText(/Only the active assignee can add work records to this job/),
+>>>>>>> Stashed changes
     ).toBeInTheDocument()
   })
 })

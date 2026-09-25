@@ -65,3 +65,20 @@ export interface JobListFilters {
   status?: string
   assignedTechnicianId?: string
 }
+
+export interface CreateWorkRecordRequest {
+  technicianId: string
+  content: string
+}
+
+export interface ServiceWorkRecordResponse {
+  id: string
+  jobId: string
+  jobReference: string
+  technicianId: string
+  technicianReference: string
+  content: string
+  recordedAt: string
+  createdAt: string
+}
+

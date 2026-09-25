@@ -1,11 +1,20 @@
+<<<<<<< Updated upstream
 import { useContext, useEffect, useState } from 'react'
+=======
+import { useContext, useEffect, useState, type FormEvent } from 'react'
+>>>>>>> Stashed changes
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
 import { AuthContext } from '../../auth/authContext'
+<<<<<<< Updated upstream
 import { getJobById, startJob } from '../../services/jobService'
 import type { JobResponse } from '../../types/job'
+=======
+import { addWorkRecord, getJobById, getWorkRecords, startJob } from '../../services/jobService'
+import type { JobResponse, ServiceWorkRecordResponse } from '../../types/job'
+>>>>>>> Stashed changes
 import { formatDateTime } from '../../utils/formatDateTime'
 
 function JobDetailPage() {
@@ -18,16 +27,58 @@ function JobDetailPage() {
   const [actionSuccess, setActionSuccess] = useState('')
   const [starting, setStarting] = useState(false)
 
+  // Start Job state
+  const [starting, setStarting] = useState(false)
+  const [actionError, setActionError] = useState('')
+  const [actionSuccess, setActionSuccess] = useState('')
+
+  // Work Records state
+  const [workRecords, setWorkRecords] = useState<ServiceWorkRecordResponse[]>([])
+  const [loadingRecords, setLoadingRecords] = useState(false)
+  const [recordContent, setRecordContent] = useState('')
+  const [addingRecord, setAddingRecord] = useState(false)
+  const [recordError, setRecordError] = useState('')
+  const [recordSuccess, setRecordSuccess] = useState('')
+
   useEffect(() => {
     async function load() {
       try {
+<<<<<<< Updated upstream
         setJob(await getJobById(id))
+=======
+        const loadedJob = await getJobById(id)
+        setJob(loadedJob)
+        if (loadedJob.status === 'IN_PROGRESS') {
+          await loadRecords(loadedJob.id)
+        }
+>>>>>>> Stashed changes
       } catch {
         setError('Job not found or Job Service is unavailable.')
       }
     }
     void load()
   }, [id])
+
+<<<<<<< Updated upstream
+  async function handleStartJob() {
+    if (!job) return
+    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    setStarting(true)
+    setActionError('')
+    setActionSuccess('')
+
+=======
+  async function loadRecords(jobId: string) {
+    setLoadingRecords(true)
+    try {
+      const records = await getWorkRecords(jobId)
+      setWorkRecords(records)
+    } catch {
+      // Non-fatal if records fail to load initially
+    } finally {
+      setLoadingRecords(false)
+    }
+  }
 
   async function handleStartJob() {
     if (!job) return
@@ -36,10 +87,15 @@ function JobDetailPage() {
     setActionError('')
     setActionSuccess('')
 
+>>>>>>> Stashed changes
     try {
       const updated = await startJob(job.id, technicianId)
       setJob(updated)
       setActionSuccess('Job started successfully and is now in progress.')
+<<<<<<< Updated upstream
+=======
+      await loadRecords(updated.id)
+>>>>>>> Stashed changes
     } catch (caught: unknown) {
       if (axios.isAxiosError(caught)) {
         if (caught.response?.status === 403) {
@@ -57,6 +113,49 @@ function JobDetailPage() {
     }
   }
 
+<<<<<<< Updated upstream
+=======
+  async function handleAddWorkRecord(e: FormEvent) {
+    e.preventDefault()
+    if (!job) return
+    if (!recordContent.trim()) {
+      setRecordError('Work record content is required.')
+      return
+    }
+
+    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    setAddingRecord(true)
+    setRecordError('')
+    setRecordSuccess('')
+
+    try {
+      const newRecord = await addWorkRecord(job.id, {
+        technicianId,
+        content: recordContent.trim(),
+      })
+      setWorkRecords((prev) => [...prev, newRecord])
+      setRecordContent('')
+      setRecordSuccess('Work record added successfully.')
+    } catch (caught: unknown) {
+      if (axios.isAxiosError(caught)) {
+        if (caught.response?.status === 400) {
+          setRecordError('Work record content is required.')
+        } else if (caught.response?.status === 403) {
+          setRecordError('Forbidden: Only the active assignee can add work records to this job.')
+        } else if (caught.response?.status === 409) {
+          setRecordError('Conflict: Work records can only be added to a job in status IN_PROGRESS.')
+        } else {
+          setRecordError('Could not save work record. Check that Job Service is running.')
+        }
+      } else {
+        setRecordError('An unexpected error occurred while saving the work record.')
+      }
+    } finally {
+      setAddingRecord(false)
+    }
+  }
+
+>>>>>>> Stashed changes
   const isTechnician = auth?.hasRole('Technician') ?? false
   const backLinkPath = isTechnician ? '/my-jobs' : '/jobs'
   const backLinkLabel = isTechnician ? '← Back to my jobs' : '← Back to jobs'
@@ -83,7 +182,15 @@ function JobDetailPage() {
 
   const canStartJob =
     job.status === 'ASSIGNED' &&
+<<<<<<< Updated upstream
     (!auth || isTechnician || (!auth.hasRole('Agent', 'Dispatcher', 'Manager')))
+=======
+    (!auth || isTechnician || !auth.hasRole('Agent', 'Dispatcher', 'Manager'))
+
+  const canAddWorkRecord =
+    job.status === 'IN_PROGRESS' &&
+    (!auth || isTechnician || !auth.hasRole('Agent', 'Dispatcher', 'Manager'))
+>>>>>>> Stashed changes
 
   return (
     <>
@@ -125,8 +232,13 @@ function JobDetailPage() {
         </div>
       )}
 
+<<<<<<< Updated upstream
       <div className="card app-card">
         <dl className="detail-grid">
+=======
+      <div className="card app-card mb-4">
+        <dl className="detail-grid mb-0">
+>>>>>>> Stashed changes
           <div className="detail-row">
             <dt>Priority</dt>
             <dd>{job.priority}</dd>
@@ -157,6 +269,76 @@ function JobDetailPage() {
           </div>
         </dl>
       </div>
+<<<<<<< Updated upstream
+=======
+
+      {/* Service Work Records Section */}
+      {job.status === 'IN_PROGRESS' && (
+        <div className="card app-card p-4">
+          <h2 className="h4 mb-3">Service Work Records</h2>
+
+          {canAddWorkRecord && (
+            <form onSubmit={handleAddWorkRecord} className="mb-4">
+              {recordError && (
+                <div className="alert alert-danger mb-3" role="alert">
+                  {recordError}
+                </div>
+              )}
+              {recordSuccess && (
+                <div className="alert alert-success mb-3" role="alert">
+                  {recordSuccess}
+                </div>
+              )}
+              <div className="mb-3">
+                <label htmlFor="work-record-content" className="form-label">
+                  Record Work Performed
+                </label>
+                <textarea
+                  id="work-record-content"
+                  className="form-control"
+                  rows={3}
+                  placeholder="Describe parts replaced, diagnostics performed, or work completed..."
+                  value={recordContent}
+                  onChange={(e) => setRecordContent(e.target.value)}
+                  disabled={addingRecord}
+                />
+              </div>
+              <button
+                type="submit"
+                className="btn btn-primary"
+                id="add-work-record-btn"
+                disabled={addingRecord}
+              >
+                {addingRecord ? 'Adding record...' : 'Add Work Record'}
+              </button>
+            </form>
+          )}
+
+          {loadingRecords ? (
+            <div className="text-center py-3">
+              <div className="spinner-border spinner-border-sm text-primary" role="status" />
+              <span className="ms-2">Loading work records...</span>
+            </div>
+          ) : workRecords.length === 0 ? (
+            <div className="text-muted py-2">
+              No service work records recorded yet.
+            </div>
+          ) : (
+            <div className="list-group">
+              {workRecords.map((record) => (
+                <div key={record.id} className="list-group-item list-group-item-action flex-column align-items-start">
+                  <div className="d-flex w-100 justify-content-between mb-1">
+                    <h5 className="mb-1 text-primary">{record.technicianReference || 'Technician'}</h5>
+                    <small className="text-muted">{formatDateTime(record.recordedAt)}</small>
+                  </div>
+                  <p className="mb-1">{record.content}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+>>>>>>> Stashed changes
     </>
   )
 }
