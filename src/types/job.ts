@@ -65,3 +65,28 @@ export interface JobListFilters {
   status?: string
   assignedTechnicianId?: string
 }
+<<<<<<< Updated upstream
+=======
+
+export interface CreateWorkRecordRequest {
+  technicianId: string
+  content: string
+}
+
+export interface UpdateWorkRecordRequest {
+  technicianId: string
+  content: string
+}
+
+export interface ServiceWorkRecordResponse {
+  id: string
+  jobId: string
+  jobReference: string
+  technicianId: string
+  technicianReference: string
+  content: string
+  recordedAt: string
+  createdAt: string
+}
+
+>>>>>>> Stashed changes
