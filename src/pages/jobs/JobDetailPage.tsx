@@ -6,6 +6,7 @@ import StatusBadge from '../../components/common/StatusBadge'
 import { AuthContext } from '../../auth/authContext'
 import {
   addWorkRecord,
+  deleteWorkRecord,
   getJobById,
   getJobStatusHistory,
   getWorkRecords,
@@ -39,6 +40,7 @@ function JobDetailPage() {
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
   const [editRecordContent, setEditRecordContent] = useState('')
   const [updatingRecord, setUpdatingRecord] = useState(false)
+  const [deletingRecordId, setDeletingRecordId] = useState<string | null>(null)
 
   // Job Status History state
   const [statusHistory, setStatusHistory] = useState<JobStatusHistoryResponse[]>([])
@@ -202,6 +204,42 @@ function JobDetailPage() {
     setEditRecordContent('')
     setRecordError('')
     setRecordSuccess('')
+  }
+
+  async function handleDeleteWorkRecord(recordId: string) {
+    if (!job) return
+    if (!window.confirm('Are you sure you want to delete this work record?')) {
+      return
+    }
+
+    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    setDeletingRecordId(recordId)
+    setRecordError('')
+    setRecordSuccess('')
+
+    try {
+      await deleteWorkRecord(job.id, recordId, technicianId)
+      setWorkRecords((current) => current.filter((record) => record.id !== recordId))
+      if (editingRecordId === recordId) {
+        setEditingRecordId(null)
+        setEditRecordContent('')
+      }
+      setRecordSuccess('Work record deleted successfully.')
+    } catch (caught: unknown) {
+      if (axios.isAxiosError(caught)) {
+        if (caught.response?.status === 403) {
+          setRecordError('Forbidden: Only the active assignee can delete work records on this job.')
+        } else if (caught.response?.status === 409) {
+          setRecordError('Conflict: Work records can only be deleted on a job in status IN_PROGRESS.')
+        } else {
+          setRecordError('Could not delete work record. Check that Job Service is running.')
+        }
+      } else {
+        setRecordError('An unexpected error occurred while deleting the work record.')
+      }
+    } finally {
+      setDeletingRecordId(null)
+    }
   }
 
   const isTechnician = auth?.hasRole('Technician') ?? false
@@ -396,18 +434,28 @@ function JobDetailPage() {
                     <div className="d-flex align-items-center gap-3">
                       <time className="small text-muted" dateTime={record.recordedAt}>{formatDateTime(record.recordedAt)}</time>
                       {canEditWorkRecord && editingRecordId !== record.id && (
-                        <button
-                          type="button"
-                          className="btn btn-sm btn-outline-secondary edit-work-record-btn"
-                          onClick={() => {
-                            setEditingRecordId(record.id)
-                            setEditRecordContent(record.content)
-                            setRecordError('')
-                            setRecordSuccess('')
-                          }}
-                        >
-                          Edit
-                        </button>
+                        <div className="d-flex gap-2">
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-secondary edit-work-record-btn"
+                            onClick={() => {
+                              setEditingRecordId(record.id)
+                              setEditRecordContent(record.content)
+                              setRecordError('')
+                              setRecordSuccess('')
+                            }}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-sm btn-outline-danger delete-work-record-btn"
+                            disabled={deletingRecordId === record.id}
+                            onClick={() => void handleDeleteWorkRecord(record.id)}
+                          >
+                            {deletingRecordId === record.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

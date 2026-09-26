@@ -7,6 +7,7 @@ import { AuthContext } from '../../auth/authContext'
 import JobDetailPage from './JobDetailPage'
 import {
   addWorkRecord,
+  deleteWorkRecord,
   getJobById,
   getJobStatusHistory,
   getWorkRecords,
@@ -17,6 +18,7 @@ import type { JobResponse, JobStatusHistoryResponse, ServiceWorkRecordResponse }
 
 vi.mock('../../services/jobService', () => ({
   addWorkRecord: vi.fn(),
+  deleteWorkRecord: vi.fn(),
   getJobById: vi.fn(),
   getJobStatusHistory: vi.fn(),
   getWorkRecords: vi.fn(),
@@ -30,6 +32,7 @@ const getWorkRecordsMock = vi.mocked(getWorkRecords)
 const startJobMock = vi.mocked(startJob)
 const addWorkRecordMock = vi.mocked(addWorkRecord)
 const updateWorkRecordMock = vi.mocked(updateWorkRecord)
+const deleteWorkRecordMock = vi.mocked(deleteWorkRecord)
 
 const technicianId = 'af5d2057-6646-4322-afce-b4b026a90aba'
 
@@ -324,4 +327,54 @@ describe('JobDetailPage', () => {
     expect(screen.getByText('UNASSIGNED → ASSIGNED')).toBeInTheDocument()
     expect(screen.getByText('ASSIGNED → IN_PROGRESS')).toBeInTheDocument()
   })
+
+  it('deletes a work record after confirmation and updates the list', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    deleteWorkRecordMock.mockResolvedValue(undefined)
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    renderWithRouter()
+    expect(await screen.findByText(sampleWorkRecord.content)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    await waitFor(() => {
+      expect(deleteWorkRecordMock).toHaveBeenCalledWith('job-1', sampleWorkRecord.id, technicianId)
+    })
+    expect(await screen.findByText('Work record deleted successfully.')).toBeInTheDocument()
+    expect(screen.queryByText(sampleWorkRecord.content)).not.toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  it('does not delete a work record if confirmation is cancelled', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    renderWithRouter()
+    expect(await screen.findByText(sampleWorkRecord.content)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(deleteWorkRecordMock).not.toHaveBeenCalled()
+    expect(screen.getByText(sampleWorkRecord.content)).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  it('shows an error when deleting a work record fails', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    deleteWorkRecordMock.mockRejectedValue(createAxiosError(403))
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    renderWithRouter()
+    expect(await screen.findByText(sampleWorkRecord.content)).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+
+    expect(await screen.findByText(/Only the active assignee can delete work records/)).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
 })
+
