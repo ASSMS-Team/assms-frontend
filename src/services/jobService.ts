@@ -139,3 +139,16 @@ export async function getJobStatusHistory(
   return response.data
 }
 
+// Deletes a draft work record while its job remains in progress.
+export async function deleteWorkRecord(
+  jobId: string,
+  recordId: string,
+  technicianId: string,
+): Promise<void> {
+  await jobApi.delete(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records/${encodeURIComponent(recordId)}`,
+    { params: { technicianId } },
+  )
+}
+
+
