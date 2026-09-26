@@ -1,20 +1,11 @@
-<<<<<<< Updated upstream
-import { useContext, useEffect, useState } from 'react'
-=======
 import { useContext, useEffect, useState, type FormEvent } from 'react'
->>>>>>> Stashed changes
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
 import { AuthContext } from '../../auth/authContext'
-<<<<<<< Updated upstream
-import { getJobById, startJob } from '../../services/jobService'
-import type { JobResponse } from '../../types/job'
-=======
 import { addWorkRecord, getJobById, getWorkRecords, startJob } from '../../services/jobService'
 import type { JobResponse, ServiceWorkRecordResponse } from '../../types/job'
->>>>>>> Stashed changes
 import { formatDateTime } from '../../utils/formatDateTime'
 
 function JobDetailPage() {
@@ -26,13 +17,6 @@ function JobDetailPage() {
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
   const [starting, setStarting] = useState(false)
-
-  // Start Job state
-  const [starting, setStarting] = useState(false)
-  const [actionError, setActionError] = useState('')
-  const [actionSuccess, setActionSuccess] = useState('')
-
-  // Work Records state
   const [workRecords, setWorkRecords] = useState<ServiceWorkRecordResponse[]>([])
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [recordContent, setRecordContent] = useState('')
@@ -40,18 +24,25 @@ function JobDetailPage() {
   const [recordError, setRecordError] = useState('')
   const [recordSuccess, setRecordSuccess] = useState('')
 
+  async function loadRecords(jobId: string) {
+    setLoadingRecords(true)
+    try {
+      setWorkRecords(await getWorkRecords(jobId))
+    } catch {
+      // Keep the job details available if the optional records request fails.
+    } finally {
+      setLoadingRecords(false)
+    }
+  }
+
   useEffect(() => {
     async function load() {
       try {
-<<<<<<< Updated upstream
-        setJob(await getJobById(id))
-=======
         const loadedJob = await getJobById(id)
         setJob(loadedJob)
         if (loadedJob.status === 'IN_PROGRESS') {
           await loadRecords(loadedJob.id)
         }
->>>>>>> Stashed changes
       } catch {
         setError('Job not found or Job Service is unavailable.')
       }
@@ -59,7 +50,6 @@ function JobDetailPage() {
     void load()
   }, [id])
 
-<<<<<<< Updated upstream
   async function handleStartJob() {
     if (!job) return
     const technicianId = staff?.id || job.assignment?.technicianId || ''
@@ -67,35 +57,11 @@ function JobDetailPage() {
     setActionError('')
     setActionSuccess('')
 
-=======
-  async function loadRecords(jobId: string) {
-    setLoadingRecords(true)
-    try {
-      const records = await getWorkRecords(jobId)
-      setWorkRecords(records)
-    } catch {
-      // Non-fatal if records fail to load initially
-    } finally {
-      setLoadingRecords(false)
-    }
-  }
-
-  async function handleStartJob() {
-    if (!job) return
-    const technicianId = staff?.id || job.assignment?.technicianId || ''
-    setStarting(true)
-    setActionError('')
-    setActionSuccess('')
-
->>>>>>> Stashed changes
     try {
       const updated = await startJob(job.id, technicianId)
       setJob(updated)
       setActionSuccess('Job started successfully and is now in progress.')
-<<<<<<< Updated upstream
-=======
       await loadRecords(updated.id)
->>>>>>> Stashed changes
     } catch (caught: unknown) {
       if (axios.isAxiosError(caught)) {
         if (caught.response?.status === 403) {
@@ -113,10 +79,8 @@ function JobDetailPage() {
     }
   }
 
-<<<<<<< Updated upstream
-=======
-  async function handleAddWorkRecord(e: FormEvent) {
-    e.preventDefault()
+  async function handleAddWorkRecord(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     if (!job) return
     if (!recordContent.trim()) {
       setRecordError('Work record content is required.')
@@ -129,11 +93,11 @@ function JobDetailPage() {
     setRecordSuccess('')
 
     try {
-      const newRecord = await addWorkRecord(job.id, {
+      const record = await addWorkRecord(job.id, {
         technicianId,
         content: recordContent.trim(),
       })
-      setWorkRecords((prev) => [...prev, newRecord])
+      setWorkRecords((current) => [...current, record])
       setRecordContent('')
       setRecordSuccess('Work record added successfully.')
     } catch (caught: unknown) {
@@ -155,7 +119,6 @@ function JobDetailPage() {
     }
   }
 
->>>>>>> Stashed changes
   const isTechnician = auth?.hasRole('Technician') ?? false
   const backLinkPath = isTechnician ? '/my-jobs' : '/jobs'
   const backLinkLabel = isTechnician ? '← Back to my jobs' : '← Back to jobs'
@@ -180,17 +143,10 @@ function JobDetailPage() {
     )
   }
 
-  const canStartJob =
-    job.status === 'ASSIGNED' &&
-<<<<<<< Updated upstream
-    (!auth || isTechnician || (!auth.hasRole('Agent', 'Dispatcher', 'Manager')))
-=======
-    (!auth || isTechnician || !auth.hasRole('Agent', 'Dispatcher', 'Manager'))
-
-  const canAddWorkRecord =
-    job.status === 'IN_PROGRESS' &&
-    (!auth || isTechnician || !auth.hasRole('Agent', 'Dispatcher', 'Manager'))
->>>>>>> Stashed changes
+  const canManageAssignedWork =
+    !auth || isTechnician || !auth.hasRole('Agent', 'Dispatcher', 'Manager')
+  const canStartJob = job.status === 'ASSIGNED' && canManageAssignedWork
+  const canAddWorkRecord = job.status === 'IN_PROGRESS' && canManageAssignedWork
 
   return (
     <>
@@ -220,95 +176,46 @@ function JobDetailPage() {
         </div>
       </div>
 
-      {actionError && (
-        <div className="alert alert-danger mb-3" role="alert">
-          {actionError}
-        </div>
-      )}
+      {actionError && <div className="alert alert-danger mb-3" role="alert">{actionError}</div>}
+      {actionSuccess && <div className="alert alert-success mb-3" role="alert">{actionSuccess}</div>}
 
-      {actionSuccess && (
-        <div className="alert alert-success mb-3" role="alert">
-          {actionSuccess}
-        </div>
-      )}
-
-<<<<<<< Updated upstream
       <div className="card app-card">
         <dl className="detail-grid">
-=======
-      <div className="card app-card mb-4">
-        <dl className="detail-grid mb-0">
->>>>>>> Stashed changes
-          <div className="detail-row">
-            <dt>Priority</dt>
-            <dd>{job.priority}</dd>
-          </div>
+          <div className="detail-row"><dt>Priority</dt><dd>{job.priority}</dd></div>
           <div className="detail-row">
             <dt>Assignment</dt>
-            <dd>
-              {job.assignment
-                ? `${job.assignment.technicianReference} (${job.assignment.technicianId})`
-                : 'Unassigned'}
-            </dd>
+            <dd>{job.assignment ? `${job.assignment.technicianReference} (${job.assignment.technicianId})` : 'Unassigned'}</dd>
           </div>
           <div className="detail-row">
             <dt>Assigned at</dt>
-            <dd>
-              {job.assignment ? formatDateTime(job.assignment.assignedAt) : '—'}
-            </dd>
+            <dd>{job.assignment ? formatDateTime(job.assignment.assignedAt) : '—'}</dd>
           </div>
-          {job.startedAt && (
-            <div className="detail-row">
-              <dt>Started at</dt>
-              <dd>{formatDateTime(job.startedAt)}</dd>
-            </div>
-          )}
-          <div className="detail-row">
-            <dt>Problem description</dt>
-            <dd>{job.problemDescription}</dd>
-          </div>
+          {job.startedAt && <div className="detail-row"><dt>Started at</dt><dd>{formatDateTime(job.startedAt)}</dd></div>}
+          <div className="detail-row"><dt>Problem description</dt><dd>{job.problemDescription}</dd></div>
         </dl>
       </div>
-<<<<<<< Updated upstream
-=======
 
-      {/* Service Work Records Section */}
       {job.status === 'IN_PROGRESS' && (
-        <div className="card app-card p-4">
-          <h2 className="h4 mb-3">Service Work Records</h2>
+        <section className="card app-card p-4 mt-4" aria-labelledby="work-records-heading">
+          <h2 id="work-records-heading" className="h4 mb-3">Service Work Records</h2>
 
           {canAddWorkRecord && (
             <form onSubmit={handleAddWorkRecord} className="mb-4">
-              {recordError && (
-                <div className="alert alert-danger mb-3" role="alert">
-                  {recordError}
-                </div>
-              )}
-              {recordSuccess && (
-                <div className="alert alert-success mb-3" role="alert">
-                  {recordSuccess}
-                </div>
-              )}
+              {recordError && <div className="alert alert-danger mb-3" role="alert">{recordError}</div>}
+              {recordSuccess && <div className="alert alert-success mb-3" role="alert">{recordSuccess}</div>}
               <div className="mb-3">
-                <label htmlFor="work-record-content" className="form-label">
-                  Record Work Performed
-                </label>
+                <label htmlFor="work-record-content" className="form-label">Record Work Performed</label>
                 <textarea
                   id="work-record-content"
                   className="form-control"
                   rows={3}
                   placeholder="Describe parts replaced, diagnostics performed, or work completed..."
                   value={recordContent}
-                  onChange={(e) => setRecordContent(e.target.value)}
+                  onChange={(event) => setRecordContent(event.target.value)}
                   disabled={addingRecord}
                 />
               </div>
-              <button
-                type="submit"
-                className="btn btn-primary"
-                id="add-work-record-btn"
-                disabled={addingRecord}
-              >
+              <button type="submit" className="btn btn-primary" id="add-work-record-btn" disabled={addingRecord}>
                 {addingRecord ? 'Adding record...' : 'Add Work Record'}
               </button>
             </form>
@@ -320,28 +227,24 @@ function JobDetailPage() {
               <span className="ms-2">Loading work records...</span>
             </div>
           ) : workRecords.length === 0 ? (
-            <div className="text-muted py-2">
-              No service work records recorded yet.
-            </div>
+            <div className="text-muted py-2">No service work records recorded yet.</div>
           ) : (
             <div className="list-group">
               {workRecords.map((record) => (
-                <div key={record.id} className="list-group-item list-group-item-action flex-column align-items-start">
+                <article key={record.id} className="list-group-item d-flex flex-column">
                   <div className="d-flex w-100 justify-content-between mb-1">
-                    <h5 className="mb-1 text-primary">{record.technicianReference || 'Technician'}</h5>
-                    <small className="text-muted">{formatDateTime(record.recordedAt)}</small>
+                    <h3 className="h6 mb-1 text-primary">{record.technicianReference || 'Technician'}</h3>
+                    <time className="small text-muted" dateTime={record.recordedAt}>{formatDateTime(record.recordedAt)}</time>
                   </div>
                   <p className="mb-1">{record.content}</p>
-                </div>
+                </article>
               ))}
             </div>
           )}
-        </div>
+        </section>
       )}
->>>>>>> Stashed changes
     </>
   )
 }
 
 export default JobDetailPage
-

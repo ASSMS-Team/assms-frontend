@@ -86,8 +86,6 @@ export async function startJob(
   return response.data
 }
 
-<<<<<<< Updated upstream
-=======
 // Adds a service work record for an active in-progress job.
 // The caller must be the active assignee.
 export async function addWorkRecord(
@@ -116,5 +114,3 @@ export async function getWorkRecords(
 
   return response.data
 }
-
->>>>>>> Stashed changes
