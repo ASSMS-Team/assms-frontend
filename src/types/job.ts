@@ -49,9 +49,15 @@ export interface JobResponse {
   assignment: JobAssignment | null
   // When the active assignee moved the job to IN_PROGRESS, or null until that transition happens.
   startedAt?: string | null
+  // When the active assignee completed the job, or null until that transition happens.
+  completedAt?: string | null
   // ISO 8601 UTC strings, not Date objects - JSON has no date type.
   createdAt: string
   updatedAt: string
+}
+
+export interface CompleteJobRequest {
+  technicianId: string
 }
 
 export interface JobAssignment {
