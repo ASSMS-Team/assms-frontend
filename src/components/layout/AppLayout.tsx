@@ -62,6 +62,9 @@ function AppLayout() {
             {hasRole('Manager') && <NavLink className={navClass} to="/reports/jobs-by-technician" onClick={closeMenu}>
               <span aria-hidden="true">▤</span> Jobs by technician
             </NavLink>}
+            {hasRole('Manager') && <NavLink className={navClass} to="/reports/job-completions" onClick={closeMenu}>
+              <span aria-hidden="true">▤</span> Job completions
+            </NavLink>}
           </>}
         </nav>
 
