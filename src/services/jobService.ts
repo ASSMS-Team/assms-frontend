@@ -1,8 +1,5 @@
 import axios from 'axios'
 
-<<<<<<< Updated upstream
-import type { CreateJobRequest, JobListFilters, JobResponse } from '../types/job'
-=======
 import type {
   CreateJobRequest,
   CreateWorkRecordRequest,
@@ -11,7 +8,6 @@ import type {
   ServiceWorkRecordResponse,
   UpdateWorkRecordRequest,
 } from '../types/job'
->>>>>>> Stashed changes
 import { attachAuth } from './authToken'
 
 // Its own instance, not the customer one: the job service is a separate process
@@ -91,8 +87,6 @@ export async function startJob(
   return response.data
 }
 
-<<<<<<< Updated upstream
-=======
 // Adds a service work record for an active in-progress job.
 // The caller must be the active assignee.
 export async function addWorkRecord(
@@ -122,7 +116,7 @@ export async function getWorkRecords(
   return response.data
 }
 
-// Updates an existing service work record.
+// Updates a work record while its job remains in progress.
 export async function updateWorkRecord(
   jobId: string,
   recordId: string,
@@ -135,4 +129,3 @@ export async function updateWorkRecord(
 
   return response.data
 }
->>>>>>> Stashed changes

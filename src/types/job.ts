@@ -65,8 +65,6 @@ export interface JobListFilters {
   status?: string
   assignedTechnicianId?: string
 }
-<<<<<<< Updated upstream
-=======
 
 export interface CreateWorkRecordRequest {
   technicianId: string
@@ -88,5 +86,3 @@ export interface ServiceWorkRecordResponse {
   recordedAt: string
   createdAt: string
 }
-
->>>>>>> Stashed changes
