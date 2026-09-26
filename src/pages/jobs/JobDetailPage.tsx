@@ -7,11 +7,16 @@ import { AuthContext } from '../../auth/authContext'
 import {
   addWorkRecord,
   getJobById,
+  getJobStatusHistory,
   getWorkRecords,
   startJob,
   updateWorkRecord,
 } from '../../services/jobService'
-import type { JobResponse, ServiceWorkRecordResponse } from '../../types/job'
+import type {
+  JobResponse,
+  JobStatusHistoryResponse,
+  ServiceWorkRecordResponse,
+} from '../../types/job'
 import { formatDateTime } from '../../utils/formatDateTime'
 
 function JobDetailPage() {
@@ -23,6 +28,8 @@ function JobDetailPage() {
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
   const [starting, setStarting] = useState(false)
+
+  // Work Records state
   const [workRecords, setWorkRecords] = useState<ServiceWorkRecordResponse[]>([])
   const [loadingRecords, setLoadingRecords] = useState(false)
   const [recordContent, setRecordContent] = useState('')
@@ -32,6 +39,11 @@ function JobDetailPage() {
   const [editingRecordId, setEditingRecordId] = useState<string | null>(null)
   const [editRecordContent, setEditRecordContent] = useState('')
   const [updatingRecord, setUpdatingRecord] = useState(false)
+
+  // Job Status History state
+  const [statusHistory, setStatusHistory] = useState<JobStatusHistoryResponse[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
+  const [historyError, setHistoryError] = useState('')
 
   async function loadRecords(jobId: string) {
     setLoadingRecords(true)
@@ -44,6 +56,19 @@ function JobDetailPage() {
     }
   }
 
+  async function loadHistory(jobId: string) {
+    if (!auth?.hasRole('Agent', 'Dispatcher', 'Manager', 'Technician')) return
+    setLoadingHistory(true)
+    try {
+      const history = await getJobStatusHistory(jobId)
+      setStatusHistory(history)
+    } catch {
+      setHistoryError('Failed to load status history')
+    } finally {
+      setLoadingHistory(false)
+    }
+  }
+
   useEffect(() => {
     async function load() {
       try {
@@ -52,6 +77,7 @@ function JobDetailPage() {
         if (loadedJob.status !== 'UNASSIGNED' && loadedJob.status !== 'ASSIGNED') {
           await loadRecords(loadedJob.id)
         }
+        await loadHistory(loadedJob.id)
       } catch {
         setError('Job not found or Job Service is unavailable.')
       }
@@ -71,6 +97,7 @@ function JobDetailPage() {
       setJob(updated)
       setActionSuccess('Job started successfully and is now in progress.')
       await loadRecords(updated.id)
+      await loadHistory(updated.id)
     } catch (caught: unknown) {
       if (axios.isAxiosError(caught)) {
         if (caught.response?.status === 403) {
@@ -206,6 +233,7 @@ function JobDetailPage() {
   const canStartJob = job.status === 'ASSIGNED' && canManageAssignedWork
   const canEditWorkRecord = job.status === 'IN_PROGRESS' && canManageAssignedWork
   const canViewWorkRecords = job.status !== 'UNASSIGNED' && job.status !== 'ASSIGNED'
+  const canViewHistory = auth?.hasRole('Agent', 'Dispatcher', 'Manager') || isTechnician
 
   return (
     <>
@@ -236,7 +264,10 @@ function JobDetailPage() {
 
       <div className="card app-card mb-4">
         <dl className="detail-grid mb-0">
-          <div className="detail-row"><dt>Priority</dt><dd>{job.priority}</dd></div>
+          <div className="detail-row">
+            <dt>Priority</dt>
+            <dd>{job.priority}</dd>
+          </div>
           <div className="detail-row">
             <dt>Assignment</dt>
             <dd>{job.assignment ? `${job.assignment.technicianReference} (${job.assignment.technicianId})` : 'Unassigned'}</dd>
@@ -245,10 +276,51 @@ function JobDetailPage() {
             <dt>Assigned at</dt>
             <dd>{job.assignment ? formatDateTime(job.assignment.assignedAt) : '—'}</dd>
           </div>
-          {job.startedAt && <div className="detail-row"><dt>Started at</dt><dd>{formatDateTime(job.startedAt)}</dd></div>}
-          <div className="detail-row"><dt>Problem description</dt><dd>{job.problemDescription}</dd></div>
+          {job.startedAt && (
+            <div className="detail-row">
+              <dt>Started at</dt>
+              <dd>{formatDateTime(job.startedAt)}</dd>
+            </div>
+          )}
+          <div className="detail-row">
+            <dt>Problem description</dt>
+            <dd>{job.problemDescription}</dd>
+          </div>
         </dl>
       </div>
+
+      {canViewHistory && (
+        <div className="card app-card mb-4 p-4">
+          <h2 className="h4 mb-3">Job Status History</h2>
+          {loadingHistory ? (
+            <div className="text-center py-3">
+              <div className="spinner-border spinner-border-sm text-primary" role="status" />
+              <span className="ms-2">Loading history...</span>
+            </div>
+          ) : historyError ? (
+            <div className="alert alert-danger mb-0">{historyError}</div>
+          ) : statusHistory.length === 0 ? (
+            <div className="text-muted py-2">
+              No status changes recorded for this job.
+            </div>
+          ) : (
+            <div className="list-group">
+              {statusHistory.map((history) => (
+                <div key={history.id} className="list-group-item flex-column align-items-start">
+                  <div className="d-flex w-100 justify-content-between mb-1">
+                    <h5 className="mb-1 text-primary">
+                      {history.previousStatus ? `${history.previousStatus} → ` : ''}
+                      {history.newStatus}
+                    </h5>
+                    <small className="text-muted">{formatDateTime(history.createdAt)}</small>
+                  </div>
+                  <p className="mb-0 text-muted small">Actor: {history.actorId}</p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {canViewWorkRecords && (
         <section className="card app-card p-4" aria-labelledby="work-records-heading">

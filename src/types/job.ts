@@ -86,3 +86,13 @@ export interface ServiceWorkRecordResponse {
   recordedAt: string
   createdAt: string
 }
+
+export interface JobStatusHistoryResponse {
+  id: string
+  jobId: string
+  previousStatus: string | null
+  newStatus: string
+  actorId: string
+  createdAt: string
+}
+

@@ -5,6 +5,7 @@ import type {
   CreateWorkRecordRequest,
   JobListFilters,
   JobResponse,
+  JobStatusHistoryResponse,
   ServiceWorkRecordResponse,
   UpdateWorkRecordRequest,
 } from '../types/job'
@@ -86,7 +87,6 @@ export async function startJob(
 
   return response.data
 }
-
 // Adds a service work record for an active in-progress job.
 // The caller must be the active assignee.
 export async function addWorkRecord(
@@ -129,3 +129,13 @@ export async function updateWorkRecord(
 
   return response.data
 }
+
+export async function getJobStatusHistory(
+  id: string,
+): Promise<JobStatusHistoryResponse[]> {
+  const response = await jobApi.get<JobStatusHistoryResponse[]>(
+    `/api/jobs/${encodeURIComponent(id)}/history`,
+  )
+  return response.data
+}
+
