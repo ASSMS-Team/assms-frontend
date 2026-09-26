@@ -81,4 +81,3 @@ export interface ServiceWorkRecordResponse {
   recordedAt: string
   createdAt: string
 }
-

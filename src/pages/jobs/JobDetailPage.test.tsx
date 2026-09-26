@@ -4,7 +4,13 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthContext } from '../../auth/authContext'
-import { addWorkRecord, getJobById, getWorkRecords, startJob } from '../../services/jobService'
+import {
+  addWorkRecord,
+  getJobById,
+  getWorkRecords,
+  startJob,
+  updateWorkRecord,
+} from '../../services/jobService'
 import type { JobResponse, ServiceWorkRecordResponse } from '../../types/job'
 import JobDetailPage from './JobDetailPage'
 
@@ -13,12 +19,14 @@ vi.mock('../../services/jobService', () => ({
   getJobById: vi.fn(),
   getWorkRecords: vi.fn(),
   startJob: vi.fn(),
+  updateWorkRecord: vi.fn(),
 }))
 
 const getJobByIdMock = vi.mocked(getJobById)
 const getWorkRecordsMock = vi.mocked(getWorkRecords)
 const startJobMock = vi.mocked(startJob)
 const addWorkRecordMock = vi.mocked(addWorkRecord)
+const updateWorkRecordMock = vi.mocked(updateWorkRecord)
 
 const technicianId = 'af5d2057-6646-4322-afce-b4b026a90aba'
 
@@ -48,6 +56,11 @@ const inProgressJob: JobResponse = {
   ...assignedJob,
   status: 'IN_PROGRESS',
   startedAt: '2026-09-15T11:00:00Z',
+}
+
+const completedJob: JobResponse = {
+  ...inProgressJob,
+  status: 'COMPLETED',
 }
 
 const sampleWorkRecord: ServiceWorkRecordResponse = {
@@ -133,7 +146,20 @@ describe('JobDetailPage', () => {
     expect(await screen.findByText('Service Work Records')).toBeInTheDocument()
     expect(screen.getByText('IN_PROGRESS')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Start Job' })).not.toBeInTheDocument()
-    expect(screen.getByText('Checked coolant levels and tightened valves.')).toBeInTheDocument()
+    expect(screen.getByText('Started at')).toBeInTheDocument()
+    expect(screen.getByText(sampleWorkRecord.content)).toBeInTheDocument()
+  })
+
+  it('shows completed job work records without edit controls', async () => {
+    getJobByIdMock.mockResolvedValue(completedJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+
+    renderWithRouter()
+
+    expect(await screen.findByText('Service Work Records')).toBeInTheDocument()
+    expect(screen.getByText(sampleWorkRecord.content)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Add Work Record' })).not.toBeInTheDocument()
   })
 
   it('starts the assigned job and displays the updated state', async () => {
@@ -209,5 +235,59 @@ describe('JobDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add Work Record' }))
 
     expect(await screen.findByText(/Only the active assignee can add work records/)).toBeInTheDocument()
+  })
+
+  it('edits a work record and updates the displayed content', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    const updatedRecord = { ...sampleWorkRecord, content: 'Updated work notes.' }
+    updateWorkRecordMock.mockResolvedValue(updatedRecord)
+
+    renderWithRouter()
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.change(screen.getByLabelText('Edit Work Performed'), {
+      target: { value: updatedRecord.content },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    await waitFor(() => {
+      expect(updateWorkRecordMock).toHaveBeenCalledWith('job-1', sampleWorkRecord.id, {
+        technicianId,
+        content: updatedRecord.content,
+      })
+    })
+    expect(await screen.findByText('Work record updated successfully.')).toBeInTheDocument()
+    expect(screen.getByText(updatedRecord.content)).toBeInTheDocument()
+  })
+
+  it('allows cancelling a work record edit without submitting', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+
+    renderWithRouter()
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.change(screen.getByLabelText('Edit Work Performed'), {
+      target: { value: 'Discard this change.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+
+    expect(updateWorkRecordMock).not.toHaveBeenCalled()
+    expect(screen.getByText(sampleWorkRecord.content)).toBeInTheDocument()
+    expect(screen.queryByLabelText('Edit Work Performed')).not.toBeInTheDocument()
+  })
+
+  it('shows a forbidden error when updating a work record is not allowed', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    updateWorkRecordMock.mockRejectedValue(createAxiosError(403))
+
+    renderWithRouter()
+    fireEvent.click(await screen.findByRole('button', { name: 'Edit' }))
+    fireEvent.change(screen.getByLabelText('Edit Work Performed'), {
+      target: { value: 'Updated notes.' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }))
+
+    expect(await screen.findByText(/Only the active assignee can update work records/)).toBeInTheDocument()
   })
 })

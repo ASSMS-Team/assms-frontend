@@ -114,3 +114,17 @@ export async function getWorkRecords(
 
   return response.data
 }
+
+// Updates a work record while its job remains in progress.
+export async function updateWorkRecord(
+  jobId: string,
+  recordId: string,
+  request: CreateWorkRecordRequest,
+): Promise<ServiceWorkRecordResponse> {
+  const response = await jobApi.put<ServiceWorkRecordResponse>(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records/${encodeURIComponent(recordId)}`,
+    request,
+  )
+
+  return response.data
+}
