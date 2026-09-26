@@ -71,6 +71,11 @@ export interface CreateWorkRecordRequest {
   content: string
 }
 
+export interface UpdateWorkRecordRequest {
+  technicianId: string
+  content: string
+}
+
 export interface ServiceWorkRecordResponse {
   id: string
   jobId: string

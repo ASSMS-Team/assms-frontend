@@ -6,6 +6,7 @@ import type {
   JobListFilters,
   JobResponse,
   ServiceWorkRecordResponse,
+  UpdateWorkRecordRequest,
 } from '../types/job'
 import { attachAuth } from './authToken'
 
@@ -119,7 +120,7 @@ export async function getWorkRecords(
 export async function updateWorkRecord(
   jobId: string,
   recordId: string,
-  request: CreateWorkRecordRequest,
+  request: UpdateWorkRecordRequest,
 ): Promise<ServiceWorkRecordResponse> {
   const response = await jobApi.put<ServiceWorkRecordResponse>(
     `/api/jobs/${encodeURIComponent(jobId)}/work-records/${encodeURIComponent(recordId)}`,
