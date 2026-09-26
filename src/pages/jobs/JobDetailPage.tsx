@@ -6,6 +6,7 @@ import StatusBadge from '../../components/common/StatusBadge'
 import { AuthContext } from '../../auth/authContext'
 import {
   addWorkRecord,
+  completeJob,
   deleteWorkRecord,
   getJobById,
   getJobStatusHistory,
@@ -29,6 +30,7 @@ function JobDetailPage() {
   const [actionError, setActionError] = useState('')
   const [actionSuccess, setActionSuccess] = useState('')
   const [starting, setStarting] = useState(false)
+  const [completing, setCompleting] = useState(false)
 
   // Work Records state
   const [workRecords, setWorkRecords] = useState<ServiceWorkRecordResponse[]>([])
@@ -114,6 +116,46 @@ function JobDetailPage() {
       }
     } finally {
       setStarting(false)
+    }
+  }
+
+  async function handleCompleteJob() {
+    if (!job) return
+    if (workRecords.length === 0) {
+      setActionError('At least one service work record is required before completing the job.')
+      return
+    }
+    if (!window.confirm('Are you sure you want to mark this job as COMPLETED? This action cannot be undone.')) {
+      return
+    }
+
+    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    setCompleting(true)
+    setActionError('')
+    setActionSuccess('')
+
+    try {
+      const updated = await completeJob(job.id, technicianId)
+      setJob(updated)
+      setActionSuccess('Job marked as completed successfully.')
+      await loadRecords(updated.id)
+      await loadHistory(updated.id)
+    } catch (caught: unknown) {
+      if (axios.isAxiosError(caught)) {
+        if (caught.response?.status === 400) {
+          setActionError('At least one service work record is required before completing the job.')
+        } else if (caught.response?.status === 403) {
+          setActionError('Forbidden: Only the assigned technician can complete this job.')
+        } else if (caught.response?.status === 409) {
+          setActionError('Conflict: Job cannot be completed because it is not in IN_PROGRESS status.')
+        } else {
+          setActionError('Could not complete this job. Check that Job Service is running.')
+        }
+      } else {
+        setActionError('An unexpected error occurred while completing the job.')
+      }
+    } finally {
+      setCompleting(false)
     }
   }
 
@@ -269,6 +311,7 @@ function JobDetailPage() {
   const canManageAssignedWork =
     !auth || isTechnician || !auth.hasRole('Agent', 'Dispatcher', 'Manager')
   const canStartJob = job.status === 'ASSIGNED' && canManageAssignedWork
+  const canCompleteJob = job.status === 'IN_PROGRESS' && canManageAssignedWork
   const canEditWorkRecord = job.status === 'IN_PROGRESS' && canManageAssignedWork
   const canViewWorkRecords = job.status !== 'UNASSIGNED' && job.status !== 'ASSIGNED'
   const canViewHistory = auth?.hasRole('Agent', 'Dispatcher', 'Manager') || isTechnician
@@ -292,6 +335,17 @@ function JobDetailPage() {
               onClick={handleStartJob}
             >
               {starting ? 'Starting job...' : 'Start Job'}
+            </button>
+          )}
+          {canCompleteJob && (
+            <button
+              type="button"
+              className="btn btn-success"
+              id="complete-job-button"
+              disabled={completing}
+              onClick={() => void handleCompleteJob()}
+            >
+              {completing ? 'Completing job...' : 'Complete Job'}
             </button>
           )}
         </div>
@@ -318,6 +372,12 @@ function JobDetailPage() {
             <div className="detail-row">
               <dt>Started at</dt>
               <dd>{formatDateTime(job.startedAt)}</dd>
+            </div>
+          )}
+          {job.completedAt && (
+            <div className="detail-row">
+              <dt>Completed at</dt>
+              <dd>{formatDateTime(job.completedAt)}</dd>
             </div>
           )}
           <div className="detail-row">

@@ -7,6 +7,7 @@ import { AuthContext } from '../../auth/authContext'
 import JobDetailPage from './JobDetailPage'
 import {
   addWorkRecord,
+  completeJob,
   deleteWorkRecord,
   getJobById,
   getJobStatusHistory,
@@ -18,6 +19,7 @@ import type { JobResponse, JobStatusHistoryResponse, ServiceWorkRecordResponse }
 
 vi.mock('../../services/jobService', () => ({
   addWorkRecord: vi.fn(),
+  completeJob: vi.fn(),
   deleteWorkRecord: vi.fn(),
   getJobById: vi.fn(),
   getJobStatusHistory: vi.fn(),
@@ -30,6 +32,7 @@ const getJobByIdMock = vi.mocked(getJobById)
 const getJobStatusHistoryMock = vi.mocked(getJobStatusHistory)
 const getWorkRecordsMock = vi.mocked(getWorkRecords)
 const startJobMock = vi.mocked(startJob)
+const completeJobMock = vi.mocked(completeJob)
 const addWorkRecordMock = vi.mocked(addWorkRecord)
 const updateWorkRecordMock = vi.mocked(updateWorkRecord)
 const deleteWorkRecordMock = vi.mocked(deleteWorkRecord)
@@ -67,6 +70,7 @@ const inProgressJob: JobResponse = {
 const completedJob: JobResponse = {
   ...inProgressJob,
   status: 'COMPLETED',
+  completedAt: '2026-09-15T12:00:00Z',
 }
 
 const sampleWorkRecord: ServiceWorkRecordResponse = {
@@ -184,8 +188,10 @@ describe('JobDetailPage', () => {
 
     expect(await screen.findByText('Service Work Records')).toBeInTheDocument()
     expect(screen.getByText(sampleWorkRecord.content)).toBeInTheDocument()
+    expect(screen.getByText('Completed at')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Edit' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Add Work Record' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Complete Job' })).not.toBeInTheDocument()
   })
 
   it('starts the assigned job and displays the updated state', async () => {
@@ -374,6 +380,66 @@ describe('JobDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
 
     expect(await screen.findByText(/Only the active assignee can delete work records/)).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  it('renders Complete Job button when job is IN_PROGRESS and completes job upon confirmation', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    completeJobMock.mockResolvedValue(completedJob)
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    renderWithRouter()
+
+    expect(await screen.findByRole('button', { name: 'Complete Job' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Job' }))
+
+    await waitFor(() => {
+      expect(completeJobMock).toHaveBeenCalledWith('job-1', technicianId)
+    })
+    expect(await screen.findByText('Job marked as completed successfully.')).toBeInTheDocument()
+    expect(screen.getByText('COMPLETED')).toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  it('rejects completing an in-progress job if no work records exist', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([])
+
+    renderWithRouter()
+
+    expect(await screen.findByRole('button', { name: 'Complete Job' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Job' }))
+
+    expect(await screen.findByText('At least one service work record is required before completing the job.')).toBeInTheDocument()
+    expect(completeJobMock).not.toHaveBeenCalled()
+  })
+
+  it('does not complete job if user cancels confirmation', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    renderWithRouter()
+
+    expect(await screen.findByRole('button', { name: 'Complete Job' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Complete Job' }))
+
+    expect(completeJobMock).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('shows an error when completing job fails with 403 or 409', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getWorkRecordsMock.mockResolvedValue([sampleWorkRecord])
+    completeJobMock.mockRejectedValue(createAxiosError(403))
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    renderWithRouter()
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Complete Job' }))
+
+    expect(await screen.findByText(/Only the assigned technician can complete this job/)).toBeInTheDocument()
     confirmSpy.mockRestore()
   })
 })
