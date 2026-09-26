@@ -4,25 +4,28 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AuthContext } from '../../auth/authContext'
+import JobDetailPage from './JobDetailPage'
 import {
   addWorkRecord,
   getJobById,
+  getJobStatusHistory,
   getWorkRecords,
   startJob,
   updateWorkRecord,
 } from '../../services/jobService'
-import type { JobResponse, ServiceWorkRecordResponse } from '../../types/job'
-import JobDetailPage from './JobDetailPage'
+import type { JobResponse, JobStatusHistoryResponse, ServiceWorkRecordResponse } from '../../types/job'
 
 vi.mock('../../services/jobService', () => ({
   addWorkRecord: vi.fn(),
   getJobById: vi.fn(),
+  getJobStatusHistory: vi.fn(),
   getWorkRecords: vi.fn(),
   startJob: vi.fn(),
   updateWorkRecord: vi.fn(),
 }))
 
 const getJobByIdMock = vi.mocked(getJobById)
+const getJobStatusHistoryMock = vi.mocked(getJobStatusHistory)
 const getWorkRecordsMock = vi.mocked(getWorkRecords)
 const startJobMock = vi.mocked(startJob)
 const addWorkRecordMock = vi.mocked(addWorkRecord)
@@ -74,6 +77,25 @@ const sampleWorkRecord: ServiceWorkRecordResponse = {
   createdAt: '2026-09-15T11:30:00Z',
 }
 
+const sampleHistory: JobStatusHistoryResponse[] = [
+  {
+    id: 'hist-1',
+    jobId: 'job-1',
+    previousStatus: 'UNASSIGNED',
+    newStatus: 'ASSIGNED',
+    actorId: 'dispatcher-1',
+    createdAt: '2026-09-15T10:30:00Z',
+  },
+  {
+    id: 'hist-2',
+    jobId: 'job-1',
+    previousStatus: 'ASSIGNED',
+    newStatus: 'IN_PROGRESS',
+    actorId: technicianId,
+    createdAt: '2026-09-15T11:00:00Z',
+  },
+]
+
 const authContextValue = {
   staff: {
     id: technicianId,
@@ -121,6 +143,7 @@ describe('JobDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getWorkRecordsMock.mockResolvedValue([])
+    getJobStatusHistoryMock.mockResolvedValue([])
   })
 
   afterEach(() => cleanup())
@@ -289,5 +312,16 @@ describe('JobDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }))
 
     expect(await screen.findByText(/Only the active assignee can update work records/)).toBeInTheDocument()
+  })
+
+  it('renders job status history when available', async () => {
+    getJobByIdMock.mockResolvedValue(inProgressJob)
+    getJobStatusHistoryMock.mockResolvedValue(sampleHistory)
+
+    renderWithRouter()
+
+    expect(await screen.findByText('Job Status History')).toBeInTheDocument()
+    expect(screen.getByText('UNASSIGNED → ASSIGNED')).toBeInTheDocument()
+    expect(screen.getByText('ASSIGNED → IN_PROGRESS')).toBeInTheDocument()
   })
 })

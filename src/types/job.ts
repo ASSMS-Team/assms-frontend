@@ -71,6 +71,11 @@ export interface CreateWorkRecordRequest {
   content: string
 }
 
+export interface UpdateWorkRecordRequest {
+  technicianId: string
+  content: string
+}
+
 export interface ServiceWorkRecordResponse {
   id: string
   jobId: string
@@ -81,3 +86,13 @@ export interface ServiceWorkRecordResponse {
   recordedAt: string
   createdAt: string
 }
+
+export interface JobStatusHistoryResponse {
+  id: string
+  jobId: string
+  previousStatus: string | null
+  newStatus: string
+  actorId: string
+  createdAt: string
+}
+
