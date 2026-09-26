@@ -1,6 +1,12 @@
 import axios from 'axios'
 
-import type { CreateJobRequest, JobListFilters, JobResponse } from '../types/job'
+import type {
+  CreateJobRequest,
+  CreateWorkRecordRequest,
+  JobListFilters,
+  JobResponse,
+  ServiceWorkRecordResponse,
+} from '../types/job'
 import { attachAuth } from './authToken'
 
 // Its own instance, not the customer one: the job service is a separate process
@@ -80,3 +86,31 @@ export async function startJob(
   return response.data
 }
 
+// Adds a service work record for an active in-progress job.
+// The caller must be the active assignee.
+export async function addWorkRecord(
+  jobId: string,
+  request: CreateWorkRecordRequest,
+): Promise<ServiceWorkRecordResponse> {
+  const response = await jobApi.post<ServiceWorkRecordResponse>(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records`,
+    request,
+  )
+
+  return response.data
+}
+
+// Retrieves all service work records for a job.
+export async function getWorkRecords(
+  jobId: string,
+): Promise<ServiceWorkRecordResponse[]> {
+  const response = await jobApi.get<ServiceWorkRecordResponse[]>(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records`,
+  )
+
+  if (!Array.isArray(response.data)) {
+    throw new Error('Job Service returned an invalid work records response.')
+  }
+
+  return response.data
+}
