@@ -8,14 +8,10 @@ import type {
   JobsByTechnicianReport,
 } from '../types/report'
 import { attachAuth } from './authToken'
+import { REPORTING_API_BASE_URL } from './apiConfig'
 
-// A third instance, alongside the customer and job ones: the reporting service
-// is another separate process on another port, so it needs its own baseURL. As
-// there, the URL comes from the env var declared in vite-env.d.ts, which types
-// it as a required string - so there is no fallback here to quietly mask a
-// missing .env.
 export const reportingApi = axios.create({
-  baseURL: import.meta.env.VITE_REPORTING_API_URL,
+  baseURL: REPORTING_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },

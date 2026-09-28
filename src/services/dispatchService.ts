@@ -1,11 +1,12 @@
 import axios from 'axios'
 
 import { attachAuth } from './authToken'
+import { DISPATCH_API_BASE_URL } from './apiConfig'
 import type { CreateTechnicianRequest, TechnicianResponse, UpdateTechnicianRequest } from '../types/technician'
 import type { MyAssignmentResponse } from '../types/assignment'
 
 export const dispatchApi = axios.create({
-  baseURL: import.meta.env.VITE_DISPATCH_API_URL,
+  baseURL: DISPATCH_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 

@@ -6,12 +6,10 @@ import type {
   UpdateCustomerRequest,
 } from '../types/customer'
 import { attachAuth } from './authToken'
+import { CUSTOMER_API_BASE_URL } from './apiConfig'
 
-// baseURL comes from the env var declared in vite-env.d.ts, which types it as a
-// required string - so there is no fallback URL here to quietly mask a missing
-// .env and send requests somewhere unexpected.
 export const customerApi = axios.create({
-  baseURL: import.meta.env.VITE_CUSTOMER_API_URL,
+  baseURL: CUSTOMER_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
