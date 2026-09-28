@@ -2,8 +2,10 @@ import axios from 'axios'
 
 import type { LoginResponse } from '../types/auth'
 
+import { CUSTOMER_API_BASE_URL } from './apiConfig'
+
 const authApi = axios.create({
-  baseURL: import.meta.env.VITE_CUSTOMER_API_URL,
+  baseURL: CUSTOMER_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 

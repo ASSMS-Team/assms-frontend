@@ -11,13 +11,10 @@ import type {
   UpdateWorkRecordRequest,
 } from '../types/job'
 import { attachAuth } from './authToken'
+import { JOB_API_BASE_URL } from './apiConfig'
 
-// Its own instance, not the customer one: the job service is a separate process
-// on a separate port, so it needs its own baseURL. As there, the URL comes from
-// the env var declared in vite-env.d.ts, which types it as a required string -
-// so there is no fallback here to quietly mask a missing .env.
 export const jobApi = axios.create({
-  baseURL: import.meta.env.VITE_JOB_API_URL,
+  baseURL: JOB_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
