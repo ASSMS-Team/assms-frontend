@@ -95,7 +95,7 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label" htmlFor="reference">Technician reference</label>
-          <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} disabled={isEdit} />
+          <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032 or technician.local" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} disabled={isEdit} />
           {errorsFor('reference')}
         </div>
         <div className="col-md-6">

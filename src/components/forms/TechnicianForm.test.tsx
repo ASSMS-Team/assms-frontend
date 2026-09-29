@@ -40,6 +40,27 @@ describe('TechnicianForm', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Created Tharindu Jayasena (TEC-032).')
   })
 
+  it('submits technician with dots in reference to support staff account username linking', async () => {
+    createTechnicianMock.mockResolvedValue({
+      id: 'technician-2', reference: 'TECHNICIAN.LOCAL', fullName: 'Staff Technician', region: 'WESTERN',
+      status: 'ACTIVE', skills: ['Electrical'], phone: null, email: null,
+      createdAt: '2026-09-09T00:00:00Z', updatedAt: '2026-09-09T00:00:00Z',
+    })
+
+    render(<TechnicianForm />)
+    fireEvent.change(screen.getByLabelText('Technician reference'), { target: { value: 'technician.local' } })
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Staff Technician' } })
+    fireEvent.change(screen.getByLabelText('Region'), { target: { value: 'WESTERN' } })
+    fireEvent.click(screen.getByLabelText('Electrical'))
+    fireEvent.click(screen.getByRole('button', { name: 'Create technician' }))
+
+    await waitFor(() => expect(createTechnicianMock).toHaveBeenCalledWith({
+      reference: 'technician.local', fullName: 'Staff Technician', region: 'WESTERN',
+      skills: ['Electrical'], status: 'ACTIVE', phone: null, email: null,
+    }))
+    expect(screen.getByRole('status')).toHaveTextContent('Created Staff Technician (TECHNICIAN.LOCAL).')
+  })
+
   it('updates capability data without changing the technician reference', async () => {
     updateTechnicianMock.mockResolvedValue({
       id: 'technician-1', reference: 'TEC-032', fullName: 'Tharindu Jayasena', region: 'CENTRAL',
