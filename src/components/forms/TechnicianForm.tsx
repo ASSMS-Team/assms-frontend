@@ -6,6 +6,10 @@ import { REGIONS, REGION_LABELS, TECHNICIAN_SKILLS } from '../../constants/techn
 import { createTechnician, updateTechnician } from '../../services/dispatchService'
 import type { ValidationProblemDetails } from '../../types/customer'
 import type { CreateTechnicianRequest, TechnicianResponse, UpdateTechnicianRequest } from '../../types/technician'
+import TechnicianLoginFields from './TechnicianLoginFields'
+import { EMPTY_LOGIN, validateLogin } from './technicianLoginDraft'
+import { createTechnicianAccount, getTechnicianAccount, loginSetupError } from '../../services/technicianAccounts'
+import { Link } from 'react-router-dom'
 
 type FormValues = Omit<CreateTechnicianRequest, 'phone' | 'email'> & { phone: string; email: string }
 
@@ -31,6 +35,10 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
   const [formError, setFormError] = useState<string | null>(null)
   const [created, setCreated] = useState<TechnicianResponse | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [loginEnabled, setLoginEnabled] = useState(false)
+  const [loginDraft, setLoginDraft] = useState({ ...EMPTY_LOGIN })
+  const [loginComplete, setLoginComplete] = useState(false)
+  const [loginError, setLoginError] = useState('')
 
   function handleChange(event: ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = event.target
@@ -50,7 +58,12 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
     event.preventDefault()
     setFieldErrors({})
     setFormError(null)
-    setCreated(null)
+    if (isEdit) setCreated(null)
+    setLoginError('')
+    if (!isEdit && loginEnabled) {
+      const validation = validateLogin(loginDraft)
+      if (validation) { setLoginError(validation); return }
+    }
     setSubmitting(true)
 
     try {
@@ -68,9 +81,22 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
           phone: request.phone,
           email: request.email,
         } as UpdateTechnicianRequest)
-        : await createTechnician(request)
+        : created ?? await createTechnician(request)
       setCreated(technician)
-      if (!isEdit) setValues(EMPTY_FORM)
+      if (!isEdit && loginEnabled) {
+        try {
+          await createTechnicianAccount(technician.id, { username: loginDraft.username.trim(), email: loginDraft.email.trim(), password: loginDraft.password })
+          setLoginComplete(true)
+          setLoginDraft({ ...EMPTY_LOGIN })
+        } catch (cause) {
+          try {
+            if (await getTechnicianAccount(technician.id)) {
+              setLoginComplete(true); setLoginDraft({ ...EMPTY_LOGIN }); return
+            }
+          } catch { /* Keep the provisioning error and saved technician. */ }
+          setLoginError(loginSetupError(cause))
+        }
+      }
     } catch (error) {
       if (axios.isAxiosError<ValidationProblemDetails>(error) && error.response?.data.errors) {
         setFieldErrors(error.response.data.errors)
@@ -92,11 +118,12 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
       {formError && <p className="alert alert-danger" role="alert">{formError}</p>}
       {created && <p className="alert alert-success" role="status">{isEdit ? 'Updated' : 'Created'} {created.fullName} ({created.reference}).</p>}
 
+      <fieldset disabled={submitting || (!isEdit && Boolean(created))}>
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label" htmlFor="reference">Technician reference</label>
           <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032 or technician.local" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} aria-describedby="reference-help" disabled={isEdit} />
-          <p id="reference-help" className="form-text">For My Jobs access, this reference must match the Technician's staff username (not their email). Creating a staff login does not automatically create a Dispatch technician record.</p>
+          <p id="reference-help" className="form-text">Business reference for this technician. Login access is linked by technician ID, so the username can be different.</p>
           {errorsFor('reference')}
         </div>
         <div className="col-md-6">
@@ -144,11 +171,20 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
           {errorsFor('email')}
         </div>
       </div>
+      </fieldset>
 
       <div className="alert alert-light border mt-4 mb-3" role="note">
-        This {isEdit ? 'updates' : 'creates'} a Dispatch Service technician record only. It does not create a staff login account.
+        {isEdit ? 'This updates the technician record. Manage login access from technician details.' : 'Optionally create login access below. Only the Technician role is assigned.'}
       </div>
-      <button type="submit" className="btn btn-primary" disabled={submitting}>{submitting ? (isEdit ? 'Saving...' : 'Creating...') : (isEdit ? 'Save changes' : 'Create technician')}</button>
+      {!isEdit && <div className="mb-4">
+        <div className="form-check mb-3"><input id="create-login" type="checkbox" className="form-check-input" checked={loginEnabled} disabled={submitting || Boolean(created)} onChange={(e) => setLoginEnabled(e.target.checked)} />
+          <label className="form-check-label" htmlFor="create-login">Create login access for this technician</label></div>
+        {loginEnabled && !loginComplete && <fieldset disabled={submitting}><TechnicianLoginFields value={loginDraft} onChange={setLoginDraft} /></fieldset>}
+        {loginError && <p className="alert alert-warning mt-3" role="alert">{created ? 'Technician created; login setup pending. ' : ''}{loginError}</p>}
+        {loginComplete && <p role="status" className="alert alert-success">Technician login created and linked. Share the initial password privately.</p>}
+      </div>}
+      <button type="submit" className="btn btn-primary" disabled={submitting || (!isEdit && Boolean(created) && (!loginEnabled || loginComplete))}>{submitting ? (isEdit ? 'Saving...' : 'Creating...') : isEdit ? 'Save changes' : created ? 'Retry login setup' : loginEnabled ? 'Create technician and login' : 'Create technician'}</button>
+      {created && <Link className="btn btn-outline-primary ms-2" to={`/technicians/${created.id}`}>View technician / login setup</Link>}
     </form>
   )
 }

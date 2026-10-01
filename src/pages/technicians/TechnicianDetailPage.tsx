@@ -7,6 +7,7 @@ import { REGION_LABELS } from '../../constants/technician'
 import { deactivateTechnician, getTechnicianById } from '../../services/dispatchService'
 import type { TechnicianResponse } from '../../types/technician'
 import { formatDateTime } from '../../utils/formatDateTime'
+import TechnicianLoginSetup from '../../components/forms/TechnicianLoginSetup'
 
 function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -100,6 +101,7 @@ function TechnicianDetailPage() {
           </>
         )}
       </div>
+      {technician && <TechnicianLoginSetup key={technician.id} technicianId={technician.id} />}
     </>
   )
 }

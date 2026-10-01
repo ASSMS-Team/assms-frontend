@@ -25,7 +25,7 @@ function MyJobsPage() {
         const status = axios.isAxiosError(cause) ? cause.response?.status : undefined
         if (status === 404) {
           setProfileMissing(true)
-          setError('Your staff account is not linked to a Dispatch technician record. Ask your Manager or Dispatcher to configure a technician reference matching your staff username.')
+          setError('Your staff account is not linked to a Dispatch technician record. Ask your Manager or Dispatcher to set up login access from your technician details, then sign out and sign in again.')
         } else if (status === 403) {
           setError('Your account does not have permission to view technician assignments. Sign in with a Technician account.')
         } else if (status === 401) {

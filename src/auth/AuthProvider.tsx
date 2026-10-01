@@ -14,7 +14,7 @@ function identityFromToken(token: string | null): StaffIdentity | null {
     const username = String(payload.unique_name ?? '')
     const role = String(payload.role ?? '') as StaffRole
     if (!id || !username || !['Agent', 'Dispatcher', 'Technician', 'Manager'].includes(role)) return null
-    return { id, username, email: '', role }
+    return { id, username, email: '', role, technicianId: typeof payload.technician_id === 'string' ? payload.technician_id : null }
   } catch {
     return null
   }

@@ -5,6 +5,7 @@ export interface StaffIdentity {
   username: string
   email: string
   role: StaffRole
+  technicianId?: string | null
 }
 
 export interface LoginResponse {

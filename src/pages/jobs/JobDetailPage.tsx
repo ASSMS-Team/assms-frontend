@@ -91,7 +91,7 @@ function JobDetailPage() {
 
   async function handleStartJob() {
     if (!job) return
-    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setStarting(true)
     setActionError('')
     setActionSuccess('')
@@ -129,7 +129,7 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setCompleting(true)
     setActionError('')
     setActionSuccess('')
@@ -167,7 +167,7 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setAddingRecord(true)
     setRecordError('')
     setRecordSuccess('')
@@ -206,7 +206,7 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setUpdatingRecord(true)
     setRecordError('')
     setRecordSuccess('')
@@ -254,7 +254,7 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.id || job.assignment?.technicianId || ''
+    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setDeletingRecordId(recordId)
     setRecordError('')
     setRecordSuccess('')

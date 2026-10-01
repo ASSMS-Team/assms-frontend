@@ -105,7 +105,8 @@ const sampleHistory: JobStatusHistoryResponse[] = [
 
 const authContextValue = {
   staff: {
-    id: technicianId,
+    id: 'staff-account-id-different-from-technician',
+    technicianId,
     username: 'tech1',
     email: 'tech1@example.com',
     role: 'Technician' as const,
@@ -443,4 +444,3 @@ describe('JobDetailPage', () => {
     confirmSpy.mockRestore()
   })
 })
-
