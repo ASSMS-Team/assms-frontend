@@ -95,7 +95,8 @@ function TechnicianForm({ technician: existing }: TechnicianFormProps) {
       <div className="row g-3">
         <div className="col-md-6">
           <label className="form-label" htmlFor="reference">Technician reference</label>
-          <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032 or technician.local" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} disabled={isEdit} />
+          <input id="reference" name="reference" className={`form-control${fieldErrors.reference ? ' is-invalid' : ''}`} maxLength={30} placeholder="TEC-032 or technician.local" value={values.reference} onChange={handleChange} aria-invalid={Boolean(fieldErrors.reference)} aria-describedby="reference-help" disabled={isEdit} />
+          <p id="reference-help" className="form-text">For My Jobs access, this reference must match the Technician's staff username (not their email). Creating a staff login does not automatically create a Dispatch technician record.</p>
           {errorsFor('reference')}
         </div>
         <div className="col-md-6">

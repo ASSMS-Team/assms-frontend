@@ -44,7 +44,38 @@ describe('My jobs page', () => {
 
     const alert = await screen.findByRole('alert')
     expect(alert).toBeInTheDocument()
-    expect(alert).toHaveTextContent('Could not load your assignments. Check the Dispatch Service connection.')
+    expect(alert).toHaveTextContent('Could not load your assignments. Please try again.')
+  })
+
+  it('explains missing technician provisioning instead of reporting a connection failure', async () => {
+    getMyAssignmentsMock.mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } })
+    render(<MemoryRouter><MyJobsPage /></MemoryRouter>)
+    expect(await screen.findByRole('alert')).toHaveTextContent('not linked to a Dispatch technician record')
+    expect(screen.getByText('Technician profile setup required')).toBeInTheDocument()
+    expect(screen.queryByText('No jobs assigned')).not.toBeInTheDocument()
+  })
+
+  it('distinguishes permission failures from missing profiles', async () => {
+    getMyAssignmentsMock.mockRejectedValueOnce({ isAxiosError: true, response: { status: 403 } })
+    render(<MemoryRouter><MyJobsPage /></MemoryRouter>)
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not have permission')
+    expect(screen.queryByText('Technician profile setup required')).not.toBeInTheDocument()
+  })
+
+  it('explains an expired session', async () => {
+    getMyAssignmentsMock.mockRejectedValueOnce({ isAxiosError: true, response: { status: 401 } })
+    render(<MemoryRouter><MyJobsPage /></MemoryRouter>)
+    expect(await screen.findByRole('alert')).toHaveTextContent('session has expired')
+  })
+
+  it('can reload assignments after a failure without reloading the page', async () => {
+    getMyAssignmentsMock.mockRejectedValueOnce(new Error('unavailable')).mockResolvedValueOnce([assignment])
+    render(<MemoryRouter><MyJobsPage /></MemoryRouter>)
+    const retry = await screen.findByRole('button', { name: 'Try again' })
+    retry.click()
+    expect(await screen.findByRole('link', { name: 'JOB-ABC123' })).toBeInTheDocument()
+    expect(getMyAssignmentsMock).toHaveBeenCalledTimes(2)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('links each row to the correct job detail page', async () => {
