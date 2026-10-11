@@ -24,7 +24,6 @@ import { formatDateTime } from '../../utils/formatDateTime'
 function JobDetailPage() {
   const { id = '' } = useParams()
   const auth = useContext(AuthContext)
-  const staff = auth?.staff ?? null
   const [job, setJob] = useState<JobResponse | null>(null)
   const [error, setError] = useState('')
   const [actionError, setActionError] = useState('')
@@ -91,13 +90,12 @@ function JobDetailPage() {
 
   async function handleStartJob() {
     if (!job) return
-    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setStarting(true)
     setActionError('')
     setActionSuccess('')
 
     try {
-      const updated = await startJob(job.id, technicianId)
+      const updated = await startJob(job.id)
       setJob(updated)
       setActionSuccess('Job started successfully and is now in progress.')
       await loadRecords(updated.id)
@@ -129,13 +127,12 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setCompleting(true)
     setActionError('')
     setActionSuccess('')
 
     try {
-      const updated = await completeJob(job.id, technicianId)
+      const updated = await completeJob(job.id)
       setJob(updated)
       setActionSuccess('Job marked as completed successfully.')
       await loadRecords(updated.id)
@@ -167,14 +164,12 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setAddingRecord(true)
     setRecordError('')
     setRecordSuccess('')
 
     try {
       const record = await addWorkRecord(job.id, {
-        technicianId,
         content: recordContent.trim(),
       })
       setWorkRecords((current) => [...current, record])
@@ -206,14 +201,12 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setUpdatingRecord(true)
     setRecordError('')
     setRecordSuccess('')
 
     try {
       const updatedRecord = await updateWorkRecord(job.id, recordId, {
-        technicianId,
         content: editRecordContent.trim(),
       })
       setWorkRecords((current) =>
@@ -254,13 +247,12 @@ function JobDetailPage() {
       return
     }
 
-    const technicianId = staff?.technicianId || job.assignment?.technicianId || ''
     setDeletingRecordId(recordId)
     setRecordError('')
     setRecordSuccess('')
 
     try {
-      await deleteWorkRecord(job.id, recordId, technicianId)
+      await deleteWorkRecord(job.id, recordId)
       setWorkRecords((current) => current.filter((record) => record.id !== recordId))
       if (editingRecordId === recordId) {
         setEditingRecordId(null)

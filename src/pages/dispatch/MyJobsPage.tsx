@@ -73,6 +73,8 @@ function MyJobsPage() {
               <thead>
                 <tr>
                   <th>Reference</th>
+                  <th>Priority</th>
+                  <th>Summary</th>
                   <th>Status</th>
                   <th>Assigned</th>
                 </tr>
@@ -92,6 +94,15 @@ function MyJobsPage() {
                       >
                         {a.jobReference}
                       </Link>
+                      <small className="d-block text-muted">
+                        {[a.serviceCategory, a.region].filter(Boolean).join(' · ') || 'Location not recorded'}
+                      </small>
+                    </td>
+                    <td>{a.priority ?? <span className="text-muted">—</span>}</td>
+                    <td>
+                      {a.problemDescription
+                        ? <span className="text-truncate d-inline-block" style={{ maxWidth: '22rem' }} title={a.problemDescription}>{a.problemDescription}</span>
+                        : <span className="text-muted">—</span>}
                     </td>
                     <td><StatusBadge status={a.jobStatus} /></td>
                     <td>

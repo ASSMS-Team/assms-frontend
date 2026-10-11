@@ -30,6 +30,30 @@ describe('My jobs page', () => {
     expect(screen.getByText('ASSIGNED')).toBeInTheDocument()
   })
 
+  it('shows priority, location and problem summary needed for field work', async () => {
+    getMyAssignmentsMock.mockResolvedValue([{
+      ...assignment,
+      priority: 'URGENT',
+      serviceCategory: 'REPAIR',
+      region: 'UVA',
+      problemDescription: 'AC unit not cooling (Badulla site)',
+    }])
+    render(<MemoryRouter><MyJobsPage /></MemoryRouter>)
+
+    expect(await screen.findByRole('link', { name: 'JOB-ABC123' })).toBeInTheDocument()
+    expect(screen.getByText('URGENT')).toBeInTheDocument()
+    expect(screen.getByText('REPAIR · UVA')).toBeInTheDocument()
+    expect(screen.getByText('AC unit not cooling (Badulla site)')).toBeInTheDocument()
+  })
+
+  it('marks summary fields as not recorded for older assignments', async () => {
+    getMyAssignmentsMock.mockResolvedValue([assignment])
+    render(<MemoryRouter><MyJobsPage /></MemoryRouter>)
+
+    expect(await screen.findByText('Location not recorded')).toBeInTheDocument()
+    expect(screen.getAllByText('—')).toHaveLength(2)
+  })
+
   it('shows empty state when no assignments are returned', async () => {
     getMyAssignmentsMock.mockResolvedValue([])
     render(<MemoryRouter><MyJobsPage /></MemoryRouter>)

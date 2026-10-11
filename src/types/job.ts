@@ -56,10 +56,6 @@ export interface JobResponse {
   updatedAt: string
 }
 
-export interface CompleteJobRequest {
-  technicianId: string
-}
-
 export interface JobAssignment {
   id: string
   technicianId: string
@@ -73,12 +69,10 @@ export interface JobListFilters {
 }
 
 export interface CreateWorkRecordRequest {
-  technicianId: string
   content: string
 }
 
 export interface UpdateWorkRecordRequest {
-  technicianId: string
   content: string
 }
 

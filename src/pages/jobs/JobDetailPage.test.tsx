@@ -202,7 +202,7 @@ describe('JobDetailPage', () => {
     renderWithRouter()
     fireEvent.click(await screen.findByRole('button', { name: 'Start Job' }))
 
-    await waitFor(() => expect(startJobMock).toHaveBeenCalledWith('job-1', technicianId))
+    await waitFor(() => expect(startJobMock).toHaveBeenCalledWith('job-1'))
     expect(await screen.findByText('Job started successfully and is now in progress.')).toBeInTheDocument()
     expect(screen.getByText('IN_PROGRESS')).toBeInTheDocument()
   })
@@ -239,7 +239,6 @@ describe('JobDetailPage', () => {
 
     await waitFor(() => {
       expect(addWorkRecordMock).toHaveBeenCalledWith('job-1', {
-        technicianId,
         content: sampleWorkRecord.content,
       })
     })
@@ -285,7 +284,6 @@ describe('JobDetailPage', () => {
 
     await waitFor(() => {
       expect(updateWorkRecordMock).toHaveBeenCalledWith('job-1', sampleWorkRecord.id, {
-        technicianId,
         content: updatedRecord.content,
       })
     })
@@ -347,7 +345,7 @@ describe('JobDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
 
     await waitFor(() => {
-      expect(deleteWorkRecordMock).toHaveBeenCalledWith('job-1', sampleWorkRecord.id, technicianId)
+      expect(deleteWorkRecordMock).toHaveBeenCalledWith('job-1', sampleWorkRecord.id)
     })
     expect(await screen.findByText('Work record deleted successfully.')).toBeInTheDocument()
     expect(screen.queryByText(sampleWorkRecord.content)).not.toBeInTheDocument()
@@ -396,7 +394,7 @@ describe('JobDetailPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Complete Job' }))
 
     await waitFor(() => {
-      expect(completeJobMock).toHaveBeenCalledWith('job-1', technicianId)
+      expect(completeJobMock).toHaveBeenCalledWith('job-1')
     })
     expect(await screen.findByText('Job marked as completed successfully.')).toBeInTheDocument()
     expect(screen.getByText('COMPLETED')).toBeInTheDocument()

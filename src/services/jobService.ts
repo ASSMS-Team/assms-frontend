@@ -1,7 +1,6 @@
 import axios from 'axios'
 
 import type {
-  CompleteJobRequest,
   CreateJobRequest,
   CreateWorkRecordRequest,
   JobListFilters,
@@ -72,30 +71,22 @@ export async function getJobByReference(
 }
 
 // Starts an assigned job (moves status from ASSIGNED to IN_PROGRESS).
-// The caller provides the technician's id. Throws on 403 (not assignee),
-// 404 (not found), or 409 (not assigned / invalid transition).
-export async function startJob(
-  id: string,
-  technicianId: string,
-): Promise<JobResponse> {
+// Job Service identifies the technician from the bearer token. Throws on
+// 403 (not assignee), 404 (not found), or 409 (not assigned / invalid transition).
+export async function startJob(id: string): Promise<JobResponse> {
   const response = await jobApi.post<JobResponse>(
     `/api/jobs/${encodeURIComponent(id)}/start`,
-    { technicianId },
   )
 
   return response.data
 }
 
 // Completes an in-progress job (moves status from IN_PROGRESS to COMPLETED).
-// The caller provides the technician's id. Throws on 403 (not assignee),
-// 404 (not found), or 409 (not in-progress / no work records / invalid transition).
-export async function completeJob(
-  id: string,
-  technicianId: string,
-): Promise<JobResponse> {
+// Job Service identifies the technician from the bearer token. Throws on
+// 403 (not assignee), 404 (not found), or 409 (not in-progress / no work records / invalid transition).
+export async function completeJob(id: string): Promise<JobResponse> {
   const response = await jobApi.post<JobResponse>(
     `/api/jobs/${encodeURIComponent(id)}/complete`,
-    { technicianId } as CompleteJobRequest,
   )
 
   return response.data
@@ -156,11 +147,9 @@ export async function getJobStatusHistory(
 export async function deleteWorkRecord(
   jobId: string,
   recordId: string,
-  technicianId: string,
 ): Promise<void> {
   await jobApi.delete(
     `/api/jobs/${encodeURIComponent(jobId)}/work-records/${encodeURIComponent(recordId)}`,
-    { params: { technicianId } },
   )
 }
 
