@@ -79,6 +79,13 @@ body { background: var(--app-bg); color: var(--app-ink); }
 .row-link-name { color: #203c30; font-weight: 700; }
 .row-link:hover .row-link-name { color: #356b51; }
 .badge { border-radius: 4px !important; padding: .38rem .5rem; font-size: .64rem; letter-spacing: .04em; }
+.badge-role { text-transform: uppercase; font-weight: 700; border-radius: 4px; padding: .38rem .5rem; font-size: .64rem; }
+.badge-role-manager { background: #fee2e2 !important; color: #991b1b !important; }
+.badge-role-dispatcher { background: #fef3c7 !important; color: #92400e !important; }
+.badge-role-technician { background: #dbeafe !important; color: #1e40af !important; }
+.badge-role-agent { background: #e0e7ff !important; color: #3730a3 !important; }
+.badge-active { background: #dbeeda !important; color: #276243 !important; }
+.badge-inactive { background: #e9ece8 !important; color: #59655e !important; }
 .bg-success { background: #dbeeda !important; color: #276243; }
 .bg-secondary { background: #e9ece8 !important; color: #59655e; }
 .form-label { color: #294435; font-size: .76rem; font-weight: 800; }

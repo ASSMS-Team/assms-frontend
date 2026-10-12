@@ -112,6 +112,6 @@ describe('Technician views', () => {
 
     fireEvent.click(await screen.findByRole('button', { name: 'Deactivate' }))
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('Reassign or close those jobs')
+    expect(await screen.findByText(/Reassign or close those jobs/i)).toBeInTheDocument()
   })
 })

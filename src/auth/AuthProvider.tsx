@@ -21,6 +21,14 @@ function identityFromToken(token: string | null): StaffIdentity | null {
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  if (import.meta.env.DEV && typeof window !== 'undefined') {
+    const params = new URLSearchParams(window.location.search)
+    const demoToken = params.get('demo_token')
+    if (demoToken && getAccessToken() !== demoToken) {
+      setAccessToken(demoToken)
+    }
+  }
+
   const [staff, setStaff] = useState<StaffIdentity | null>(() => identityFromToken(getAccessToken()))
 
   const refresh = useCallback(() => {
