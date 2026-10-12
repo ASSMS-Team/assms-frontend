@@ -134,14 +134,44 @@ export async function createStaffAccount(request: CreateStaffAccountRequest): Pr
   throw new Error('Staff account creation failed.')
 }
 
+export async function deactivateStaffAccount(id: string): Promise<StaffAccountResponse> {
+  try {
+    const response = await api.post<StaffAccountResponse>(`/api/staff-accounts/${encodeURIComponent(id)}/deactivate`)
+    if (response.data && typeof response.data === 'object' && 'id' in response.data) {
+      return response.data
+    }
+  } catch (error) {
+    if (!import.meta.env.DEV) throw error
+  }
+
+  if (import.meta.env.DEV) {
+    return {
+      id,
+      fullName: 'Deactivated Staff',
+      username: 'deactivated.user',
+      email: 'deactivated@assms.lk',
+      role: 'Agent',
+      status: 'INACTIVE',
+      technicianId: null,
+      createdAt: new Date().toISOString(),
+      createdBy: 'acc-001',
+    }
+  }
+  throw new Error('Staff account deactivation failed.')
+}
+
 export function staffAccountError(error: unknown): string {
+  if (axios.isAxiosError(error) && error.response?.data?.detail)
+    return error.response.data.detail
   if (axios.isAxiosError(error) && error.response?.status === 409)
-    return 'The username, email or technician link is already in use.'
+    return 'The operation was rejected due to a conflict (e.g. last active Manager cannot be deactivated, or duplicate identifier).'
   if (axios.isAxiosError(error) && error.response?.status === 400)
-    return error.response.data?.detail ?? 'Check the form fields and try again.'
+    return 'Check the request details and try again.'
   if (axios.isAxiosError(error) && error.response?.status === 403)
-    return 'Only Managers can create staff accounts.'
+    return 'Only Managers are authorized to perform this operation.'
   if (axios.isAxiosError(error) && error.response?.status === 503)
-    return 'Could not verify technician with the Dispatch service. Try again later.'
-  return 'Staff account creation failed. Please try again.'
+    return 'Could not reach dependent services. Try again later.'
+  if (error instanceof Error)
+    return error.message
+  return 'Operation failed. Please try again.'
 }
