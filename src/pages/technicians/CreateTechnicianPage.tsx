@@ -7,7 +7,7 @@ function CreateTechnicianPage() {
     <>
       <div className="page-head">
         <div>
-          <Link className="back-link" to="/customers">&larr; Back to workspace</Link>
+          <Link className="back-link" to="/technicians">&larr; Back to technicians</Link>
           <h1 className="page-title">New technician</h1>
           <p className="page-sub">Create the Dispatch record used for service-job assignment.</p>
         </div>

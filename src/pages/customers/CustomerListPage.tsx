@@ -2,22 +2,30 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 import StatusBadge from '../../components/common/StatusBadge'
+import LoadingState from '../../components/feedback/LoadingState'
+import EmptyState from '../../components/feedback/EmptyState'
+import ErrorState from '../../components/feedback/ErrorState'
 import { CUSTOMER_TYPE_LABELS } from '../../constants/customer'
 import { getAllCustomers } from '../../services/customerService'
 import type { CustomerResponse } from '../../types/customer'
+import { useAuth } from '../../auth/useAuth'
+import { parseApiError } from '../../utils/formatApiError'
 
 function CustomerListPage() {
   const [customers, setCustomers] = useState<CustomerResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const navigate = useNavigate()
+  const { hasRole } = useAuth()
+  const canRegisterCustomer = hasRole('Agent', 'Manager')
 
   useEffect(() => {
     async function load() {
       try {
         setCustomers(await getAllCustomers())
-      } catch {
-        setError('Could not load customers. Check that the customer service is running.')
+      } catch (caught) {
+        const parsed = parseApiError(caught, 'Could not load customers. Check that the customer service is running.')
+        setError(parsed.message)
       } finally {
         setLoading(false)
       }
@@ -33,36 +41,30 @@ function CustomerListPage() {
           <h1 className="page-title">Customers</h1>
           <p className="page-sub">Everyone registered with the service, newest first.</p>
         </div>
-        <Link className="btn btn-primary" to="/customers/new">
-          New customer
-        </Link>
+        {canRegisterCustomer && (
+          <Link className="btn btn-primary" to="/customers/new">
+            New customer
+          </Link>
+        )}
       </div>
 
       <div className="card app-card">
         {loading ? (
-          <div className="state-block">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="state-text">Loading customers...</p>
-          </div>
+          <LoadingState message="Loading customers..." />
         ) : error ? (
-          <div className="state-block">
-            <div className="alert alert-danger mb-0" role="alert">
-              {error}
-            </div>
-          </div>
+          <ErrorState message={error} />
         ) : customers.length === 0 ? (
-          // An empty list is a normal outcome, not an error - say so instead of
-          // rendering a table with nothing but headers.
-          <div className="state-block">
-            <div className="empty-mark">0</div>
-            <p className="state-title">No customers yet</p>
-            <p className="state-text">Register the first one to see it listed here.</p>
-            <Link className="btn btn-primary" to="/customers/new">
-              New customer
-            </Link>
-          </div>
+          <EmptyState
+            title="No customers yet"
+            message="Register the first one to see it listed here."
+            action={
+              canRegisterCustomer ? (
+                <Link className="btn btn-primary" to="/customers/new">
+                  New customer
+                </Link>
+              ) : undefined
+            }
+          />
         ) : (
           <div className="table-responsive">
             <table className="table table-hover app-table align-middle mb-0">
@@ -82,8 +84,6 @@ function CustomerListPage() {
                     onClick={() => navigate(`/customers/${customer.id}`)}
                   >
                     <td>
-                      {/* A real link as well as the clickable row, so the page
-                          stays reachable by keyboard. */}
                       <Link className="row-link-name" to={`/customers/${customer.id}`}>
                         {customer.name}
                       </Link>

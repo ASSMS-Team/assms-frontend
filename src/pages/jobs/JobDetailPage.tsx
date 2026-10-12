@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
+import LoadingState from '../../components/feedback/LoadingState'
+import ErrorState from '../../components/feedback/ErrorState'
 import { AuthContext } from '../../auth/authContext'
 import {
   addWorkRecord,
@@ -282,22 +284,20 @@ function JobDetailPage() {
 
   if (error) {
     return (
-      <div className="state-block">
-        <div className="alert alert-danger" role="alert">{error}</div>
-        <Link className="btn btn-primary" to={backLinkPath}>
-          {isTechnician ? 'Back to my jobs' : 'Back to jobs'}
-        </Link>
-      </div>
+      <ErrorState
+        title="Job not found"
+        message={error}
+        action={
+          <Link className="btn btn-primary" to={backLinkPath}>
+            {isTechnician ? 'Back to my jobs' : 'Back to jobs'}
+          </Link>
+        }
+      />
     )
   }
 
   if (!job) {
-    return (
-      <div className="state-block">
-        <div className="spinner-border text-primary" role="status" />
-        <p className="state-text">Loading job...</p>
-      </div>
-    )
+    return <LoadingState message="Loading job..." />
   }
 
   const canManageAssignedWork =
