@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, type FormEvent } from 'react'
+import { useCallback, useContext, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 
@@ -50,7 +50,7 @@ function JobDetailPage() {
   const [loadingHistory, setLoadingHistory] = useState(false)
   const [historyError, setHistoryError] = useState('')
 
-  async function loadRecords(jobId: string) {
+  const loadRecords = useCallback(async (jobId: string) => {
     setLoadingRecords(true)
     try {
       setWorkRecords(await getWorkRecords(jobId))
@@ -59,9 +59,9 @@ function JobDetailPage() {
     } finally {
       setLoadingRecords(false)
     }
-  }
+  }, [])
 
-  async function loadHistory(jobId: string) {
+  const loadHistory = useCallback(async (jobId: string) => {
     if (!auth?.hasRole('Agent', 'Dispatcher', 'Manager', 'Technician')) return
     setLoadingHistory(true)
     try {
@@ -72,7 +72,7 @@ function JobDetailPage() {
     } finally {
       setLoadingHistory(false)
     }
-  }
+  }, [auth])
 
   useEffect(() => {
     async function load() {
@@ -88,7 +88,7 @@ function JobDetailPage() {
       }
     }
     void load()
-  }, [id])
+  }, [id, loadRecords, loadHistory])
 
   async function handleStartJob() {
     if (!job) return
