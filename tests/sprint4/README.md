@@ -2,7 +2,9 @@
 
 Branch: `Sprint4_QA_Test_Automation`, created from frontend `dev` revision `3d8bdd5` on 12 October 2026. Baseline reference: [Sprint2_QA_Test_Automation](https://github.com/ASSMS-Team/assms-frontend/tree/Sprint2_QA_Test_Automation), commit `c55309b`. Existing Sprint 2 tests and JMeter files remain available in their original directories. These new runners adapt its health/login checks and Selenium explicit-wait/screenshot structure for Sprint 4; historical Sprint 2 screenshots/results are not Sprint 4 evidence.
 
-The five code revisions and all migration filenames are recorded in `local/SOURCE_REVISIONS.json`. Applications must be siblings: assms-frontend, assms-customer-asset-service, assms-job-service, assms-dispatch-service, assms-reporting-service. Use the exact documented revisions for a reproducible run, or record any update before testing. Original working folders have not been switched/reset.
+The five code revisions and all migration filenames are recorded in `local/SOURCE_REVISIONS.json`. Applications use their existing sibling folders under `F:\Projects\ASSMS`: assms-frontend, assms-customer-asset-service, assms-job-service, assms-dispatch-service, assms-reporting-service. Frontend uses this QA branch; the four backend checkouts use current dev. Previous branches/history and existing untracked work are preserved. The extra qa-workspace checkout folder was removed at the user's request. Use the exact documented application revisions for a reproducible run, or record any update before testing.
+
+For manual browser, Swagger, database, Kafka, mocking, regression and JMeter instructions, read [MANUAL_QA_GUIDE.md](MANUAL_QA_GUIDE.md).
 
 ## Requirements
 
