@@ -26,9 +26,10 @@ export interface CreateStaffAccountRequest {
   technicianId?: string | null
 }
 
-export async function getStaffAccounts(): Promise<StaffAccountResponse[]> {
+export async function getStaffAccounts(status?: string): Promise<StaffAccountResponse[]> {
   try {
-    const response = await api.get<StaffAccountResponse[]>('/api/staff-accounts')
+    const url = status ? `/api/staff-accounts?status=${encodeURIComponent(status)}` : '/api/staff-accounts'
+    const response = await api.get<StaffAccountResponse[]>(url)
     if (Array.isArray(response.data)) {
       return response.data
     }
@@ -37,7 +38,7 @@ export async function getStaffAccounts(): Promise<StaffAccountResponse[]> {
   }
 
   if (import.meta.env.DEV) {
-    return [
+    const mockAccounts: StaffAccountResponse[] = [
       {
         id: 'acc-001',
         fullName: 'Kasun Bandara',
@@ -82,9 +83,29 @@ export async function getStaffAccounts(): Promise<StaffAccountResponse[]> {
         createdAt: new Date(Date.now() - 86400000).toISOString(),
         createdBy: 'acc-001',
       },
+      {
+        id: 'acc-005',
+        fullName: 'Kamal Jayawardena',
+        username: 'kamal.former',
+        email: 'kamal@assms.lk',
+        role: 'Agent',
+        status: 'INACTIVE',
+        technicianId: null,
+        createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+        createdBy: 'acc-001',
+      },
     ]
+
+    return status
+      ? mockAccounts.filter((a) => a.status.toUpperCase() === status.toUpperCase())
+      : mockAccounts
   }
   return []
+}
+
+export async function getStaffAccountById(id: string): Promise<StaffAccountResponse> {
+  const response = await api.get<StaffAccountResponse>(`/api/staff-accounts/${encodeURIComponent(id)}`)
+  return response.data
 }
 
 export async function createStaffAccount(request: CreateStaffAccountRequest): Promise<StaffAccountResponse> {
