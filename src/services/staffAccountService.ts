@@ -26,6 +26,75 @@ export interface CreateStaffAccountRequest {
   technicianId?: string | null
 }
 
+let devMockAccounts: StaffAccountResponse[] = [
+  {
+    id: 'acc-001',
+    fullName: 'Kasun Bandara',
+    username: 'kasun.manager',
+    email: 'kasun.mgr@assms.lk',
+    role: 'Manager',
+    status: 'ACTIVE',
+    technicianId: null,
+    createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
+    createdBy: null,
+  },
+  {
+    id: 'acc-002',
+    fullName: 'Saman Kumara',
+    username: 'saman.dispatcher',
+    email: 'saman@assms.lk',
+    role: 'Dispatcher',
+    status: 'ACTIVE',
+    technicianId: null,
+    createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
+    createdBy: 'acc-001',
+  },
+  {
+    id: 'acc-003',
+    fullName: 'Nimal Perera',
+    username: 'nimal.agent',
+    email: 'nimal@assms.lk',
+    role: 'Agent',
+    status: 'ACTIVE',
+    technicianId: null,
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    createdBy: 'acc-001',
+  },
+  {
+    id: 'acc-004',
+    fullName: 'Amal Silva',
+    username: 'amal.tech',
+    email: 'amal.tech@assms.lk',
+    role: 'Technician',
+    status: 'ACTIVE',
+    technicianId: '783a9fae-a2da-4acb-906a-74cbfa5fbc6e',
+    createdAt: new Date(Date.now() - 86400000).toISOString(),
+    createdBy: 'acc-001',
+  },
+  {
+    id: 'acc-005',
+    fullName: 'Kamal Jayawardena',
+    username: 'kamal.former',
+    email: 'kamal@assms.lk',
+    role: 'Agent',
+    status: 'INACTIVE',
+    technicianId: null,
+    createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
+    createdBy: 'acc-001',
+  },
+  {
+    id: 'acc-006',
+    fullName: 'Priyantha Fernando',
+    username: 'priyantha.manager',
+    email: 'priyantha@assms.lk',
+    role: 'Manager',
+    status: 'ACTIVE',
+    technicianId: null,
+    createdAt: new Date(Date.now() - 86400000 * 10).toISOString(),
+    createdBy: 'acc-001',
+  },
+]
+
 export async function getStaffAccounts(status?: string): Promise<StaffAccountResponse[]> {
   try {
     const url = status ? `/api/staff-accounts?status=${encodeURIComponent(status)}` : '/api/staff-accounts'
@@ -38,67 +107,9 @@ export async function getStaffAccounts(status?: string): Promise<StaffAccountRes
   }
 
   if (import.meta.env.DEV) {
-    const mockAccounts: StaffAccountResponse[] = [
-      {
-        id: 'acc-001',
-        fullName: 'Kasun Bandara',
-        username: 'kasun.manager',
-        email: 'kasun.mgr@assms.lk',
-        role: 'Manager',
-        status: 'ACTIVE',
-        technicianId: null,
-        createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
-        createdBy: null,
-      },
-      {
-        id: 'acc-002',
-        fullName: 'Saman Kumara',
-        username: 'saman.dispatcher',
-        email: 'saman@assms.lk',
-        role: 'Dispatcher',
-        status: 'ACTIVE',
-        technicianId: null,
-        createdAt: new Date(Date.now() - 86400000 * 3).toISOString(),
-        createdBy: 'acc-001',
-      },
-      {
-        id: 'acc-003',
-        fullName: 'Nimal Perera',
-        username: 'nimal.agent',
-        email: 'nimal@assms.lk',
-        role: 'Agent',
-        status: 'ACTIVE',
-        technicianId: null,
-        createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-        createdBy: 'acc-001',
-      },
-      {
-        id: 'acc-004',
-        fullName: 'Amal Silva',
-        username: 'amal.tech',
-        email: 'amal.tech@assms.lk',
-        role: 'Technician',
-        status: 'ACTIVE',
-        technicianId: '783a9fae-a2da-4acb-906a-74cbfa5fbc6e',
-        createdAt: new Date(Date.now() - 86400000).toISOString(),
-        createdBy: 'acc-001',
-      },
-      {
-        id: 'acc-005',
-        fullName: 'Kamal Jayawardena',
-        username: 'kamal.former',
-        email: 'kamal@assms.lk',
-        role: 'Agent',
-        status: 'INACTIVE',
-        technicianId: null,
-        createdAt: new Date(Date.now() - 86400000 * 30).toISOString(),
-        createdBy: 'acc-001',
-      },
-    ]
-
     return status
-      ? mockAccounts.filter((a) => a.status.toUpperCase() === status.toUpperCase())
-      : mockAccounts
+      ? devMockAccounts.filter((a) => a.status.toUpperCase() === status.toUpperCase())
+      : devMockAccounts
   }
   return []
 }
@@ -119,7 +130,7 @@ export async function createStaffAccount(request: CreateStaffAccountRequest): Pr
   }
 
   if (import.meta.env.DEV) {
-    return {
+    const created: StaffAccountResponse = {
       id: `acc-${Date.now()}`,
       fullName: request.fullName,
       username: request.username,
@@ -130,6 +141,8 @@ export async function createStaffAccount(request: CreateStaffAccountRequest): Pr
       createdAt: new Date().toISOString(),
       createdBy: 'acc-001',
     }
+    devMockAccounts = [created, ...devMockAccounts]
+    return created
   }
   throw new Error('Staff account creation failed.')
 }
@@ -145,6 +158,17 @@ export async function deactivateStaffAccount(id: string): Promise<StaffAccountRe
   }
 
   if (import.meta.env.DEV) {
+    const target = devMockAccounts.find((a) => a.id === id)
+    if (target?.role === 'Manager') {
+      const activeManagers = devMockAccounts.filter((a) => a.role === 'Manager' && a.status === 'ACTIVE')
+      if (activeManagers.length <= 1) {
+        throw new Error('Cannot deactivate the last active Manager account. At least one active Manager must remain.')
+      }
+    }
+    if (target) {
+      target.status = 'INACTIVE'
+      return { ...target }
+    }
     return {
       id,
       fullName: 'Deactivated Staff',

@@ -94,7 +94,8 @@ function StaffAccountListPage() {
     setActionError(null)
     setActionSuccess(null)
 
-    if (account.id === staff?.id) {
+    const isCurrentManager = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+    if (isCurrentManager) {
       setActionError('Self-deactivation safeguard: You cannot deactivate your own currently authenticated Manager account.')
       return
     }
@@ -258,7 +259,7 @@ function StaffAccountListPage() {
                   <tbody>
                     {filteredAccounts.map((account) => {
                       const linkedTech = account.technicianId ? technicianMap.get(account.technicianId) : null
-                      const isCurrentUser = account.id === staff?.id
+                      const isCurrentUser = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
 
                       return (
                         <tr key={account.id}>
