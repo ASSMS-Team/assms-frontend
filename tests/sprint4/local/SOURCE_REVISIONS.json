@@ -1,0 +1,45 @@
+{
+  "assms-frontend": {
+    "commit": "3d8bdd5a268d7e2ecde217f41296954f1ae4ce33",
+    "migrations": []
+  },
+  "assms-customer-asset-service": {
+    "commit": "1327899652d61ba8733295485d1ed74bc4ba5357",
+    "migrations": [
+      "V01__create_customers.sql",
+      "V02__create_assets.sql",
+      "V03__add_asset_status.sql",
+      "V04__create_staff_accounts.sql",
+      "V05__link_technician_accounts.sql"
+    ]
+  },
+  "assms-job-service": {
+    "commit": "4c128efcdb8ddc79c153db29890bd7884f1e36b1",
+    "migrations": [
+      "V01__create_jobs.sql",
+      "V02__add_job_assignment.sql",
+      "V03__add_job_started_at.sql",
+      "V04__create_service_work_records.sql",
+      "V05__create_job_status_history.sql",
+      "V06__add_job_completed_at.sql"
+    ]
+  },
+  "assms-dispatch-service": {
+    "commit": "f71b6d245c9353551b2686f485dcc74954040759",
+    "migrations": [
+      "V01__create_technicians.sql",
+      "V02__create_technician_assignments.sql",
+      "V03__create_job_candidate_evaluations.sql",
+      "V04__create_assignment_outbox.sql",
+      "V05__add_job_summary_to_candidate_evaluations.sql"
+    ]
+  },
+  "assms-reporting-service": {
+    "commit": "6466dbd0295211ba4f62b520f0ab40eca7198e09",
+    "migrations": [
+      "V01__create_job_projection.sql",
+      "V02__add_job_assignment_projection.sql",
+      "V03__add_job_completion_projection.sql"
+    ]
+  }
+}

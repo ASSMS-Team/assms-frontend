@@ -1,0 +1,224 @@
+name: assms-sprint4-qa
+services:
+  customer:
+    build:
+      context: ../../../../assms-customer-asset-service
+    ports:
+    - 127.0.0.1:${CUSTOMER_PORT:-5037}:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__default: Server=mysql;Port=3306;Database=customerdb;User
+        ID=customer_svc;Password=${CUSTOMER_DB_PASSWORD:?Run local config setup};
+      Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-8081}
+      Authentication__Jwt__Issuer: assms-customer-asset-service
+      Authentication__Jwt__Audience: assms-internal
+      Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Run local config setup}
+      Authentication__Jwt__LifetimeMinutes: '60'
+      InternalServiceAuthentication__Key: ${INTERNAL_SERVICE_KEY:?Run local config
+        setup}
+      Authentication__BootstrapManager__Username: manager.local
+      Authentication__BootstrapManager__Email: manager.local@assms.test
+      Authentication__BootstrapManager__Password: ${MANAGER_PASSWORD:?Run local config
+        setup}
+      Authentication__SeedAccounts__0__Username: dispatcher.local
+      Authentication__SeedAccounts__0__Email: dispatcher.local@assms.test
+      Authentication__SeedAccounts__0__Password: ${DISPATCHER_PASSWORD:?Run local
+        config setup}
+      Authentication__SeedAccounts__0__Role: Dispatcher
+      Authentication__SeedAccounts__1__Username: agent.local
+      Authentication__SeedAccounts__1__Email: agent.local@assms.test
+      Authentication__SeedAccounts__1__Password: ${AGENT_PASSWORD:?Run local config
+        setup}
+      Authentication__SeedAccounts__1__Role: Agent
+      Authentication__SeedAccounts__2__Username: technician.local
+      Authentication__SeedAccounts__2__Email: technician.local@assms.test
+      Authentication__SeedAccounts__2__Password: ${TECHNICIAN_SEED_PASSWORD:?Run local
+        config setup}
+      Authentication__SeedAccounts__2__Role: Technician
+      DispatchService__BaseUrl: http://dispatch:8080
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  dispatch:
+    build:
+      context: ../../../../assms-dispatch-service
+    ports:
+    - 127.0.0.1:${DISPATCH_PORT:-5055}:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__default: Server=mysql;Port=3306;Database=dispatchdb;User
+        ID=dispatch_svc;Password=${DISPATCH_DB_PASSWORD:?Run local config setup};
+      Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-8081}
+      Authentication__Jwt__Issuer: assms-customer-asset-service
+      Authentication__Jwt__Audience: assms-internal
+      Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Run local config setup}
+      Kafka__BootstrapServers: kafka:29092
+      CandidateMatching__RequiredSkillByServiceCategory__REPAIR: AC
+      CandidateMatching__RequiredSkillByServiceCategory__INSTALLATION: AC_INSTALLATION
+      CandidateMatching__RequiredSkillByServiceCategory__MAINTENANCE: AC_MAINTENANCE
+      CandidateMatching__RequiredSkillByServiceCategory__INSPECTION: AC_INSPECTION
+      CandidateMatching__RequiredSkillByServiceCategory__WARRANTY_CLAIM: AC_WARRANTY
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      topic-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  job:
+    build:
+      context: ../../../../assms-job-service
+    ports:
+    - 127.0.0.1:${JOB_PORT:-5252}:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__default: Server=mysql;Port=3306;Database=jobdb;User ID=job_svc;Password=${JOB_DB_PASSWORD:?Run
+        local config setup};
+      Authentication__Jwt__Issuer: assms-customer-asset-service
+      Authentication__Jwt__Audience: assms-internal
+      Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Run local config setup}
+      CustomerService__BaseUrl: http://customer:8080
+      CustomerService__InternalServiceKey: ${INTERNAL_SERVICE_KEY:?Run local config
+        setup}
+      Kafka__BootstrapServers: kafka:29092
+      Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-8081}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      topic-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  reporting:
+    build:
+      context: ../../../../assms-reporting-service
+    ports:
+    - 127.0.0.1:${REPORTING_PORT:-8082}:8080
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__default: Server=mysql;Port=3306;Database=reportingdb;User
+        ID=reporting_svc;Password=${REPORTING_DB_PASSWORD:?Run local config setup};
+      Authentication__Jwt__Issuer: assms-customer-asset-service
+      Authentication__Jwt__Audience: assms-internal
+      Authentication__Jwt__SigningKey: ${JWT_SIGNING_KEY:?Run local config setup}
+      Kafka__BootstrapServers: kafka:29092
+      Cors__AllowedOrigins__0: http://localhost:${FRONTEND_PORT:-8081}
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      topic-init:
+        condition: service_completed_successfully
+    restart: unless-stopped
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    volumes:
+    - ../../..:/app
+    - frontend-node-modules:/app/node_modules
+    ports:
+    - 127.0.0.1:${FRONTEND_PORT:-8081}:5173
+    environment:
+      VITE_CUSTOMER_API_URL: http://localhost:${CUSTOMER_PORT:-5037}
+      VITE_JOB_API_URL: http://localhost:${JOB_PORT:-5252}
+      VITE_DISPATCH_API_URL: http://localhost:${DISPATCH_PORT:-5055}
+      VITE_REPORTING_API_URL: http://localhost:${REPORTING_PORT:-8082}
+    depends_on:
+      customer:
+        condition: service_started
+      job:
+        condition: service_started
+      dispatch:
+        condition: service_started
+      reporting:
+        condition: service_started
+    restart: unless-stopped
+  mysql:
+    image: mysql:8.0.40
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?Run local config setup}
+      CUSTOMER_DB_PASSWORD: ${CUSTOMER_DB_PASSWORD:?Run local config setup}
+      JOB_DB_PASSWORD: ${JOB_DB_PASSWORD:?Run local config setup}
+      DISPATCH_DB_PASSWORD: ${DISPATCH_DB_PASSWORD:?Run local config setup}
+      REPORTING_DB_PASSWORD: ${REPORTING_DB_PASSWORD:?Run local config setup}
+    ports:
+    - 127.0.0.1:${MYSQL_PORT:-13306}:3306
+    volumes:
+    - mysql-data:/var/lib/mysql
+    - ./database:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - MYSQL_PWD=$$MYSQL_ROOT_PASSWORD mysql --protocol=TCP -h 127.0.0.1 -u root
+        -D reportingdb -e 'SELECT 1' >/dev/null 2>&1
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+  kafka:
+    image: apache/kafka:4.3.1
+    hostname: kafka
+    restart: unless-stopped
+    ports:
+    - 127.0.0.1:${KAFKA_HOST_PORT:-19092}:9092
+    environment:
+      KAFKA_NODE_ID: '1'
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:29093
+      KAFKA_LISTENERS: INTERNAL://:29092,CONTROLLER://:29093,EXTERNAL://:9092
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:${KAFKA_HOST_PORT:-19092}
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: '1'
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: '1'
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: '1'
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: '1'
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: '1'
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: '0'
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      CLUSTER_ID: 4L6g3nShT-eMCtK--X86sw
+    volumes:
+    - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - /opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:29092 --list >/dev/null
+        2>&1
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+  topic-init:
+    image: apache/kafka:4.3.1
+    entrypoint:
+    - /bin/bash
+    - /scripts/create-topics.sh
+    volumes:
+    - ./scripts:/scripts:ro
+    depends_on:
+      kafka:
+        condition: service_healthy
+  migrations:
+    image: mysql:8.0.40
+    entrypoint:
+    - /bin/bash
+    - /scripts/migrate.sh
+    volumes:
+    - ./scripts:/scripts:ro
+    - ../../../../assms-customer-asset-service/database/migrations:/migrations/customer:ro
+    - ../../../../assms-job-service/database/migrations:/migrations/job:ro
+    - ../../../../assms-dispatch-service/database/migrations:/migrations/dispatch:ro
+    - ../../../../assms-reporting-service/database/migrations:/migrations/reporting:ro
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      CUSTOMER_DB_PASSWORD: ${CUSTOMER_DB_PASSWORD:?Run local config setup}
+      JOB_DB_PASSWORD: ${JOB_DB_PASSWORD:?Run local config setup}
+      DISPATCH_DB_PASSWORD: ${DISPATCH_DB_PASSWORD:?Run local config setup}
+      REPORTING_DB_PASSWORD: ${REPORTING_DB_PASSWORD:?Run local config setup}
+volumes:
+  mysql-data: null
+  kafka-data: null
+  frontend-node-modules: null
