@@ -57,11 +57,16 @@ GitHub variables. No Azure client secret is used.
 1. Set the four `VITE_*_API_URL` values only for the staging build;
    `.env.example` remains local-only.
 2. Run `npm ci`, `npm run lint`, and `npm run build` on Node.js 22.
-3. Require `dist/index.html`, ZIP the compiled `dist` contents, and deploy with
-   `az webapp deploy` rather than FTP or basic publishing.
+3. Require `dist/index.html`, write the exact commit to `dist/deployment.json`,
+   ZIP the compiled `dist` contents, and deploy with `az webapp deploy`.
+   Wait for ZIP deployment completion with `--async false`, but disable the
+   Linux startup tracker with `--track-status false`. This tracker can time out
+   even when Kudu reports success and the live site has started.
 4. Confirm the App Service startup command remains
    `pm2 serve /home/site/wwwroot --no-daemon --spa`.
-5. Confirm `/` and `/assets/new` return the React SPA shell and every configured
+5. Poll the public `deployment.json` for the exact expected commit with a bounded
+   retry loop. A missing file or an old deployment must fail verification.
+6. Confirm `/` and `/assets/new` return the React SPA shell and every configured
    backend HTTPS health endpoint is reachable.
 
 ## Rollback and Emergency Procedure

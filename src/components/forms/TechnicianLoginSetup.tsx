@@ -45,7 +45,7 @@ export default function TechnicianLoginSetup({ technicianId }: { technicianId: s
     {loading ? <p>Checking login setup…</p> : account ? <div role="status">
       <p>Linked login: <strong>{account.username}</strong> ({account.email})</p>
       <p className="mb-0">The technician must sign out and sign in again to use the linked assignments. Existing jobs are retained.</p>
-    </div> : loadFailed ? <><p role="alert">{error}</p><button className="btn btn-outline-primary" onClick={() => { setLoading(true); setLoadFailed(false); setError(''); setRevision((n) => n + 1) }}>Check again</button></> : <form onSubmit={submit}>
+    </div> : loadFailed ? <><p className="text-danger mb-2">{error}</p><button className="btn btn-outline-primary" onClick={() => { setLoading(true); setLoadFailed(false); setError(''); setRevision((n) => n + 1) }}>Check again</button></> : <form onSubmit={submit}>
       <p>Create a Technician login or link an existing active Technician account. This keeps the technician ID and assignments unchanged.</p>
       <div className="mb-3"><label className="form-label" htmlFor="login-mode">Login setup</label>
         <select id="login-mode" className="form-select" value={mode} onChange={(e) => { setMode(e.target.value); setDraft({ ...EMPTY_LOGIN }); setError('') }}>
