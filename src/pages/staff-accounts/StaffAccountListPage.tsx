@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { useAuth } from '../../auth/useAuth'
@@ -47,37 +47,34 @@ function StaffAccountListPage() {
     return () => clearTimeout(timer)
   }, [searchQuery, urlQuery, setSearchParams])
 
-  useEffect(() => {
-    let cancelled = false
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const [accountData, technicianData] = await Promise.allSettled([
+        getStaffAccounts(),
+        getAllTechnicians(),
+      ])
 
-    async function loadData() {
-      try {
-        const [accountData, technicianData] = await Promise.allSettled([
-          getStaffAccounts(),
-          getAllTechnicians(),
-        ])
-
-        if (cancelled) return
-
-        if (accountData.status === 'fulfilled') {
-          setAccounts(Array.isArray(accountData.value) ? accountData.value : [])
-        } else {
-          setError('Could not load staff accounts.')
-        }
-
-        if (technicianData.status === 'fulfilled' && Array.isArray(technicianData.value)) {
-          setTechnicians(technicianData.value)
-        }
-      } catch {
-        if (!cancelled) setError('Could not load staff accounts.')
-      } finally {
-        if (!cancelled) setLoading(false)
+      if (accountData.status === 'fulfilled') {
+        setAccounts(Array.isArray(accountData.value) ? accountData.value : [])
+      } else {
+        setError(staffAccountError(accountData.reason))
       }
-    }
 
-    void loadData()
-    return () => { cancelled = true }
+      if (technicianData.status === 'fulfilled' && Array.isArray(technicianData.value)) {
+        setTechnicians(technicianData.value)
+      }
+    } catch (err) {
+      setError(staffAccountError(err))
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
 
   const technicianMap = useMemo(() => {
     const map = new Map<string, TechnicianResponse>()
@@ -225,7 +222,15 @@ function StaffAccountListPage() {
           </div>
         ) : error ? (
           <div className="state-block">
-            <div className="alert alert-danger mb-0" role="alert">{error}</div>
+            <div className="alert alert-danger mb-3" role="alert">{error}</div>
+            <button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={() => void loadData()}
+              id="staff-accounts-retry-btn"
+            >
+              Retry
+            </button>
           </div>
         ) : accounts.length === 0 ? (
           <div className="state-block">

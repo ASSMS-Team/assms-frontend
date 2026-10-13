@@ -488,4 +488,45 @@ describe('Staff Account Pages', () => {
 
     confirmSpy.mockRestore()
   })
+
+  it('displays service error and Retry button when loading staff accounts fails, and allows retrying', async () => {
+    getStaffAccountsMock.mockRejectedValueOnce(new Error('Could not connect to the service. Please check your network connection and try again.'))
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Could not connect to the service/i)
+    const retryBtn = screen.getByRole('button', { name: 'Retry' })
+    expect(retryBtn).toBeInTheDocument()
+
+    // Test clicking Retry
+    getStaffAccountsMock.mockResolvedValueOnce([sampleActiveAccount])
+    fireEvent.click(retryBtn)
+
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('displays duplicate conflict error and never fabricates created success when creation is rejected', async () => {
+    createStaffAccountMock.mockRejectedValueOnce(new Error('The username, email or technician link is already in use.'))
+    render(
+      <MemoryRouter>
+        <CreateStaffAccountPage />
+      </MemoryRouter>
+    )
+
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Duplicate User' } })
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'duplicate.user' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'duplicate@assms.com' } })
+    fireEvent.change(screen.getByLabelText('Initial password'), { target: { value: 'ValidPassword123!' } })
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'ValidPassword123!' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create staff account' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/The username, email or technician link is already in use/i)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Created Duplicate User/i)).not.toBeInTheDocument()
+  })
 })
