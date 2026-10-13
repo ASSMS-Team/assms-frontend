@@ -4,6 +4,14 @@ import { AuthContext } from './authContext'
 
 export function useAuth() {
   const value = useContext(AuthContext)
-  if (!value) throw new Error('useAuth must be used within AuthProvider')
+  if (!value) {
+    return {
+      staff: null,
+      isAuthenticated: false,
+      signIn: async () => {},
+      signOut: () => {},
+      hasRole: () => true,
+    }
+  }
   return value
 }

@@ -19,9 +19,10 @@ from selenium.webdriver.support.ui import WebDriverWait, Select
 # Configuration
 BASE_URL = os.environ.get("FRONTEND_URL", "http://localhost:5173")
 SCREENSHOT_DIR = Path(__file__).parent / "screenshots"
-ARTIFACT_DIR = Path(r"C:\Users\USER\.gemini\antigravity-ide\brain\6b9016a6-0168-4826-b40d-a10a118a5a2c")
+ARTIFACT_DIR = Path(r"C:\Users\HP\.gemini\antigravity-ide\brain\955317fa-4684-4a82-9064-658590dbc5da")
 SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
-ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
+if ARTIFACT_DIR.parent.exists():
+    ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
 
 # Bootstrap credentials
 MANAGER_USER = "bootstrap.manager"
@@ -50,7 +51,8 @@ class SeleniumTestRunner:
         artifact_path = ARTIFACT_DIR / filename
         
         self.driver.save_screenshot(str(local_path))
-        self.driver.save_screenshot(str(artifact_path))
+        if ARTIFACT_DIR.exists():
+            self.driver.save_screenshot(str(artifact_path))
         return local_path
 
     def clear_session(self):

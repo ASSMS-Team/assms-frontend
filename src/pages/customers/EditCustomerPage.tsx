@@ -3,17 +3,18 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import CustomerForm from '../../components/forms/CustomerForm'
+import LoadingState from '../../components/feedback/LoadingState'
+import EmptyState from '../../components/feedback/EmptyState'
+import ErrorState from '../../components/feedback/ErrorState'
 import { getCustomerById } from '../../services/customerService'
 import type { CustomerResponse } from '../../types/customer'
+import { parseApiError } from '../../utils/formatApiError'
 
 function EditCustomerPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const [customer, setCustomer] = useState<CustomerResponse | null>(null)
   const [loading, setLoading] = useState(true)
-  // Kept separate from `error` for the same reason as on the detail page: a 404
-  // is an expected answer to a valid question, not a failure. It is also set
-  // from the form, for a customer deleted between loading and saving.
   const [notFound, setNotFound] = useState(false)
   const [error, setError] = useState('')
 
@@ -22,7 +23,6 @@ function EditCustomerPage() {
       if (!id) {
         setNotFound(true)
         setLoading(false)
-
         return
       }
 
@@ -32,7 +32,8 @@ function EditCustomerPage() {
         if (axios.isAxiosError(caught) && caught.response?.status === 404) {
           setNotFound(true)
         } else {
-          setError('Could not load this customer. Check that the customer service is running.')
+          const parsed = parseApiError(caught, 'Could not load this customer. Check that the customer service is running.')
+          setError(parsed.message)
         }
       } finally {
         setLoading(false)
@@ -58,36 +59,25 @@ function EditCustomerPage() {
 
       <div className="card app-card app-card-padded form-column">
         {loading ? (
-          <div className="state-block">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <p className="state-text">Loading customer...</p>
-          </div>
+          <LoadingState message="Loading customer..." />
         ) : notFound ? (
-          <div className="state-block">
-            <div className="empty-mark">?</div>
-            <p className="state-title">Customer not found</p>
-            <p className="state-text">
-              No customer is registered with the id <code>{id}</code>.
-            </p>
-            <Link className="btn btn-primary" to="/customers">
-              Back to customers
-            </Link>
-          </div>
+          <EmptyState
+            icon="?"
+            title="Customer not found"
+            message={`No customer is registered with the id "${id}".`}
+            action={
+              <Link className="btn btn-primary" to="/customers">
+                Back to customers
+              </Link>
+            }
+          />
         ) : error ? (
-          <div className="state-block">
-            <div className="alert alert-danger mb-0" role="alert">
-              {error}
-            </div>
-          </div>
+          <ErrorState message={error} />
         ) : (
           customer && (
             <CustomerForm
               mode="edit"
               customerId={customer.id}
-              // Only the editable fields; status and the timestamps stay with
-              // the server, and the id travels in the URL.
               initialValues={{
                 name: customer.name,
                 phone: customer.phone,
@@ -95,8 +85,6 @@ function EditCustomerPage() {
                 customerType: customer.customerType,
                 email: customer.email,
               }}
-              // The detail page showing the new values is the confirmation, so
-              // there is no success message to leave behind here.
               onSaved={(saved) => navigate(`/customers/${saved.id}`)}
               onNotFound={() => setNotFound(true)}
             />
