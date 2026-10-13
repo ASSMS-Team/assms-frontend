@@ -1,10 +1,11 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import StaffAccountListPage from './StaffAccountListPage'
 import CreateStaffAccountPage from './CreateStaffAccountPage'
 import { createStaffAccount, getStaffAccounts } from '../../services/staffAccountService'
+import { getAllTechnicians } from '../../services/dispatchService'
 
 vi.mock('../../services/staffAccountService', () => ({
   getStaffAccounts: vi.fn(),
@@ -12,10 +13,15 @@ vi.mock('../../services/staffAccountService', () => ({
   staffAccountError: vi.fn((err: unknown) => (err instanceof Error ? err.message : 'Staff account creation failed.')),
 }))
 
+vi.mock('../../services/dispatchService', () => ({
+  getAllTechnicians: vi.fn(),
+}))
+
 const getStaffAccountsMock = vi.mocked(getStaffAccounts)
 const createStaffAccountMock = vi.mocked(createStaffAccount)
+const getAllTechniciansMock = vi.mocked(getAllTechnicians)
 
-const sampleAccount = {
+const sampleActiveAccount = {
   id: 'acc-1',
   fullName: 'Kasun Bandara',
   username: 'kasun.b',
@@ -27,15 +33,78 @@ const sampleAccount = {
   createdBy: 'mgr-1',
 }
 
+const sampleInactiveAccount = {
+  id: 'acc-2',
+  fullName: 'Kamal Jayawardena',
+  username: 'kamal.j',
+  email: 'kamal@assms.com',
+  role: 'Dispatcher',
+  status: 'INACTIVE',
+  technicianId: null,
+  createdAt: '2026-09-01T10:00:00Z',
+  createdBy: null,
+}
+
+const sampleTechAccount = {
+  id: 'acc-3',
+  fullName: 'Amal Silva',
+  username: 'amal.tech',
+  email: 'amal@assms.com',
+  role: 'Technician',
+  status: 'ACTIVE',
+  technicianId: 'tech-uuid-1',
+  createdAt: '2026-10-10T10:00:00Z',
+  createdBy: 'mgr-1',
+}
+
+const mockTechnicians = [
+  {
+    id: 'tech-uuid-1',
+    reference: 'TEC-001',
+    fullName: 'Amal Silva',
+    region: 'WESTERN' as const,
+    status: 'ACTIVE' as const,
+    skills: ['Electrical'],
+    phone: '0771112233',
+    email: 'amal@assms.com',
+    createdAt: '2026-09-01T00:00:00Z',
+    updatedAt: '2026-09-01T00:00:00Z',
+  },
+]
+
 describe('Staff Account Pages', () => {
   beforeEach(() => {
     getStaffAccountsMock.mockReset()
     createStaffAccountMock.mockReset()
+    getAllTechniciansMock.mockReset()
+    getAllTechniciansMock.mockResolvedValue(mockTechnicians)
   })
   afterEach(() => cleanup())
 
-  it('renders staff accounts table with role and status badges', async () => {
-    getStaffAccountsMock.mockResolvedValue([sampleAccount])
+  it('renders staff accounts table with role and status badges, and metadata', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount, sampleInactiveAccount, sampleTechAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    expect(within(table).getByText('Kasun Bandara')).toBeInTheDocument()
+    expect(within(table).getByText('kasun.b')).toBeInTheDocument()
+    expect(within(table).getByText('Agent')).toBeInTheDocument()
+    expect(within(table).getAllByText('ACTIVE')).toHaveLength(2)
+
+    expect(within(table).getByText('Kamal Jayawardena')).toBeInTheDocument()
+    expect(within(table).getByText('Dispatcher')).toBeInTheDocument()
+    expect(within(table).getByText('INACTIVE')).toBeInTheDocument()
+
+    // Verifies linked technician reference display
+    expect(within(table).getByText('TEC-001')).toBeInTheDocument()
+  })
+
+  it('filters staff accounts by status', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount, sampleInactiveAccount])
     render(
       <MemoryRouter>
         <StaffAccountListPage />
@@ -43,13 +112,56 @@ describe('Staff Account Pages', () => {
     )
 
     expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
-    expect(screen.getByText('kasun.b')).toBeInTheDocument()
-    expect(screen.getByText('kasun@assms.com')).toBeInTheDocument()
-    expect(screen.getByText('Agent')).toBeInTheDocument()
-    expect(screen.getByText('ACTIVE')).toBeInTheDocument()
+    expect(screen.getByText('Kamal Jayawardena')).toBeInTheDocument()
+
+    // Filter to INACTIVE
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'INACTIVE' } })
+    expect(screen.queryByText('Kasun Bandara')).not.toBeInTheDocument()
+    expect(screen.getByText('Kamal Jayawardena')).toBeInTheDocument()
+
+    // Filter to ACTIVE
+    fireEvent.change(screen.getByLabelText('Filter by status'), { target: { value: 'ACTIVE' } })
+    expect(screen.getByText('Kasun Bandara')).toBeInTheDocument()
+    expect(screen.queryByText('Kamal Jayawardena')).not.toBeInTheDocument()
   })
 
-  it('displays empty state when no accounts exist', async () => {
+  it('filters staff accounts by search query', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount, sampleInactiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Search name, username or email'), {
+      target: { value: 'kamal' },
+    })
+    expect(screen.queryByText('Kasun Bandara')).not.toBeInTheDocument()
+    expect(screen.getByText('Kamal Jayawardena')).toBeInTheDocument()
+  })
+
+  it('displays empty state and allows clearing filters', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+
+    fireEvent.change(screen.getByPlaceholderText('Search name, username or email'), {
+      target: { value: 'nonexistent' },
+    })
+    expect(await screen.findByText('No staff accounts match these filters')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+  })
+
+  it('displays empty state when no accounts exist at all', async () => {
     getStaffAccountsMock.mockResolvedValue([])
     render(
       <MemoryRouter>
@@ -57,7 +169,7 @@ describe('Staff Account Pages', () => {
       </MemoryRouter>
     )
 
-    expect(await screen.findByText('No staff accounts found.')).toBeInTheDocument()
+    expect(await screen.findByText('No staff accounts found')).toBeInTheDocument()
   })
 
   it('rejects passwords that do not match in CreateStaffAccountPage', async () => {
@@ -122,7 +234,7 @@ describe('Staff Account Pages', () => {
 
   it('successfully submits valid staff account request and resets form', async () => {
     createStaffAccountMock.mockResolvedValue({
-      ...sampleAccount,
+      ...sampleActiveAccount,
       fullName: 'Sunil Dias',
       username: 'sunil.d',
       role: 'Manager',
