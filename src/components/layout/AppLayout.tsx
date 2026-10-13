@@ -66,6 +66,16 @@ function AppLayout() {
               <span aria-hidden="true">▤</span> Job completions
             </NavLink>}
           </>}
+
+          {hasRole('Manager') && <>
+            <p className="operations-nav-label">Administration</p>
+            <NavLink className={navClass} to="/staff-accounts" end onClick={closeMenu}>
+              <span aria-hidden="true">👥</span> Staff accounts
+            </NavLink>
+            <NavLink className={navClass} to="/staff-accounts/new" onClick={closeMenu}>
+              <span aria-hidden="true">＋</span> Add staff account
+            </NavLink>
+          </>}
         </nav>
 
         <div className="operations-sidebar-footer">
