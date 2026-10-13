@@ -31,6 +31,7 @@ jobs:
       AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
       FRONTEND_APP_NAME: ${{ vars.FRONTEND_APP_NAME }}
       FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+      DEPLOY_SHA: ${{ inputs.commit_sha || github.sha }}
       VITE_CUSTOMER_API_URL: ${{ vars.VITE_CUSTOMER_API_URL }}
       VITE_JOB_API_URL: ${{ vars.VITE_JOB_API_URL }}
       VITE_DISPATCH_API_URL: ${{ vars.VITE_DISPATCH_API_URL }}
@@ -61,6 +62,7 @@ jobs:
         run: |
           test -d dist
           test -f dist/index.html
+          printf '{"commit":"%s"}\n' "$DEPLOY_SHA" > dist/deployment.json
 
       - name: Authenticate to Azure with OIDC
         uses: azure/login@v2
@@ -80,7 +82,9 @@ jobs:
             --name "$FRONTEND_APP_NAME" \
             --src-path frontend-staging.zip \
             --type zip \
-            --async false
+            --async false \
+            --track-status false \
+            --timeout 600000
 
       - name: Verify SPA hosting and backend API configuration
         run: |
@@ -89,6 +93,20 @@ jobs:
             --name "$FRONTEND_APP_NAME" \
             --query appCommandLine -o tsv)"
           test "$startup_command" = "pm2 serve /home/site/wwwroot --no-daemon --spa"
+          # Wait for the actual deployed revision, rather than Azure's Linux
+          # startup tracker, which can report a timeout for a healthy site.
+          revision_ready=false
+          for attempt in $(seq 1 24); do
+            if curl --fail --silent --show-error --connect-timeout 10 --max-time 20 \
+              "${FRONTEND_URL}/deployment.json?revision=${DEPLOY_SHA}" \
+              --output "$RUNNER_TEMP/frontend-deployment.json" && \
+              cmp -s dist/deployment.json "$RUNNER_TEMP/frontend-deployment.json"; then
+              revision_ready=true
+              break
+            fi
+            sleep 5
+          done
+          test "$revision_ready" = true
           for route in / /assets/new; do
             body="$(curl --fail --silent --show-error --retry 12 --retry-delay 5 "${FRONTEND_URL}${route}")"
             grep -F '<div id="root"></div>' <<< "$body"
