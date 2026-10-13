@@ -15,6 +15,7 @@ export interface StaffAccountResponse {
   technicianId: string | null
   createdAt: string
   createdBy: string | null
+  dispatchSyncStatus?: string | null
 }
 
 export interface CreateStaffAccountRequest {
@@ -167,6 +168,9 @@ export async function deactivateStaffAccount(id: string): Promise<StaffAccountRe
     }
     if (target) {
       target.status = 'INACTIVE'
+      if (target.role === 'Technician' && target.technicianId) {
+        target.dispatchSyncStatus = 'SYNCHRONIZED'
+      }
       return { ...target }
     }
     return {
@@ -187,8 +191,10 @@ export async function deactivateStaffAccount(id: string): Promise<StaffAccountRe
 export function staffAccountError(error: unknown): string {
   if (axios.isAxiosError(error) && error.response?.data?.detail)
     return error.response.data.detail
+  if (axios.isAxiosError(error) && error.response?.data?.title)
+    return error.response.data.title
   if (axios.isAxiosError(error) && error.response?.status === 409)
-    return 'The operation was rejected due to a conflict (e.g. last active Manager cannot be deactivated, or duplicate identifier).'
+    return 'The operation was rejected due to a conflict (e.g. technician has open assignments, or last active Manager cannot be deactivated).'
   if (axios.isAxiosError(error) && error.response?.status === 400)
     return 'Check the request details and try again.'
   if (axios.isAxiosError(error) && error.response?.status === 403)

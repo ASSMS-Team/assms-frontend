@@ -121,30 +121,44 @@ function StaffAccountListPage() {
     setActionError(null)
     setActionSuccess(null)
 
-    const isCurrentManager = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
-    if (isCurrentManager) {
-      setActionError('Self-deactivation safeguard: You cannot deactivate your own currently authenticated Manager account.')
-      return
+    const isRetry = account.status === 'INACTIVE' && account.role === 'Technician' && account.dispatchSyncStatus === 'PENDING_RETRY'
+
+    if (!isRetry) {
+      const isCurrentManager = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+      if (isCurrentManager) {
+        setActionError('Self-deactivation safeguard: You cannot deactivate your own currently authenticated Manager account.')
+        return
+      }
+
+      const techNote = account.role === 'Technician' && account.technicianId
+        ? ' Linked Dispatch technician availability will also be deactivated.'
+        : ''
+
+      const confirmed = window.confirm(
+        `Deactivate staff account "${account.fullName || account.username}"? Future login will be prevented while historical data is preserved.${techNote}`
+      )
+      if (!confirmed) return
     }
-
-    const techNote = account.role === 'Technician' && account.technicianId
-      ? ' Linked Dispatch technician availability will also be deactivated.'
-      : ''
-
-    const confirmed = window.confirm(
-      `Deactivate staff account "${account.fullName || account.username}"? Future login will be prevented while historical data is preserved.${techNote}`
-    )
-    if (!confirmed) return
 
     setDeactivatingId(account.id)
     try {
       const updated = await deactivateStaffAccount(account.id)
       setAccounts((prev) =>
-        prev.map((item) => (item.id === account.id ? { ...item, status: updated.status } : item))
+        prev.map((item) => (item.id === account.id ? { ...item, status: updated.status, dispatchSyncStatus: updated.dispatchSyncStatus } : item))
       )
-      setActionSuccess(
-        `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and future login is prevented.`
-      )
+      if (updated.dispatchSyncStatus === 'PENDING_RETRY') {
+        setActionError(
+          `Staff access for "${account.fullName || account.username}" was revoked, but Dispatch technician synchronization is pending retry (Dispatch service is currently unreachable). Retry once Dispatch is restored to complete offboarding.`
+        )
+      } else if (account.role === 'Technician' && account.technicianId) {
+        setActionSuccess(
+          `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and linked Dispatch technician has been marked inactive for assignments.`
+        )
+      } else {
+        setActionSuccess(
+          `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and future login is prevented.`
+        )
+      }
     } catch (err) {
       setActionError(staffAccountError(err))
     } finally {
@@ -319,6 +333,9 @@ function StaffAccountListPage() {
                             ) : (
                               <span className="text-muted">—</span>
                             )}
+                            {account.role === 'Technician' && account.status === 'INACTIVE' && account.dispatchSyncStatus === 'PENDING_RETRY' && (
+                              <span className="badge bg-warning text-dark ms-2" title="Dispatch sync pending">Sync pending</span>
+                            )}
                           </td>
                           <td data-label="Status">
                             <span className={`badge ${account.status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}`}>
@@ -341,6 +358,16 @@ function StaffAccountListPage() {
                                 onClick={() => void handleDeactivate(account)}
                               >
                                 {deactivatingId === account.id ? 'Deactivating…' : 'Deactivate'}
+                              </button>
+                            ) : account.role === 'Technician' && account.technicianId && account.dispatchSyncStatus === 'PENDING_RETRY' ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-warning"
+                                disabled={deactivatingId === account.id}
+                                title="Retry Dispatch technician synchronization"
+                                onClick={() => void handleDeactivate(account)}
+                              >
+                                {deactivatingId === account.id ? 'Retrying…' : 'Retry sync'}
                               </button>
                             ) : (
                               <span className="text-muted small">Deactivated</span>

@@ -430,4 +430,62 @@ describe('Staff Account Pages', () => {
     )
     confirmSpy.mockRestore()
   })
+
+  it('shows warning alert and Retry sync button when technician deactivation Dispatch sync is pending retry', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const technicianAccount: StaffAccountResponse = {
+      id: 'tech-1',
+      fullName: 'Amal Silva',
+      username: 'amal.tech',
+      email: 'amal@assms.lk',
+      role: 'Technician',
+      status: 'ACTIVE',
+      technicianId: 'tech-uuid-1',
+      createdAt: '2026-03-01T10:00:00Z',
+      createdBy: 'acc-1',
+    }
+
+    getStaffAccountsMock.mockResolvedValue([technicianAccount])
+    deactivateStaffAccountMock.mockResolvedValue({
+      ...technicianAccount,
+      status: 'INACTIVE',
+      dispatchSyncStatus: 'PENDING_RETRY',
+    })
+
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const deactivateBtn = within(table).getByRole('button', { name: 'Deactivate' })
+    fireEvent.click(deactivateBtn)
+
+    await waitFor(() => {
+      expect(deactivateStaffAccountMock).toHaveBeenCalledWith('tech-1')
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Dispatch technician synchronization is pending retry/i)
+
+    // Verify row now shows Sync pending badge and Retry sync button
+    const row = within(table).getByText('Amal Silva').closest('tr')!
+    expect(within(row).getByText('Sync pending')).toBeInTheDocument()
+    const retryBtn = within(row).getByRole('button', { name: 'Retry sync' })
+    expect(retryBtn).toBeInTheDocument()
+
+    // Test clicking retry sync calls deactivateStaffAccount again
+    deactivateStaffAccountMock.mockResolvedValueOnce({
+      ...technicianAccount,
+      status: 'INACTIVE',
+      dispatchSyncStatus: 'SYNCHRONIZED',
+    })
+    fireEvent.click(retryBtn)
+    await waitFor(() => {
+      expect(deactivateStaffAccountMock).toHaveBeenCalledWith('tech-1')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(/linked Dispatch technician has been marked inactive/i)
+
+    confirmSpy.mockRestore()
+  })
 })
