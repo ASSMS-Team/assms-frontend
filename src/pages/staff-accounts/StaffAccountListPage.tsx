@@ -241,7 +241,7 @@ function StaffAccountListPage() {
                 </button>
               </div>
             ) : (
-              <div className="table-responsive">
+              <div className="table-responsive staff-table-responsive">
                 <table className="table table-hover app-table align-middle mb-0" id="staff-accounts-table">
                   <thead>
                     <tr>
@@ -263,18 +263,18 @@ function StaffAccountListPage() {
 
                       return (
                         <tr key={account.id}>
-                          <td>
+                          <td data-label="Staff member">
                             <strong>{account.fullName || account.username}</strong>
                             {isCurrentUser && <span className="badge bg-secondary ms-2">You</span>}
                           </td>
-                          <td><code>{account.username}</code></td>
-                          <td>{account.email}</td>
-                          <td>
+                          <td data-label="Username"><code>{account.username}</code></td>
+                          <td data-label="Email">{account.email}</td>
+                          <td data-label="Role">
                             <span className={`badge badge-role badge-role-${account.role.toLowerCase()}`}>
                               {account.role}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Linked technician">
                             {account.role === 'Technician' ? (
                               account.technicianId ? (
                                 linkedTech ? (
@@ -293,18 +293,18 @@ function StaffAccountListPage() {
                               <span className="text-muted">—</span>
                             )}
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <span className={`badge ${account.status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}`}>
                               {account.status}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Created date">
                             {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
-                          <td>
+                          <td data-label="Created by">
                             {account.createdBy ? <code>{account.createdBy.slice(0, 8)}…</code> : <span className="text-muted">N/A</span>}
                           </td>
-                          <td>
+                          <td data-label="Action">
                             {account.status === 'ACTIVE' ? (
                               <button
                                 type="button"

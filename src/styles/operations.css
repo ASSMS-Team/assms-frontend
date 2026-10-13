@@ -126,10 +126,84 @@ textarea:focus-visible {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Staff accounts table wrapping */
+#staff-accounts-table td {
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 992px) {
   .operations-metrics { grid-template-columns: 1fr 1fr; }
   .operations-metrics article { border-bottom: 1px solid #d2dacd; }
   .operations-metrics article:nth-child(2n) { border-right: 0; }
+
+  .staff-table-responsive,
+  .table-responsive:has(#staff-accounts-table) {
+    overflow-x: visible;
+  }
+
+  #staff-accounts-table {
+    display: block;
+    width: 100%;
+  }
+
+  #staff-accounts-table thead {
+    display: none;
+  }
+
+  #staff-accounts-table tbody {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 0.85rem;
+  }
+
+  #staff-accounts-table tbody tr {
+    display: block;
+    background: #fffefa;
+    border: 1px solid #dce3d6;
+    border-radius: 8px;
+    padding: 0.85rem 1.15rem;
+    box-shadow: 0 1px 3px rgba(11, 35, 26, 0.04);
+  }
+
+  #staff-accounts-table tbody tr:hover {
+    background: #fdfefb;
+    border-color: #c9d5c0;
+  }
+
+  #staff-accounts-table tbody td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid #edf1ea;
+    font-size: 0.84rem;
+    text-align: right;
+  }
+
+  #staff-accounts-table tbody td:last-child {
+    border-bottom: none;
+    padding-top: 0.65rem;
+    justify-content: flex-end;
+  }
+
+  #staff-accounts-table tbody td::before {
+    content: attr(data-label);
+    font-weight: 700;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #5d6e62;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  #staff-accounts-table tbody td[data-label="Action"]::before {
+    display: none;
+  }
 }
 
 @media (max-width: 860px) {
