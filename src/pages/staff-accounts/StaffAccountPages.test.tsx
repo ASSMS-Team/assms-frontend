@@ -4,13 +4,29 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import StaffAccountListPage from './StaffAccountListPage'
 import CreateStaffAccountPage from './CreateStaffAccountPage'
-import { createStaffAccount, getStaffAccounts } from '../../services/staffAccountService'
+import { createStaffAccount, deactivateStaffAccount, getStaffAccounts } from '../../services/staffAccountService'
 import { getAllTechnicians } from '../../services/dispatchService'
+
+vi.mock('../../auth/useAuth', () => ({
+  useAuth: vi.fn(() => ({
+    staff: {
+      id: 'mgr-current',
+      username: 'manager.john',
+      email: 'manager@assms.com',
+      role: 'Manager' as const,
+    },
+    isAuthenticated: true,
+    signIn: vi.fn(),
+    signOut: vi.fn(),
+    hasRole: vi.fn(() => true),
+  })),
+}))
 
 vi.mock('../../services/staffAccountService', () => ({
   getStaffAccounts: vi.fn(),
   createStaffAccount: vi.fn(),
-  staffAccountError: vi.fn((err: unknown) => (err instanceof Error ? err.message : 'Staff account creation failed.')),
+  deactivateStaffAccount: vi.fn(),
+  staffAccountError: vi.fn((err: unknown) => (err instanceof Error ? err.message : 'Staff account operation failed.')),
 }))
 
 vi.mock('../../services/dispatchService', () => ({
@@ -19,6 +35,7 @@ vi.mock('../../services/dispatchService', () => ({
 
 const getStaffAccountsMock = vi.mocked(getStaffAccounts)
 const createStaffAccountMock = vi.mocked(createStaffAccount)
+const deactivateStaffAccountMock = vi.mocked(deactivateStaffAccount)
 const getAllTechniciansMock = vi.mocked(getAllTechnicians)
 
 const sampleActiveAccount = {
@@ -76,6 +93,7 @@ describe('Staff Account Pages', () => {
   beforeEach(() => {
     getStaffAccountsMock.mockReset()
     createStaffAccountMock.mockReset()
+    deactivateStaffAccountMock.mockReset()
     getAllTechniciansMock.mockReset()
     getAllTechniciansMock.mockResolvedValue(mockTechnicians)
   })
@@ -267,5 +285,129 @@ describe('Staff Account Pages', () => {
     })
 
     expect(await screen.findByText(/Created/i)).toHaveTextContent('Sunil Dias as Manager (sunil.d)')
+  })
+
+  it('renders Deactivate button for active accounts and Deactivated label for inactive accounts', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount, sampleInactiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const activeRow = within(table).getByText('Kasun Bandara').closest('tr')!
+    const inactiveRow = within(table).getByText('Kamal Jayawardena').closest('tr')!
+
+    expect(within(activeRow).getByRole('button', { name: 'Deactivate' })).toBeEnabled()
+    expect(within(inactiveRow).getByText('Deactivated')).toBeInTheDocument()
+    expect(within(inactiveRow).queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument()
+  })
+
+  it('disables Deactivate button for the currently authenticated Manager (self-deactivation safety)', async () => {
+    const currentManagerAccount = {
+      id: 'mgr-current',
+      fullName: 'John Manager',
+      username: 'manager.john',
+      email: 'manager@assms.com',
+      role: 'Manager',
+      status: 'ACTIVE',
+      technicianId: null,
+      createdAt: '2026-09-01T10:00:00Z',
+      createdBy: null,
+    }
+
+    getStaffAccountsMock.mockResolvedValue([currentManagerAccount, sampleActiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const managerRow = within(table).getByText('John Manager').closest('tr')!
+
+    expect(within(managerRow).getByText('You')).toBeInTheDocument()
+    const deactivateBtn = within(managerRow).getByRole('button', { name: 'Deactivate' })
+    expect(deactivateBtn).toBeDisabled()
+    expect(deactivateBtn).toHaveAttribute('title', 'You cannot deactivate your own account')
+  })
+
+  it('does not deactivate if the confirmation dialog is cancelled', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const deactivateBtn = within(table).getByRole('button', { name: 'Deactivate' })
+    fireEvent.click(deactivateBtn)
+
+    expect(confirmSpy).toHaveBeenCalled()
+    expect(deactivateStaffAccountMock).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('successfully deactivates active account upon confirmation and updates status to INACTIVE', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount])
+    deactivateStaffAccountMock.mockResolvedValue({
+      ...sampleActiveAccount,
+      status: 'INACTIVE',
+    })
+
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const deactivateBtn = within(table).getByRole('button', { name: 'Deactivate' })
+    fireEvent.click(deactivateBtn)
+
+    await waitFor(() => {
+      expect(deactivateStaffAccountMock).toHaveBeenCalledWith('acc-1')
+    })
+
+    expect(await screen.findByRole('status')).toHaveTextContent(/Successfully deactivated "Kasun Bandara"/i)
+
+    // Verify row now shows INACTIVE and "Deactivated" badge instead of button
+    const row = within(table).getByText('Kasun Bandara').closest('tr')!
+    expect(within(row).getByText('INACTIVE')).toBeInTheDocument()
+    expect(within(row).getByText('Deactivated')).toBeInTheDocument()
+    expect(within(row).queryByRole('button', { name: 'Deactivate' })).not.toBeInTheDocument()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('displays error alert when deactivation fails', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount])
+    deactivateStaffAccountMock.mockRejectedValue(
+      new Error('Cannot deactivate the only active Manager account.')
+    )
+
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const deactivateBtn = within(table).getByRole('button', { name: 'Deactivate' })
+    fireEvent.click(deactivateBtn)
+
+    await waitFor(() => {
+      expect(deactivateStaffAccountMock).toHaveBeenCalledWith('acc-1')
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Cannot deactivate the only active Manager account.'
+    )
+    confirmSpy.mockRestore()
   })
 })

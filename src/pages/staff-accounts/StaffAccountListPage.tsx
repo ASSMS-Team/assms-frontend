@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
-import { getStaffAccounts } from '../../services/staffAccountService'
+import { useAuth } from '../../auth/useAuth'
+import { deactivateStaffAccount, getStaffAccounts, staffAccountError } from '../../services/staffAccountService'
 import type { StaffAccountResponse } from '../../services/staffAccountService'
 import { getAllTechnicians } from '../../services/dispatchService'
 import type { TechnicianResponse } from '../../types/technician'
@@ -9,10 +10,14 @@ import type { TechnicianResponse } from '../../types/technician'
 const ROLES = ['Agent', 'Dispatcher', 'Technician', 'Manager'] as const
 
 function StaffAccountListPage() {
+  const { staff } = useAuth()
   const [accounts, setAccounts] = useState<StaffAccountResponse[]>([])
   const [technicians, setTechnicians] = useState<TechnicianResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [actionSuccess, setActionSuccess] = useState<string | null>(null)
+  const [actionError, setActionError] = useState<string | null>(null)
+  const [deactivatingId, setDeactivatingId] = useState<string | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
   const query = searchParams.get('q') ?? ''
@@ -85,6 +90,41 @@ function StaffAccountListPage() {
     setSearchParams(new URLSearchParams())
   }
 
+  async function handleDeactivate(account: StaffAccountResponse) {
+    setActionError(null)
+    setActionSuccess(null)
+
+    const isCurrentManager = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+    if (isCurrentManager) {
+      setActionError('Self-deactivation safeguard: You cannot deactivate your own currently authenticated Manager account.')
+      return
+    }
+
+    const techNote = account.role === 'Technician' && account.technicianId
+      ? ' Linked Dispatch technician availability will also be deactivated.'
+      : ''
+
+    const confirmed = window.confirm(
+      `Deactivate staff account "${account.fullName || account.username}"? Future login will be prevented while historical data is preserved.${techNote}`
+    )
+    if (!confirmed) return
+
+    setDeactivatingId(account.id)
+    try {
+      const updated = await deactivateStaffAccount(account.id)
+      setAccounts((prev) =>
+        prev.map((item) => (item.id === account.id ? { ...item, status: updated.status } : item))
+      )
+      setActionSuccess(
+        `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and future login is prevented.`
+      )
+    } catch (err) {
+      setActionError(staffAccountError(err))
+    } finally {
+      setDeactivatingId(null)
+    }
+  }
+
   return (
     <>
       <div className="page-head">
@@ -96,6 +136,18 @@ function StaffAccountListPage() {
           ＋ Create account
         </Link>
       </div>
+
+      {actionSuccess && (
+        <div className="alert alert-success alert-dismissible" role="status">
+          {actionSuccess}
+        </div>
+      )}
+
+      {actionError && (
+        <div className="alert alert-danger" role="alert">
+          {actionError}
+        </div>
+      )}
 
       {!loading && !error && accounts.length > 0 && (
         <section className="operations-metrics" aria-label="Staff accounts summary">
@@ -201,15 +253,19 @@ function StaffAccountListPage() {
                       <th scope="col">Status</th>
                       <th scope="col">Created date</th>
                       <th scope="col">Created by</th>
+                      <th scope="col">Action</th>
                     </tr>
                   </thead>
                   <tbody>
                     {filteredAccounts.map((account) => {
                       const linkedTech = account.technicianId ? technicianMap.get(account.technicianId) : null
+                      const isCurrentUser = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+
                       return (
                         <tr key={account.id}>
                           <td>
                             <strong>{account.fullName || account.username}</strong>
+                            {isCurrentUser && <span className="badge bg-secondary ms-2">You</span>}
                           </td>
                           <td><code>{account.username}</code></td>
                           <td>{account.email}</td>
@@ -247,6 +303,21 @@ function StaffAccountListPage() {
                           </td>
                           <td>
                             {account.createdBy ? <code>{account.createdBy.slice(0, 8)}…</code> : <span className="text-muted">N/A</span>}
+                          </td>
+                          <td>
+                            {account.status === 'ACTIVE' ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-danger"
+                                disabled={isCurrentUser || deactivatingId === account.id}
+                                title={isCurrentUser ? 'You cannot deactivate your own account' : 'Deactivate staff account'}
+                                onClick={() => void handleDeactivate(account)}
+                              >
+                                {deactivatingId === account.id ? 'Deactivating…' : 'Deactivate'}
+                              </button>
+                            ) : (
+                              <span className="text-muted small">Deactivated</span>
+                            )}
                           </td>
                         </tr>
                       )
