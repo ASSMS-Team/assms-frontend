@@ -160,6 +160,26 @@ describe('Staff Account Pages', () => {
     expect(screen.getByText('Kamal Jayawardena')).toBeInTheDocument()
   })
 
+  it('preserves complete typed input during rapid character entry without dropping keystrokes', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount, sampleInactiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+    const searchInput = screen.getByPlaceholderText('Search name, username or email') as HTMLInputElement
+
+    // Simulate rapid keystroke sequence
+    const rapidSequence = ['q', 'qa', 'qa.', 'qa.r', 'qa.ra', 'qa.rap', 'qa.rapi', 'qa.rapid', 'qa.rapid.4faf199e']
+    for (const val of rapidSequence) {
+      fireEvent.change(searchInput, { target: { value: val } })
+    }
+
+    expect(searchInput.value).toBe('qa.rapid.4faf199e')
+  })
+
   it('displays empty state and allows clearing filters', async () => {
     getStaffAccountsMock.mockResolvedValue([sampleActiveAccount])
     render(

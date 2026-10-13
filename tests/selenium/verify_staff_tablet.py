@@ -93,6 +93,23 @@ def main():
         assert tech_metrics['tableScrollWidth'] <= tech_metrics['containerClientWidth'], "Filtered table exceeds container width!"
         print("[+] SUCCESS: Linked technician account fits perfectly without horizontal scrolling!")
 
+        # Test rapid search input (reproducing S4-STAFF-UI-SEARCH)
+        print("[*] Testing rapid search input entry (S4-STAFF-UI-SEARCH)...")
+        driver.get(f"{BASE_URL}/staff-accounts")
+        time.sleep(1)
+        search_box = wait.until(EC.element_to_be_clickable((By.ID, "staff-search")))
+        search_box.clear()
+        rapid_test_string = "qa.rapid.4faf199e"
+        search_box.send_keys(rapid_test_string)
+        time.sleep(0.6)  # wait for debounce to sync to URL
+
+        typed_val = search_box.get_attribute("value")
+        final_url = driver.current_url
+        print(f"[*] Rapid entry test: entered='{rapid_test_string}', input.value='{typed_val}', URL='{final_url}'")
+        assert typed_val == rapid_test_string, f"Rapid typing dropped characters! Expected '{rapid_test_string}', got '{typed_val}'"
+        assert rapid_test_string in final_url, f"URL did not update with search query: {final_url}"
+        print("[+] SUCCESS: S4-STAFF-UI-SEARCH passed! Complete string retained without character loss!")
+
     finally:
         driver.quit()
 

@@ -20,9 +20,32 @@ function StaffAccountListPage() {
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const query = searchParams.get('q') ?? ''
+  const urlQuery = searchParams.get('q') ?? ''
   const roleFilter = searchParams.get('role') ?? ''
   const statusFilter = searchParams.get('status') ?? ''
+
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery)
+  const [searchQuery, setSearchQuery] = useState(urlQuery)
+
+  if (prevUrlQuery !== urlQuery) {
+    setPrevUrlQuery(urlQuery)
+    setSearchQuery(urlQuery)
+  }
+
+  useEffect(() => {
+    if (searchQuery === urlQuery) return
+
+    const timer = setTimeout(() => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        if (searchQuery) next.set('q', searchQuery)
+        else next.delete('q')
+        return next
+      }, { replace: true })
+    }, 200)
+
+    return () => clearTimeout(timer)
+  }, [searchQuery, urlQuery, setSearchParams])
 
   useEffect(() => {
     let cancelled = false
@@ -65,28 +88,32 @@ function StaffAccountListPage() {
   }, [technicians])
 
   const filteredAccounts = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim()
     return accounts.filter((account) => {
-      const matchesQuery = !query || [account.fullName, account.username, account.email]
-        .some((val) => val?.toLowerCase().includes(query.toLowerCase()))
+      const matchesQuery = !q || [account.fullName, account.username, account.email]
+        .some((val) => val?.toLowerCase().includes(q))
 
       const matchesRole = !roleFilter || account.role.toLowerCase() === roleFilter.toLowerCase()
       const matchesStatus = !statusFilter || account.status.toLowerCase() === statusFilter.toLowerCase()
 
       return matchesQuery && matchesRole && matchesStatus
     })
-  }, [accounts, query, roleFilter, statusFilter])
+  }, [accounts, searchQuery, roleFilter, statusFilter])
 
   const activeCount = accounts.filter((a) => a.status === 'ACTIVE').length
   const inactiveCount = accounts.filter((a) => a.status === 'INACTIVE').length
 
   function updateFilter(name: string, value: string) {
-    const next = new URLSearchParams(searchParams)
-    if (value) next.set(name, value)
-    else next.delete(name)
-    setSearchParams(next)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set(name, value)
+      else next.delete(name)
+      return next
+    })
   }
 
   function clearFilters() {
+    setSearchQuery('')
     setSearchParams(new URLSearchParams())
   }
 
@@ -201,8 +228,8 @@ function StaffAccountListPage() {
                 id="staff-search"
                 type="search"
                 placeholder="Search name, username or email"
-                value={query}
-                onChange={(e) => updateFilter('q', e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
 
               <label className="visually-hidden" htmlFor="staff-role-filter">Filter by role</label>
