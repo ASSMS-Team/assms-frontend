@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import StaffAccountListPage from './StaffAccountListPage'
 import CreateStaffAccountPage from './CreateStaffAccountPage'
-import { createStaffAccount, deactivateStaffAccount, getStaffAccounts } from '../../services/staffAccountService'
+import { createStaffAccount, deactivateStaffAccount, getStaffAccounts, type StaffAccountResponse } from '../../services/staffAccountService'
 import { getAllTechnicians } from '../../services/dispatchService'
 
 vi.mock('../../auth/useAuth', () => ({
