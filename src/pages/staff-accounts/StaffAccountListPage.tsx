@@ -47,15 +47,11 @@ function StaffAccountListPage() {
     return () => clearTimeout(timer)
   }, [searchQuery, urlQuery, setSearchParams])
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    setError(null)
-    try {
-      const [accountData, technicianData] = await Promise.allSettled([
-        getStaffAccounts(),
-        getAllTechnicians(),
-      ])
-
+  const loadData = useCallback(() => {
+    return Promise.allSettled([
+      getStaffAccounts(),
+      getAllTechnicians(),
+    ]).then(([accountData, technicianData]) => {
       if (accountData.status === 'fulfilled') {
         setAccounts(Array.isArray(accountData.value) ? accountData.value : [])
       } else {
@@ -65,16 +61,22 @@ function StaffAccountListPage() {
       if (technicianData.status === 'fulfilled' && Array.isArray(technicianData.value)) {
         setTechnicians(technicianData.value)
       }
-    } catch (err) {
+    }).catch((err) => {
       setError(staffAccountError(err))
-    } finally {
+    }).finally(() => {
       setLoading(false)
-    }
+    })
   }, [])
 
   useEffect(() => {
     void loadData()
   }, [loadData])
+
+  function handleRetry() {
+    setLoading(true)
+    setError(null)
+    void loadData()
+  }
 
   const technicianMap = useMemo(() => {
     const map = new Map<string, TechnicianResponse>()
@@ -226,7 +228,7 @@ function StaffAccountListPage() {
             <button
               type="button"
               className="btn btn-outline-primary"
-              onClick={() => void loadData()}
+              onClick={handleRetry}
               id="staff-accounts-retry-btn"
             >
               Retry

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -502,8 +502,15 @@ describe('Staff Account Pages', () => {
     expect(retryBtn).toBeInTheDocument()
 
     // Test clicking Retry
-    getStaffAccountsMock.mockResolvedValueOnce([sampleActiveAccount])
+    let resolveRetry!: (accounts: StaffAccountResponse[]) => void
+    getStaffAccountsMock.mockReturnValueOnce(new Promise((resolve) => { resolveRetry = resolve }))
     fireEvent.click(retryBtn)
+
+    expect(screen.getByText('Loading staff accounts…')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+
+    await act(async () => { resolveRetry([sampleActiveAccount]) })
 
     expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
