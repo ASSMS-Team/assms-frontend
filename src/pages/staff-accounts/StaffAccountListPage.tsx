@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 
 import { useAuth } from '../../auth/useAuth'
@@ -20,41 +20,63 @@ function StaffAccountListPage() {
   const [deactivatingId, setDeactivatingId] = useState<string | null>(null)
   const [searchParams, setSearchParams] = useSearchParams()
 
-  const query = searchParams.get('q') ?? ''
+  const urlQuery = searchParams.get('q') ?? ''
   const roleFilter = searchParams.get('role') ?? ''
   const statusFilter = searchParams.get('status') ?? ''
 
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery)
+  const [searchQuery, setSearchQuery] = useState(urlQuery)
+
+  if (prevUrlQuery !== urlQuery) {
+    setPrevUrlQuery(urlQuery)
+    setSearchQuery(urlQuery)
+  }
+
   useEffect(() => {
-    let cancelled = false
+    if (searchQuery === urlQuery) return
 
-    async function loadData() {
-      try {
-        const [accountData, technicianData] = await Promise.allSettled([
-          getStaffAccounts(),
-          getAllTechnicians(),
-        ])
+    const timer = setTimeout(() => {
+      setSearchParams((prev) => {
+        const next = new URLSearchParams(prev)
+        if (searchQuery) next.set('q', searchQuery)
+        else next.delete('q')
+        return next
+      }, { replace: true })
+    }, 200)
 
-        if (cancelled) return
+    return () => clearTimeout(timer)
+  }, [searchQuery, urlQuery, setSearchParams])
 
-        if (accountData.status === 'fulfilled') {
-          setAccounts(Array.isArray(accountData.value) ? accountData.value : [])
-        } else {
-          setError('Could not load staff accounts.')
-        }
-
-        if (technicianData.status === 'fulfilled' && Array.isArray(technicianData.value)) {
-          setTechnicians(technicianData.value)
-        }
-      } catch {
-        if (!cancelled) setError('Could not load staff accounts.')
-      } finally {
-        if (!cancelled) setLoading(false)
+  const loadData = useCallback(() => {
+    return Promise.allSettled([
+      getStaffAccounts(),
+      getAllTechnicians(),
+    ]).then(([accountData, technicianData]) => {
+      if (accountData.status === 'fulfilled') {
+        setAccounts(Array.isArray(accountData.value) ? accountData.value : [])
+      } else {
+        setError(staffAccountError(accountData.reason))
       }
-    }
 
-    void loadData()
-    return () => { cancelled = true }
+      if (technicianData.status === 'fulfilled' && Array.isArray(technicianData.value)) {
+        setTechnicians(technicianData.value)
+      }
+    }).catch((err) => {
+      setError(staffAccountError(err))
+    }).finally(() => {
+      setLoading(false)
+    })
   }, [])
+
+  useEffect(() => {
+    void loadData()
+  }, [loadData])
+
+  function handleRetry() {
+    setLoading(true)
+    setError(null)
+    void loadData()
+  }
 
   const technicianMap = useMemo(() => {
     const map = new Map<string, TechnicianResponse>()
@@ -65,28 +87,32 @@ function StaffAccountListPage() {
   }, [technicians])
 
   const filteredAccounts = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim()
     return accounts.filter((account) => {
-      const matchesQuery = !query || [account.fullName, account.username, account.email]
-        .some((val) => val?.toLowerCase().includes(query.toLowerCase()))
+      const matchesQuery = !q || [account.fullName, account.username, account.email]
+        .some((val) => val?.toLowerCase().includes(q))
 
       const matchesRole = !roleFilter || account.role.toLowerCase() === roleFilter.toLowerCase()
       const matchesStatus = !statusFilter || account.status.toLowerCase() === statusFilter.toLowerCase()
 
       return matchesQuery && matchesRole && matchesStatus
     })
-  }, [accounts, query, roleFilter, statusFilter])
+  }, [accounts, searchQuery, roleFilter, statusFilter])
 
   const activeCount = accounts.filter((a) => a.status === 'ACTIVE').length
   const inactiveCount = accounts.filter((a) => a.status === 'INACTIVE').length
 
   function updateFilter(name: string, value: string) {
-    const next = new URLSearchParams(searchParams)
-    if (value) next.set(name, value)
-    else next.delete(name)
-    setSearchParams(next)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (value) next.set(name, value)
+      else next.delete(name)
+      return next
+    })
   }
 
   function clearFilters() {
+    setSearchQuery('')
     setSearchParams(new URLSearchParams())
   }
 
@@ -94,30 +120,44 @@ function StaffAccountListPage() {
     setActionError(null)
     setActionSuccess(null)
 
-    const isCurrentManager = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
-    if (isCurrentManager) {
-      setActionError('Self-deactivation safeguard: You cannot deactivate your own currently authenticated Manager account.')
-      return
+    const isRetry = account.status === 'INACTIVE' && account.role === 'Technician' && account.dispatchSyncStatus === 'PENDING_RETRY'
+
+    if (!isRetry) {
+      const isCurrentManager = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+      if (isCurrentManager) {
+        setActionError('Self-deactivation safeguard: You cannot deactivate your own currently authenticated Manager account.')
+        return
+      }
+
+      const techNote = account.role === 'Technician' && account.technicianId
+        ? ' Linked Dispatch technician availability will also be deactivated.'
+        : ''
+
+      const confirmed = window.confirm(
+        `Deactivate staff account "${account.fullName || account.username}"? Future login will be prevented while historical data is preserved.${techNote}`
+      )
+      if (!confirmed) return
     }
-
-    const techNote = account.role === 'Technician' && account.technicianId
-      ? ' Linked Dispatch technician availability will also be deactivated.'
-      : ''
-
-    const confirmed = window.confirm(
-      `Deactivate staff account "${account.fullName || account.username}"? Future login will be prevented while historical data is preserved.${techNote}`
-    )
-    if (!confirmed) return
 
     setDeactivatingId(account.id)
     try {
       const updated = await deactivateStaffAccount(account.id)
       setAccounts((prev) =>
-        prev.map((item) => (item.id === account.id ? { ...item, status: updated.status } : item))
+        prev.map((item) => (item.id === account.id ? { ...item, status: updated.status, dispatchSyncStatus: updated.dispatchSyncStatus } : item))
       )
-      setActionSuccess(
-        `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and future login is prevented.`
-      )
+      if (updated.dispatchSyncStatus === 'PENDING_RETRY') {
+        setActionError(
+          `Staff access for "${account.fullName || account.username}" was revoked, but Dispatch technician synchronization is pending retry (Dispatch service is currently unreachable). Retry once Dispatch is restored to complete offboarding.`
+        )
+      } else if (account.role === 'Technician' && account.technicianId) {
+        setActionSuccess(
+          `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and linked Dispatch technician has been marked inactive for assignments.`
+        )
+      } else {
+        setActionSuccess(
+          `Successfully deactivated "${account.fullName || account.username}". Access has been revoked and future login is prevented.`
+        )
+      }
     } catch (err) {
       setActionError(staffAccountError(err))
     } finally {
@@ -184,7 +224,15 @@ function StaffAccountListPage() {
           </div>
         ) : error ? (
           <div className="state-block">
-            <div className="alert alert-danger mb-0" role="alert">{error}</div>
+            <div className="alert alert-danger mb-3" role="alert">{error}</div>
+            <button
+              type="button"
+              className="btn btn-outline-primary"
+              onClick={handleRetry}
+              id="staff-accounts-retry-btn"
+            >
+              Retry
+            </button>
           </div>
         ) : accounts.length === 0 ? (
           <div className="state-block">
@@ -201,8 +249,8 @@ function StaffAccountListPage() {
                 id="staff-search"
                 type="search"
                 placeholder="Search name, username or email"
-                value={query}
-                onChange={(e) => updateFilter('q', e.target.value)}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
 
               <label className="visually-hidden" htmlFor="staff-role-filter">Filter by role</label>
@@ -241,7 +289,7 @@ function StaffAccountListPage() {
                 </button>
               </div>
             ) : (
-              <div className="table-responsive">
+              <div className="table-responsive staff-table-responsive">
                 <table className="table table-hover app-table align-middle mb-0" id="staff-accounts-table">
                   <thead>
                     <tr>
@@ -263,18 +311,18 @@ function StaffAccountListPage() {
 
                       return (
                         <tr key={account.id}>
-                          <td>
+                          <td data-label="Staff member">
                             <strong>{account.fullName || account.username}</strong>
                             {isCurrentUser && <span className="badge bg-secondary ms-2">You</span>}
                           </td>
-                          <td><code>{account.username}</code></td>
-                          <td>{account.email}</td>
-                          <td>
+                          <td data-label="Username"><code>{account.username}</code></td>
+                          <td data-label="Email">{account.email}</td>
+                          <td data-label="Role">
                             <span className={`badge badge-role badge-role-${account.role.toLowerCase()}`}>
                               {account.role}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Linked technician">
                             {account.role === 'Technician' ? (
                               account.technicianId ? (
                                 linkedTech ? (
@@ -292,19 +340,22 @@ function StaffAccountListPage() {
                             ) : (
                               <span className="text-muted">—</span>
                             )}
+                            {account.role === 'Technician' && account.status === 'INACTIVE' && account.dispatchSyncStatus === 'PENDING_RETRY' && (
+                              <span className="badge bg-warning text-dark ms-2" title="Dispatch sync pending">Sync pending</span>
+                            )}
                           </td>
-                          <td>
+                          <td data-label="Status">
                             <span className={`badge ${account.status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}`}>
                               {account.status}
                             </span>
                           </td>
-                          <td>
+                          <td data-label="Created date">
                             {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
-                          <td>
+                          <td data-label="Created by">
                             {account.createdBy ? <code>{account.createdBy.slice(0, 8)}…</code> : <span className="text-muted">N/A</span>}
                           </td>
-                          <td>
+                          <td data-label="Action">
                             {account.status === 'ACTIVE' ? (
                               <button
                                 type="button"
@@ -314,6 +365,16 @@ function StaffAccountListPage() {
                                 onClick={() => void handleDeactivate(account)}
                               >
                                 {deactivatingId === account.id ? 'Deactivating…' : 'Deactivate'}
+                              </button>
+                            ) : account.role === 'Technician' && account.technicianId && account.dispatchSyncStatus === 'PENDING_RETRY' ? (
+                              <button
+                                type="button"
+                                className="btn btn-sm btn-outline-warning"
+                                disabled={deactivatingId === account.id}
+                                title="Retry Dispatch technician synchronization"
+                                onClick={() => void handleDeactivate(account)}
+                              >
+                                {deactivatingId === account.id ? 'Retrying…' : 'Retry sync'}
                               </button>
                             ) : (
                               <span className="text-muted small">Deactivated</span>

@@ -1,10 +1,10 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import StaffAccountListPage from './StaffAccountListPage'
 import CreateStaffAccountPage from './CreateStaffAccountPage'
-import { createStaffAccount, deactivateStaffAccount, getStaffAccounts } from '../../services/staffAccountService'
+import { createStaffAccount, deactivateStaffAccount, getStaffAccounts, type StaffAccountResponse } from '../../services/staffAccountService'
 import { getAllTechnicians } from '../../services/dispatchService'
 
 vi.mock('../../auth/useAuth', () => ({
@@ -158,6 +158,26 @@ describe('Staff Account Pages', () => {
     })
     expect(screen.queryByText('Kasun Bandara')).not.toBeInTheDocument()
     expect(screen.getByText('Kamal Jayawardena')).toBeInTheDocument()
+  })
+
+  it('preserves complete typed input during rapid character entry without dropping keystrokes', async () => {
+    getStaffAccountsMock.mockResolvedValue([sampleActiveAccount, sampleInactiveAccount])
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+    const searchInput = screen.getByPlaceholderText('Search name, username or email') as HTMLInputElement
+
+    // Simulate rapid keystroke sequence
+    const rapidSequence = ['q', 'qa', 'qa.', 'qa.r', 'qa.ra', 'qa.rap', 'qa.rapi', 'qa.rapid', 'qa.rapid.4faf199e']
+    for (const val of rapidSequence) {
+      fireEvent.change(searchInput, { target: { value: val } })
+    }
+
+    expect(searchInput.value).toBe('qa.rapid.4faf199e')
   })
 
   it('displays empty state and allows clearing filters', async () => {
@@ -409,5 +429,111 @@ describe('Staff Account Pages', () => {
       'Cannot deactivate the only active Manager account.'
     )
     confirmSpy.mockRestore()
+  })
+
+  it('shows warning alert and Retry sync button when technician deactivation Dispatch sync is pending retry', async () => {
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const technicianAccount: StaffAccountResponse = {
+      id: 'tech-1',
+      fullName: 'Amal Silva',
+      username: 'amal.tech',
+      email: 'amal@assms.lk',
+      role: 'Technician',
+      status: 'ACTIVE',
+      technicianId: 'tech-uuid-1',
+      createdAt: '2026-03-01T10:00:00Z',
+      createdBy: 'acc-1',
+    }
+
+    getStaffAccountsMock.mockResolvedValue([technicianAccount])
+    deactivateStaffAccountMock.mockResolvedValue({
+      ...technicianAccount,
+      status: 'INACTIVE',
+      dispatchSyncStatus: 'PENDING_RETRY',
+    })
+
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    const table = await screen.findByRole('table')
+    const deactivateBtn = within(table).getByRole('button', { name: 'Deactivate' })
+    fireEvent.click(deactivateBtn)
+
+    await waitFor(() => {
+      expect(deactivateStaffAccountMock).toHaveBeenCalledWith('tech-1')
+    })
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Dispatch technician synchronization is pending retry/i)
+
+    // Verify row now shows Sync pending badge and Retry sync button
+    const row = within(table).getByText('Amal Silva').closest('tr')!
+    expect(within(row).getByText('Sync pending')).toBeInTheDocument()
+    const retryBtn = within(row).getByRole('button', { name: 'Retry sync' })
+    expect(retryBtn).toBeInTheDocument()
+
+    // Test clicking retry sync calls deactivateStaffAccount again
+    deactivateStaffAccountMock.mockResolvedValueOnce({
+      ...technicianAccount,
+      status: 'INACTIVE',
+      dispatchSyncStatus: 'SYNCHRONIZED',
+    })
+    fireEvent.click(retryBtn)
+    await waitFor(() => {
+      expect(deactivateStaffAccountMock).toHaveBeenCalledWith('tech-1')
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent(/linked Dispatch technician has been marked inactive/i)
+
+    confirmSpy.mockRestore()
+  })
+
+  it('displays service error and Retry button when loading staff accounts fails, and allows retrying', async () => {
+    getStaffAccountsMock.mockRejectedValueOnce(new Error('Could not connect to the service. Please check your network connection and try again.'))
+    render(
+      <MemoryRouter>
+        <StaffAccountListPage />
+      </MemoryRouter>
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Could not connect to the service/i)
+    const retryBtn = screen.getByRole('button', { name: 'Retry' })
+    expect(retryBtn).toBeInTheDocument()
+
+    // Test clicking Retry
+    let resolveRetry!: (accounts: StaffAccountResponse[]) => void
+    getStaffAccountsMock.mockReturnValueOnce(new Promise((resolve) => { resolveRetry = resolve }))
+    fireEvent.click(retryBtn)
+
+    expect(screen.getByText('Loading staff accounts…')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument()
+
+    await act(async () => { resolveRetry([sampleActiveAccount]) })
+
+    expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('displays duplicate conflict error and never fabricates created success when creation is rejected', async () => {
+    createStaffAccountMock.mockRejectedValueOnce(new Error('The username, email or technician link is already in use.'))
+    render(
+      <MemoryRouter>
+        <CreateStaffAccountPage />
+      </MemoryRouter>
+    )
+
+    fireEvent.change(screen.getByLabelText('Full name'), { target: { value: 'Duplicate User' } })
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'duplicate.user' } })
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'duplicate@assms.com' } })
+    fireEvent.change(screen.getByLabelText('Initial password'), { target: { value: 'ValidPassword123!' } })
+    fireEvent.change(screen.getByLabelText('Confirm password'), { target: { value: 'ValidPassword123!' } })
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create staff account' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(/The username, email or technician link is already in use/i)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Created Duplicate User/i)).not.toBeInTheDocument()
   })
 })
