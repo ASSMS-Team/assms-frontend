@@ -315,7 +315,7 @@ function StaffAccountListPage() {
                             <strong>{account.fullName || account.username}</strong>
                             {isCurrentUser && <span className="badge bg-secondary ms-2">You</span>}
                           </td>
-                          <td data-label="Username"><code>{account.username}</code></td>
+                          <td data-label="Username"><code className="code-badge">{account.username}</code></td>
                           <td data-label="Email">{account.email}</td>
                           <td data-label="Role">
                             <span className={`badge badge-role badge-role-${account.role.toLowerCase()}`}>
@@ -331,7 +331,7 @@ function StaffAccountListPage() {
                                   </Link>
                                 ) : (
                                   <span title={account.technicianId}>
-                                    <code>{account.technicianId.slice(0, 8)}…</code>
+                                    <code className="code-badge">{account.technicianId.slice(0, 8)}…</code>
                                   </span>
                                 )
                               ) : (
@@ -353,7 +353,7 @@ function StaffAccountListPage() {
                             {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : 'N/A'}
                           </td>
                           <td data-label="Created by">
-                            {account.createdBy ? <code>{account.createdBy.slice(0, 8)}…</code> : <span className="text-muted">N/A</span>}
+                            {account.createdBy ? <code className="code-badge">{account.createdBy.slice(0, 8)}…</code> : <span className="text-muted">N/A</span>}
                           </td>
                           <td data-label="Action">
                             {account.status === 'ACTIVE' ? (

@@ -3,7 +3,7 @@
   --text-h: #08060d;
   --bg: #fff;
   --border: #e5e4e7;
-  --code-bg: #f4f3ec;
+  --code-bg: #ffffff;
   --accent: #aa3bff;
   --accent-bg: rgba(170, 59, 255, 0.1);
   --accent-border: rgba(170, 59, 255, 0.5);
@@ -36,7 +36,7 @@
     --text-h: #f3f4f6;
     --bg: #16171d;
     --border: #2e303a;
-    --code-bg: #1f2028;
+    --code-bg: #ffffff;
     --accent: #c084fc;
     --accent-bg: rgba(192, 132, 252, 0.15);
     --accent-border: rgba(192, 132, 252, 0.5);
@@ -96,13 +96,12 @@ p {
 code {
   font-family: var(--mono);
   display: inline-flex;
+  align-items: center;
   border-radius: 4px;
-  color: var(--text-h);
-}
-
-code {
-  font-size: 15px;
+  color: #203c30;
+  font-size: 0.84rem;
   line-height: 135%;
-  padding: 4px 8px;
+  padding: 0.18rem 0.45rem;
   background: var(--code-bg);
+  border: 1px solid #d4dcd2;
 }
