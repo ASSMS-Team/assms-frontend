@@ -6,8 +6,25 @@ import { deactivateStaffAccount, getStaffAccounts, staffAccountError } from '../
 import type { StaffAccountResponse } from '../../services/staffAccountService'
 import { getAllTechnicians } from '../../services/dispatchService'
 import type { TechnicianResponse } from '../../types/technician'
+import './StaffAccountListPage.css'
 
 const ROLES = ['Agent', 'Dispatcher', 'Technician', 'Manager'] as const
+
+const ROLE_AVATAR_COLORS: Record<string, [string, string]> = {
+  Agent: ['#7a8cff', '#3a45b8'],
+  Dispatcher: ['#ffc94d', '#c78400'],
+  Manager: ['#ff8a80', '#c0392b'],
+  Technician: ['#5db8ff', '#0b5aa6'],
+}
+
+function getInitials(name: string): string {
+  const parts = name.split(/[.\s_]/).filter(Boolean)
+  if (parts.length === 0) return '?'
+  return parts
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('')
+}
 
 function StaffAccountListPage() {
   const { staff } = useAuth()
@@ -166,55 +183,55 @@ function StaffAccountListPage() {
   }
 
   return (
-    <>
-      <div className="page-head">
+    <div className="staff-container">
+      <div className="staff-head">
         <div>
-          <h1 className="page-title">Staff accounts</h1>
-          <p className="page-sub">Internal logins, assigned roles, and access statuses across the organization.</p>
+          <h1>Staff accounts</h1>
+          <p>Manage who can sign in and what role they have.</p>
         </div>
-        <Link className="btn btn-primary" to="/staff-accounts/new" id="staff-accounts-create-link">
-          ＋ Create account
+        <Link className="staff-create-btn" to="/staff-accounts/new" id="staff-accounts-create-link">
+          + Create account
         </Link>
       </div>
 
       {actionSuccess && (
-        <div className="alert alert-success alert-dismissible" role="status">
+        <div className="alert alert-success alert-dismissible mb-4" role="status">
           {actionSuccess}
         </div>
       )}
 
       {actionError && (
-        <div className="alert alert-danger" role="alert">
+        <div className="alert alert-danger mb-4" role="alert">
           {actionError}
         </div>
       )}
 
       {!loading && !error && accounts.length > 0 && (
-        <section className="operations-metrics" aria-label="Staff accounts summary">
-          <article>
+        <section className="staff-stats" aria-label="Staff accounts summary">
+          <div className="staff-stat">
             <span>Total staff</span>
-            <strong>{accounts.length}</strong>
+            <b>{accounts.length}</b>
             <small>Registered logins</small>
-          </article>
-          <article>
+          </div>
+          <div className="staff-stat">
             <span>Active</span>
-            <strong>{activeCount}</strong>
-            <small>Eligible for login</small>
-          </article>
-          <article>
+            <b>{activeCount}</b>
+            <small>Eligible to sign in</small>
+          </div>
+          <div className="staff-stat">
             <span>Inactive</span>
-            <strong>{inactiveCount}</strong>
-            <small>Access deactivated</small>
-          </article>
-          <article>
+            <b>{inactiveCount}</b>
+            <small>Access turned off</small>
+          </div>
+          <div className="staff-stat">
             <span>Roles in use</span>
-            <strong>{new Set(accounts.map((a) => a.role)).size}</strong>
+            <b>{new Set(accounts.map((a) => a.role)).size}</b>
             <small>Across operations</small>
-          </article>
+          </div>
         </section>
       )}
 
-      <div className="card app-card">
+      <div className="staff-panel">
         {loading ? (
           <div className="state-block">
             <div className="spinner-border text-primary" role="status">
@@ -235,27 +252,36 @@ function StaffAccountListPage() {
             </button>
           </div>
         ) : accounts.length === 0 ? (
-          <div className="state-block">
-            <div className="empty-mark">0</div>
-            <p className="state-title">No staff accounts found</p>
-            <p className="state-text">Provision the first staff account to provide internal system access.</p>
-            <Link className="btn btn-primary" to="/staff-accounts/new">Create staff account</Link>
+          <div className="empty">
+            <b>No staff accounts found</b>
+            <p>Provision the first staff account to provide internal system access.</p>
+            <Link className="staff-create-btn" to="/staff-accounts/new">+ Create staff account</Link>
           </div>
         ) : (
           <>
-            <div className="operations-toolbar">
-              <label className="visually-hidden" htmlFor="staff-search">Search staff accounts</label>
-              <input
-                id="staff-search"
-                type="search"
-                placeholder="Search name, username or email"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
+            <div className="staff-tools">
+              <div className="staff-search">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <circle cx="11" cy="11" r="7" />
+                  <path d="M20 20l-3.5-3.5" />
+                </svg>
+                <label className="visually-hidden" htmlFor="staff-search">Search staff accounts</label>
+                <input
+                  className="staff-field"
+                  id="staff-search"
+                  type="search"
+                  placeholder="Search name, username or email"
+                  aria-label="Search staff"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
 
               <label className="visually-hidden" htmlFor="staff-role-filter">Filter by role</label>
               <select
+                className="staff-field"
                 id="staff-role-filter"
+                aria-label="Filter by role"
                 value={roleFilter}
                 onChange={(e) => updateFilter('role', e.target.value)}
               >
@@ -267,7 +293,9 @@ function StaffAccountListPage() {
 
               <label className="visually-hidden" htmlFor="staff-status-filter">Filter by status</label>
               <select
+                className="staff-field"
                 id="staff-status-filter"
+                aria-label="Filter by status"
                 value={statusFilter}
                 onChange={(e) => updateFilter('status', e.target.value)}
               >
@@ -275,122 +303,141 @@ function StaffAccountListPage() {
                 <option value="ACTIVE">Active</option>
                 <option value="INACTIVE">Inactive</option>
               </select>
-
-              <span>{filteredAccounts.length} shown</span>
             </div>
 
             {filteredAccounts.length === 0 ? (
-              <div className="state-block">
-                <div className="empty-mark">0</div>
-                <p className="state-title">No staff accounts match these filters</p>
-                <p className="state-text">Clear a filter or search with a different term.</p>
-                <button type="button" className="btn btn-outline-secondary" onClick={clearFilters}>
+              <div className="empty">
+                <b>No staff accounts match these filters</b>
+                <p>Clear a filter or search with a different term.</p>
+                <button type="button" className="staff-ghost" onClick={clearFilters}>
                   Clear filters
                 </button>
               </div>
             ) : (
-              <div className="table-responsive staff-table-responsive">
-                <table className="table table-hover app-table align-middle mb-0" id="staff-accounts-table">
-                  <thead>
-                    <tr>
-                      <th scope="col">Staff member</th>
-                      <th scope="col">Username</th>
-                      <th scope="col">Email</th>
-                      <th scope="col">Role</th>
-                      <th scope="col">Linked technician</th>
-                      <th scope="col">Status</th>
-                      <th scope="col">Created date</th>
-                      <th scope="col">Created by</th>
-                      <th scope="col">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredAccounts.map((account) => {
-                      const linkedTech = account.technicianId ? technicianMap.get(account.technicianId) : null
-                      const isCurrentUser = account.id === staff?.id || (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+              <>
+                <div className="staff-table-wrap">
+                  <table className="staff-table" id="staff-accounts-table">
+                    <thead>
+                      <tr>
+                        <th scope="col">Staff member</th>
+                        <th scope="col">Username</th>
+                        <th scope="col">Role</th>
+                        <th scope="col">Linked technician</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Created</th>
+                        <th scope="col"></th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredAccounts.map((account) => {
+                        const linkedTech = account.technicianId ? technicianMap.get(account.technicianId) : null
+                        const isCurrentUser =
+                          account.id === staff?.id ||
+                          (Boolean(staff?.username) && account.username.toLowerCase() === staff?.username.toLowerCase())
+                        const avatarColors = ROLE_AVATAR_COLORS[account.role] ?? ['#7a8cff', '#3a45b8']
+                        const initials = getInitials(account.fullName || account.username)
 
-                      return (
-                        <tr key={account.id}>
-                          <td data-label="Staff member">
-                            <strong>{account.fullName || account.username}</strong>
-                            {isCurrentUser && <span className="badge bg-secondary ms-2">You</span>}
-                          </td>
-                          <td data-label="Username"><code className="code-badge">{account.username}</code></td>
-                          <td data-label="Email">{account.email}</td>
-                          <td data-label="Role">
-                            <span className={`badge badge-role badge-role-${account.role.toLowerCase()}`}>
-                              {account.role}
-                            </span>
-                          </td>
-                          <td data-label="Linked technician">
-                            {account.role === 'Technician' ? (
-                              account.technicianId ? (
-                                linkedTech ? (
-                                  <Link to={`/technicians/${linkedTech.id}`}>
-                                    <strong>{linkedTech.reference}</strong> <small className="text-muted">({linkedTech.fullName})</small>
-                                  </Link>
+                        return (
+                          <tr key={account.id} className={`staff-row${account.status === 'ACTIVE' ? '' : ' off'}`}>
+                            <td data-label="Staff member">
+                              <div className="person">
+                                <div
+                                  className="av"
+                                  style={{
+                                    '--c1': avatarColors[0],
+                                    '--c2': avatarColors[1],
+                                  } as React.CSSProperties}
+                                >
+                                  {initials}
+                                </div>
+                                <div>
+                                  <b>
+                                    {account.fullName || account.username}
+                                    {isCurrentUser && <span className="you">You</span>}
+                                  </b>
+                                  <small>{account.email}</small>
+                                </div>
+                              </div>
+                            </td>
+                            <td data-label="Username">
+                              <span className="mono">{account.username}</span>
+                            </td>
+                            <td data-label="Role">
+                              <span className={`role r-${account.role.toLowerCase()}`}>
+                                {account.role}
+                              </span>
+                            </td>
+                            <td data-label="Linked technician">
+                              {account.role === 'Technician' ? (
+                                account.technicianId ? (
+                                  linkedTech ? (
+                                    <Link className="tech" to={`/technicians/${linkedTech.id}`}>
+                                      <b>{linkedTech.reference}</b>
+                                      <small>({linkedTech.fullName})</small>
+                                    </Link>
+                                  ) : (
+                                    <span title={account.technicianId}>
+                                      <code className="mono">{account.technicianId.slice(0, 8)}…</code>
+                                    </span>
+                                  )
                                 ) : (
-                                  <span title={account.technicianId}>
-                                    <code className="code-badge">{account.technicianId.slice(0, 8)}…</code>
-                                  </span>
+                                  <span className="none">Unlinked</span>
                                 )
                               ) : (
-                                <span className="text-muted">Unlinked</span>
-                              )
-                            ) : (
-                              <span className="text-muted">—</span>
-                            )}
-                            {account.role === 'Technician' && account.status === 'INACTIVE' && account.dispatchSyncStatus === 'PENDING_RETRY' && (
-                              <span className="badge bg-warning text-dark ms-2" title="Dispatch sync pending">Sync pending</span>
-                            )}
-                          </td>
-                          <td data-label="Status">
-                            <span className={`badge ${account.status === 'ACTIVE' ? 'badge-active' : 'badge-inactive'}`}>
-                              {account.status}
-                            </span>
-                          </td>
-                          <td data-label="Created date">
-                            {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : 'N/A'}
-                          </td>
-                          <td data-label="Created by">
-                            {account.createdBy ? <code className="code-badge">{account.createdBy.slice(0, 8)}…</code> : <span className="text-muted">N/A</span>}
-                          </td>
-                          <td data-label="Action">
-                            {account.status === 'ACTIVE' ? (
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-danger"
-                                disabled={isCurrentUser || deactivatingId === account.id}
-                                title={isCurrentUser ? 'You cannot deactivate your own account' : 'Deactivate staff account'}
-                                onClick={() => void handleDeactivate(account)}
-                              >
-                                {deactivatingId === account.id ? 'Deactivating…' : 'Deactivate'}
-                              </button>
-                            ) : account.role === 'Technician' && account.technicianId && account.dispatchSyncStatus === 'PENDING_RETRY' ? (
-                              <button
-                                type="button"
-                                className="btn btn-sm btn-outline-warning"
-                                disabled={deactivatingId === account.id}
-                                title="Retry Dispatch technician synchronization"
-                                onClick={() => void handleDeactivate(account)}
-                              >
-                                {deactivatingId === account.id ? 'Retrying…' : 'Retry sync'}
-                              </button>
-                            ) : (
-                              <span className="text-muted small">Deactivated</span>
-                            )}
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                                <span className="none">—</span>
+                              )}
+                              {account.role === 'Technician' && account.status === 'INACTIVE' && account.dispatchSyncStatus === 'PENDING_RETRY' && (
+                                <span className="badge bg-warning text-dark ms-2" title="Dispatch sync pending">Sync pending</span>
+                              )}
+                            </td>
+                            <td data-label="Status">
+                              <span className={`st${account.status === 'ACTIVE' ? '' : ' in'}`}>
+                                {account.status}
+                              </span>
+                            </td>
+                            <td data-label="Created" className="date">
+                              {account.createdAt ? new Date(account.createdAt).toLocaleDateString() : 'N/A'}
+                            </td>
+                            <td data-label="Action">
+                              {account.status === 'ACTIVE' ? (
+                                <button
+                                  type="button"
+                                  className="act"
+                                  disabled={isCurrentUser || deactivatingId === account.id}
+                                  title={isCurrentUser ? 'You cannot deactivate your own account' : 'Deactivate staff account'}
+                                  onClick={() => void handleDeactivate(account)}
+                                >
+                                  {deactivatingId === account.id ? 'Deactivating…' : 'Deactivate'}
+                                </button>
+                              ) : account.role === 'Technician' && account.technicianId && account.dispatchSyncStatus === 'PENDING_RETRY' ? (
+                                <button
+                                  type="button"
+                                  className="act ok"
+                                  disabled={deactivatingId === account.id}
+                                  title="Retry Dispatch technician synchronization"
+                                  onClick={() => void handleDeactivate(account)}
+                                >
+                                  {deactivatingId === account.id ? 'Retrying…' : 'Retry sync'}
+                                </button>
+                              ) : (
+                                <span className="text-muted small">Deactivated</span>
+                              )}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="foot" id="count" aria-live="polite">
+                  Showing {filteredAccounts.length} of {accounts.length} staff
+                </div>
+              </>
             )}
           </>
         )}
       </div>
-    </>
+    </div>
   )
 }
 
