@@ -52,6 +52,8 @@
 /* filters */
 .job-completions-container .filters {
   display: flex;
+  /* Bootstrap's .card defaults to a vertical flex layout. */
+  flex-direction: row;
   flex-wrap: wrap;
   gap: 16px 20px;
   align-items: flex-end;
