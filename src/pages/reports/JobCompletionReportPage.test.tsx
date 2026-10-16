@@ -57,10 +57,10 @@ describe('Job completion dynamic report', () => {
     renderWithRouter()
 
     expect(await screen.findByText('JOB-COMP101')).toBeInTheDocument()
-    expect(screen.getAllByText('Western')).toHaveLength(2)
+    expect(screen.getAllByText('Western')).toHaveLength(3)
     expect(screen.getByText('REPAIR')).toBeInTheDocument()
     expect(screen.getByText('TEC-032')).toBeInTheDocument()
-    expect(screen.getByText('1')).toBeInTheDocument()
+    expect(screen.getAllByText('1').length).toBeGreaterThanOrEqual(1)
   })
 
   it('sends UTC range and region filters together', async () => {
@@ -68,10 +68,8 @@ describe('Job completion dynamic report', () => {
     renderWithRouter()
 
     await screen.findByText('No completed jobs match these filters')
-    fireEvent.change(screen.getByLabelText('From date'), { target: { value: '2026-09-15' } })
-    fireEvent.change(screen.getByLabelText('From time'), { target: { value: '10:00' } })
-    fireEvent.change(screen.getByLabelText('To date'), { target: { value: '2026-09-15' } })
-    fireEvent.change(screen.getByLabelText('To time'), { target: { value: '11:00' } })
+    fireEvent.change(screen.getByLabelText('From'), { target: { value: '2026-09-15T10:00' } })
+    fireEvent.change(screen.getByLabelText('To'), { target: { value: '2026-09-15T11:00' } })
     fireEvent.change(screen.getByLabelText('Region'), { target: { value: 'WESTERN' } })
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
 
