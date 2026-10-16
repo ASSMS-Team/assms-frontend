@@ -46,6 +46,22 @@ function AppLayout() {
 
   const initials = getInitials(staff?.username)
 
+  const isCustomersActive =
+    location.pathname === '/customers' ||
+    (location.pathname.startsWith('/customers/') && location.pathname !== '/customers/new')
+
+  const isJobsActive =
+    location.pathname === '/jobs' ||
+    (location.pathname.startsWith('/jobs/') && location.pathname !== '/jobs/new')
+
+  const isTechniciansActive =
+    location.pathname === '/technicians' ||
+    (location.pathname.startsWith('/technicians/') && location.pathname !== '/technicians/new')
+
+  const isStaffAccountsActive =
+    location.pathname === '/staff-accounts' ||
+    (location.pathname.startsWith('/staff-accounts/') && location.pathname !== '/staff-accounts/new')
+
   return (
     <div className="app-shell">
       {/* SVG Icon Definitions */}
@@ -115,7 +131,16 @@ function AppLayout() {
 
         <nav id="nav" ref={navRef} className="operations-nav" aria-label="Sidebar navigation">
           <div className="grp">Workspace</div>
-          <NavLink className={navClass} to="/customers" end onClick={closeMenu} data-t="Customers">
+          <NavLink
+            className={({ isActive }) =>
+              `operations-nav-link${isActive || isCustomersActive ? ' active' : ''}`
+            }
+            aria-current={isCustomersActive ? 'page' : undefined}
+            to="/customers"
+            end
+            onClick={closeMenu}
+            data-t="Customers"
+          >
             <svg className="i" aria-hidden="true"><use href="#users" /></svg>
             Customers
           </NavLink>
@@ -140,7 +165,16 @@ function AppLayout() {
             </NavLink>
           )}
           {canDispatch && (
-            <NavLink className={navClass} to="/jobs" onClick={closeMenu} data-t="Jobs">
+            <NavLink
+              className={({ isActive }) =>
+                `operations-nav-link${isActive || isJobsActive ? ' active' : ''}`
+              }
+              aria-current={isJobsActive ? 'page' : undefined}
+              to="/jobs"
+              end
+              onClick={closeMenu}
+              data-t="Jobs"
+            >
               <svg className="i" aria-hidden="true"><use href="#jobs" /></svg>
               Jobs
             </NavLink>
@@ -152,7 +186,16 @@ function AppLayout() {
             </NavLink>
           )}
           {canDispatch && (
-            <NavLink className={navClass} to="/technicians" onClick={closeMenu} data-t="Technicians">
+            <NavLink
+              className={({ isActive }) =>
+                `operations-nav-link${isActive || isTechniciansActive ? ' active' : ''}`
+              }
+              aria-current={isTechniciansActive ? 'page' : undefined}
+              to="/technicians"
+              end
+              onClick={closeMenu}
+              data-t="Technicians"
+            >
               <svg className="i" aria-hidden="true"><use href="#wrench" /></svg>
               Technicians
             </NavLink>
@@ -189,7 +232,16 @@ function AppLayout() {
           {hasRole('Manager') && (
             <>
               <div className="grp">Admin</div>
-              <NavLink className={navClass} to="/staff-accounts" end onClick={closeMenu} data-t="Staff accounts">
+              <NavLink
+                className={({ isActive }) =>
+                  `operations-nav-link${isActive || isStaffAccountsActive ? ' active' : ''}`
+                }
+                aria-current={isStaffAccountsActive ? 'page' : undefined}
+                to="/staff-accounts"
+                end
+                onClick={closeMenu}
+                data-t="Staff accounts"
+              >
                 <svg className="i" aria-hidden="true"><use href="#shield" /></svg>
                 Staff accounts
               </NavLink>
