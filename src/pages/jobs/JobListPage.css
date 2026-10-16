@@ -389,8 +389,58 @@
   }
 }
 
+@media (max-width: 768px) {
+  .jobs-container .th {
+    display: none;
+  }
+  .jobs-container .row-item {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .jobs-container .row-item .ref {
+    grid-column: 1 / -1;
+  }
+  .jobs-container .row-item > [data-l]:before {
+    content: attr(data-l);
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 440px) {
+  .jobs-container .row-item {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1000px) {
   .jobs-container .stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .jobs-container .stats {
+    grid-template-columns: 1fr;
+  }
+  .jobs-container .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .jobs-container .btn-create,
+  .jobs-container .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .jobs-container .tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .jobs-container .search,
+  .jobs-container select.field {
+    width: 100%;
+    min-width: 100%;
   }
 }

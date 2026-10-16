@@ -2,12 +2,49 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-import StatusBadge from '../../components/common/StatusBadge'
 import { getMyAssignments } from '../../services/dispatchService'
 import type { MyAssignmentResponse } from '../../types/assignment'
+import './MyJobsPage.css'
+
+type FilterTab = 'assigned' | 'progress' | 'done'
+
+function getStatusCategory(status: string): FilterTab {
+  const s = (status || '').toUpperCase()
+  if (s === 'COMPLETED' || s === 'DONE') {
+    return 'done'
+  }
+  if (s === 'IN_PROGRESS' || s === 'IN PROGRESS') {
+    return 'progress'
+  }
+  return 'assigned'
+}
+
+function getStatusBadgeClass(status: string): string {
+  const s = (status || '').toUpperCase()
+  if (s === 'COMPLETED' || s === 'DONE' || s === 'OK') {
+    return 'ok'
+  }
+  if (s === 'IN_PROGRESS' || s === 'IN PROGRESS' || s === 'BUSY') {
+    return 'busy'
+  }
+  return 'assigned'
+}
+
+function formatAssignedDate(dateString: string): { date: string; time: string } {
+  try {
+    const d = new Date(dateString)
+    if (isNaN(d.getTime())) return { date: dateString, time: '' }
+    const date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true })
+    return { date, time }
+  } catch {
+    return { date: dateString, time: '' }
+  }
+}
 
 function MyJobsPage() {
   const [assignments, setAssignments] = useState<MyAssignmentResponse[]>([])
+  const [filter, setFilter] = useState<FilterTab>('assigned')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [profileMissing, setProfileMissing] = useState(false)
@@ -40,84 +77,150 @@ function MyJobsPage() {
     void load()
   }, [reload])
 
+  const assignedCount = assignments.filter((a) => getStatusCategory(a.jobStatus) === 'assigned').length
+  const inProgressCount = assignments.filter((a) => getStatusCategory(a.jobStatus) === 'progress').length
+  const completedCount = assignments.filter((a) => getStatusCategory(a.jobStatus) === 'done').length
+
+  const filteredAssignments = assignments.filter((a) => getStatusCategory(a.jobStatus) === filter)
+
   return (
-    <>
-      <div className="page-head">
+    <div className="my-jobs-container">
+      <div className="hd2">
         <div>
-          <h1 className="page-title">My Jobs</h1>
-          <p className="page-sub">Service work currently assigned to you.</p>
+          <h1>My jobs</h1>
+          <p className="sub">Service work assigned to you.</p>
         </div>
       </div>
 
-      <div className="card app-card">
-        {loading ? (
+      {loading ? (
+        <div className="card">
           <div className="state-block">
             <div className="spinner-border text-primary" role="status" aria-label="Loading" />
             <p className="state-text">Loading your assignments…</p>
           </div>
-        ) : error ? (
+        </div>
+      ) : error ? (
+        <div className="card">
           <div className="state-block">
             {profileMissing && <p className="state-title">Technician profile setup required</p>}
-            <div className={`alert ${profileMissing ? 'alert-warning' : 'alert-danger'} mb-0`} role="alert">{error}</div>
-            <button className="btn btn-outline-primary mt-3" onClick={() => setReload((value) => value + 1)}>Try again</button>
+            <div className={`alert ${profileMissing ? 'alert-warning' : 'alert-danger'} mb-0`} role="alert">
+              {error}
+            </div>
+            <button
+              type="button"
+              className="btn btn-outline-primary mt-3 retry-btn"
+              onClick={() => setReload((value) => value + 1)}
+            >
+              Try again
+            </button>
           </div>
-        ) : assignments.length === 0 ? (
-          <div className="state-block">
+        </div>
+      ) : assignments.length === 0 ? (
+        <div className="card">
+          <div className="empty no-border">
             <div className="empty-mark" aria-hidden="true">✓</div>
-            <p className="state-title">No jobs assigned</p>
-            <p className="state-text">You have no active assignments right now. Check back later.</p>
+            <b>No jobs assigned</b>
+            You have no active assignments right now. Check back later.
           </div>
-        ) : (
-          <div className="table-responsive">
-            <table className="table table-hover app-table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th>Reference</th>
-                  <th>Priority</th>
-                  <th>Summary</th>
-                  <th>Status</th>
-                  <th>Assigned</th>
-                </tr>
-              </thead>
-              <tbody>
-                {assignments.map((a) => (
-                  <tr
-                    className="row-link"
+        </div>
+      ) : (
+        <>
+          <div className="tabs">
+            <button
+              type="button"
+              aria-pressed={filter === 'assigned'}
+              data-f="assigned"
+              onClick={() => setFilter('assigned')}
+            >
+              Assigned<b>{assignedCount}</b>
+            </button>
+            <button
+              type="button"
+              aria-pressed={filter === 'progress'}
+              data-f="progress"
+              onClick={() => setFilter('progress')}
+            >
+              In progress<b>{inProgressCount}</b>
+            </button>
+            <button
+              type="button"
+              aria-pressed={filter === 'done'}
+              data-f="done"
+              onClick={() => setFilter('done')}
+            >
+              Completed<b>{completedCount}</b>
+            </button>
+          </div>
+
+          <div className="card">
+            <div className="row th">
+              <span>Job</span>
+              <span>Priority</span>
+              <span>Summary</span>
+              <span>Status</span>
+              <span>Assigned</span>
+            </div>
+
+            {filteredAssignments.length === 0 ? (
+              <div className="empty" id="empty">
+                <b>No jobs here yet</b>
+                Jobs appear in this list when their status changes.
+              </div>
+            ) : (
+              filteredAssignments.map((a) => {
+                const { date, time } = formatAssignedDate(a.assignedAt)
+                const statusBadgeClass = getStatusBadgeClass(a.jobStatus)
+                return (
+                  <div
+                    className="row"
                     key={a.assignmentId}
+                    data-s={getStatusCategory(a.jobStatus)}
                     onClick={() => navigate(`/jobs/${a.jobId}`)}
                   >
-                    <td>
+                    <span>
                       <Link
-                        className="row-link-name"
+                        className="row-link-name job-link"
                         to={`/jobs/${a.jobId}`}
                         id={`my-job-link-${a.assignmentId}`}
+                        onClick={(e) => e.stopPropagation()}
                       >
-                        {a.jobReference}
+                        <b>{a.jobReference}</b>
                       </Link>
-                      <small className="d-block text-muted">
+                      <small>
                         {[a.serviceCategory, a.region].filter(Boolean).join(' · ') || 'Location not recorded'}
                       </small>
-                    </td>
-                    <td>{a.priority ?? <span className="text-muted">—</span>}</td>
-                    <td>
-                      {a.problemDescription
-                        ? <span className="text-truncate d-inline-block" style={{ maxWidth: '22rem' }} title={a.problemDescription}>{a.problemDescription}</span>
-                        : <span className="text-muted">—</span>}
-                    </td>
-                    <td><StatusBadge status={a.jobStatus} /></td>
-                    <td>
-                      <span className="text-muted" style={{ fontSize: '0.875rem' }}>
-                        {new Date(a.assignedAt).toLocaleString()}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    </span>
+                    <span className={a.priority ? '' : 'mute'} data-l="Priority">
+                      {a.priority ?? '—'}
+                    </span>
+                    <span className={a.problemDescription ? '' : 'mute'} data-l="Summary">
+                      {a.problemDescription ? (
+                        <span
+                          className="text-truncate d-inline-block"
+                          style={{ maxWidth: '22rem', verticalAlign: 'bottom' }}
+                          title={a.problemDescription}
+                        >
+                          {a.problemDescription}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </span>
+                    <span data-l="Status">
+                      <i className={`st ${statusBadgeClass}`}>{a.jobStatus}</i>
+                    </span>
+                    <span data-l="Assigned">
+                      {date}
+                      {time && <small>{time}</small>}
+                    </span>
+                  </div>
+                )
+              })
+            )}
           </div>
-        )}
-      </div>
-    </>
+        </>
+      )}
+    </div>
   )
 }
 
