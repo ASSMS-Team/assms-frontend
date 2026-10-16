@@ -5,39 +5,89 @@ import axios from 'axios'
 import { getJobsByStatus } from '../../services/reportService'
 import type { ValidationProblemDetails } from '../../types/customer'
 import type { JobsByStatusReport } from '../../types/report'
+import './JobsByStatusPage.css'
 
-// The bounds the report was actually run with, as opposed to what is currently
-// typed into the two inputs. A new object is what re-runs the report, so
-// pressing Apply twice with the same dates refreshes rather than doing nothing.
 interface AppliedFilters {
   from: string
   to: string
 }
 
-// Blank on arrival: the page is useful before anyone picks a range, and an
-// empty form should not mean an empty screen.
 const NO_FILTERS: AppliedFilters = { from: '', to: '' }
 
+interface StageDefinition {
+  key: string
+  label: string
+  hint: string
+  color: string
+}
+
+const STAGES: StageDefinition[] = [
+  { key: 'CREATED', label: 'Created', hint: 'Raised, not yet assigned', color: 'var(--s-created)' },
+  { key: 'ASSIGNED', label: 'Assigned', hint: 'Waiting for a technician to start', color: 'var(--s-assigned)' },
+  { key: 'IN_PROGRESS', label: 'In progress', hint: 'Technician is on site', color: 'var(--s-progress)' },
+  { key: 'COMPLETED', label: 'Completed', hint: 'Work finished', color: 'var(--s-done)' },
+  { key: 'CANCELLED', label: 'Cancelled', hint: 'Closed without work', color: 'var(--s-cancel)' },
+]
+
+function toLocalDateIso(d: Date): string {
+  const z = new Date(d.getTime() - d.getTimezoneOffset() * 60000)
+  return z.toISOString().slice(0, 10)
+}
+
+function getPresetDates(days: number): { from: string; to: string } {
+  if (days === 0) {
+    return { from: '', to: '' }
+  }
+  const to = new Date()
+  const from = new Date()
+  from.setDate(to.getDate() - days)
+  return {
+    from: toLocalDateIso(from),
+    to: toLocalDateIso(to),
+  }
+}
+
+function formatDisplayDate(dateStr: string): string {
+  if (!dateStr) return ''
+  try {
+    const d = new Date(dateStr + 'T00:00:00')
+    if (Number.isNaN(d.getTime())) return dateStr
+    return d.toLocaleDateString('en-GB', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    })
+  } catch {
+    return dateStr
+  }
+}
+
+function getRangeDescription(fromVal: string, toVal: string): string {
+  if (fromVal && toVal) {
+    return `Raised ${formatDisplayDate(fromVal)} to ${formatDisplayDate(toVal)}`
+  }
+  if (fromVal) {
+    return `Raised since ${formatDisplayDate(fromVal)}`
+  }
+  if (toVal) {
+    return `Raised up to ${formatDisplayDate(toVal)}`
+  }
+  return 'All jobs'
+}
+
 function JobsByStatusPage() {
-  // Kept apart from the applied filters on purpose: typing a new date must not
-  // change the table underneath until Apply is pressed, or the numbers on
-  // screen would stop matching the range that produced them.
   const [from, setFrom] = useState('')
   const [to, setTo] = useState('')
+  const [activePreset, setActivePreset] = useState<number | null>(0)
+  const [clientError, setClientError] = useState<string | null>(null)
   const [applied, setApplied] = useState<AppliedFilters>(NO_FILTERS)
 
   const [report, setReport] = useState<JobsByStatusReport | null>(null)
-  // Keyed by field name, exactly as the API returns them - "from" and "to",
-  // which are already the names of the inputs, so they line up without
-  // translation.
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Guards against Apply being pressed again while a request is in flight:
-    // without it a slow response for the previous range could land after the
-    // new one's and leave the wrong numbers under the new dates.
     let cancelled = false
 
     async function load() {
@@ -56,17 +106,12 @@ function JobsByStatusPage() {
           return
         }
 
-        // Cleared so a refused filter cannot leave the previous range's table
-        // on screen next to the new range's dates.
         setReport(null)
 
         if (axios.isAxiosError<ValidationProblemDetails>(caught)) {
           const problem = caught.response?.data
 
           if (problem?.errors) {
-            // The 400: a value that is not a date, or a from that falls after
-            // its to. The API keys both against the query parameter to correct,
-            // so they render against the inputs rather than as a banner.
             setFieldErrors(problem.errors)
             setError(null)
           } else {
@@ -93,179 +138,251 @@ function JobsByStatusPage() {
     }
   }, [applied])
 
+  function handlePresetClick(days: number) {
+    setActivePreset(days)
+    setClientError(null)
+    setFieldErrors({})
+    setError(null)
+    const range = getPresetDates(days)
+    setFrom(range.from)
+    setTo(range.to)
+    setLoading(true)
+    setApplied(range)
+  }
+
+  function handleFromChange(val: string) {
+    setFrom(val)
+    setActivePreset(null)
+    if (clientError) setClientError(null)
+  }
+
+  function handleToChange(val: string) {
+    setTo(val)
+    setActivePreset(null)
+    if (clientError) setClientError(null)
+  }
+
   function handleApply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    // Marking the page as loading belongs here rather than in the effect: the
-    // button has to read "Loading..." from this render, and a setState reachable
-    // synchronously from an effect body is what causes the cascading renders the
-    // React guidance warns about. The first run needs none of this - the initial
-    // state already says loading.
+    if (from && to && from > to) {
+      setClientError('The start date is after the end date. Swap them or clear one.')
+      return
+    }
+
+    setClientError(null)
     setLoading(true)
     setError(null)
     setFieldErrors({})
-
     setApplied({ from, to })
   }
 
-  function errorsFor(field: string) {
-    const messages = fieldErrors[field]
+  const isFromBad = Boolean(clientError || fieldErrors.from)
+  const isToBad = Boolean(clientError || fieldErrors.to)
+  const isBad = Boolean(clientError || fieldErrors.from || fieldErrors.to)
 
-    if (!messages?.length) {
-      return null
+  const noteText = clientError
+    ? clientError
+    : fieldErrors.from?.length
+    ? fieldErrors.from.join(' ')
+    : fieldErrors.to?.length
+    ? fieldErrors.to.join(' ')
+    : 'Both dates are optional. Leave them blank to count every job.'
+
+  // Build status count lookup
+  const statusCountMap = new Map<string, number>()
+  if (report?.statuses) {
+    for (const item of report.statuses) {
+      statusCountMap.set(item.status.trim().toUpperCase(), item.count)
     }
-
-    return (
-      <ul className="invalid-feedback list-unstyled mb-0">
-        {messages.map((message) => (
-          <li key={message}>{message}</li>
-        ))}
-      </ul>
-    )
   }
 
+  const total = report ? report.total : 0
+
+  const stageRows = STAGES.map((stage) => {
+    const count = statusCountMap.get(stage.key) ?? 0
+    const percentage = total > 0 ? Math.round((count / total) * 100) : 0
+    return {
+      ...stage,
+      count,
+      percentage,
+    }
+  })
+
+  // Support any unexpected dynamic statuses from upstream read model
+  if (report?.statuses) {
+    const knownKeys = new Set(STAGES.map((s) => s.key))
+    for (const item of report.statuses) {
+      const key = item.status.trim().toUpperCase()
+      if (!knownKeys.has(key)) {
+        const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0
+        stageRows.push({
+          key,
+          label: item.status,
+          hint: `Status: ${item.status}`,
+          color: '#6b7280',
+          count: item.count,
+          percentage,
+        })
+      }
+    }
+  }
+
+  const nonZeroStages = stageRows.filter((s) => s.count > 0)
+  const rangeText = getRangeDescription(applied.from, applied.to)
   const invalidFilters = Object.keys(fieldErrors).length > 0
 
   return (
-    <>
-      <div className="page-head">
-        <div>
-          <h1 className="page-title">Jobs by status</h1>
-          <p className="page-sub">
-            How many jobs sit at each stage. Counted from when each job was
-            raised, not from when this report last updated.
-          </p>
+    <div className="jobs-by-status-container">
+      <h1>Jobs by status</h1>
+      <p className="sub">
+        How many jobs sit at each stage, counted from the date each job was raised.
+      </p>
+
+      <form className="card filters" id="filters" onSubmit={handleApply} noValidate>
+        <div className="presets" role="group" aria-label="Quick range">
+          <button
+            type="button"
+            data-days="0"
+            aria-pressed={activePreset === 0}
+            onClick={() => handlePresetClick(0)}
+          >
+            All time
+          </button>
+          <button
+            type="button"
+            data-days="7"
+            aria-pressed={activePreset === 7}
+            onClick={() => handlePresetClick(7)}
+          >
+            Last 7 days
+          </button>
+          <button
+            type="button"
+            data-days="30"
+            aria-pressed={activePreset === 30}
+            onClick={() => handlePresetClick(30)}
+          >
+            Last 30 days
+          </button>
         </div>
-      </div>
 
-      <div className="card app-card app-card-padded mb-3">
-        <form onSubmit={handleApply} noValidate>
-          <div className="row g-3 align-items-start">
-            <div className="col-sm-4">
-              <label className="form-label" htmlFor="from">
-                From
-              </label>
-              <input
-                id="from"
-                name="from"
-                type="date"
-                className={`form-control${fieldErrors.from ? ' is-invalid' : ''}`}
-                value={from}
-                onChange={(event) => setFrom(event.target.value)}
-                disabled={loading}
-                aria-invalid={Boolean(fieldErrors.from)}
-              />
-              {errorsFor('from')}
-            </div>
+        <label className="f" htmlFor="from">
+          <span>From</span>
+          <input
+            className={`inp${isFromBad ? ' bad' : ''}`}
+            type="date"
+            id="from"
+            name="from"
+            value={from}
+            onChange={(e) => handleFromChange(e.target.value)}
+            disabled={loading}
+            aria-invalid={isFromBad}
+          />
+        </label>
 
-            <div className="col-sm-4">
-              <label className="form-label" htmlFor="to">
-                To
-              </label>
-              <input
-                id="to"
-                name="to"
-                type="date"
-                className={`form-control${fieldErrors.to ? ' is-invalid' : ''}`}
-                value={to}
-                onChange={(event) => setTo(event.target.value)}
-                disabled={loading}
-                aria-invalid={Boolean(fieldErrors.to)}
-              />
-              {errorsFor('to')}
-            </div>
+        <label className="f" htmlFor="to">
+          <span>To</span>
+          <input
+            className={`inp${isToBad ? ' bad' : ''}`}
+            type="date"
+            id="to"
+            name="to"
+            value={to}
+            onChange={(e) => handleToChange(e.target.value)}
+            disabled={loading}
+            aria-invalid={isToBad}
+          />
+        </label>
 
-            <div className="col-sm-4">
-              {/* A hidden label keeps the button on the same baseline as the two
-                  inputs without leaving a stray word above it. */}
-              <label
-                className="form-label invisible d-none d-sm-block"
-                aria-hidden="true"
-              >
-                Apply
-              </label>
-              <button
-                type="submit"
-                className="btn btn-primary w-100"
-                disabled={loading}
-              >
-                {loading ? 'Loading...' : 'Apply'}
-              </button>
-            </div>
-          </div>
+        <button className="btn" type="submit" disabled={loading}>
+          {loading ? 'Loading...' : 'Apply'}
+        </button>
 
-          <p className="form-text mb-0">
-            Both dates are optional and independent. Leave them blank to count
-            every job.
-          </p>
-        </form>
-      </div>
+        <p className={`note${isBad ? ' err' : ''}`} id="note">
+          {noteText}
+        </p>
+      </form>
 
-      <div className="card app-card">
+      <section className="card report" aria-live="polite">
         {loading ? (
-          <div className="state-block">
-            <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
+          <div className="report-state" role="status">
+            <div className="spinner" />
             <p className="state-text">Loading report...</p>
           </div>
         ) : error ? (
-          <div className="state-block">
+          <div className="report-state error">
             <div className="alert alert-danger mb-0" role="alert">
               {error}
             </div>
           </div>
         ) : invalidFilters ? (
-          // The messages themselves already render against the inputs above, so
-          // this only has to explain why there is no table.
-          <div className="state-block">
-            <p className="state-title">The report was not run</p>
+          <div className="report-state">
+            <p className="report-state-title">The report was not run</p>
             <p className="state-text">Correct the dates above and apply again.</p>
           </div>
-        ) : report && report.statuses.length === 0 ? (
-          // Nothing matching is a normal outcome, not an error and not a missing
-          // page - say so rather than rendering a table with nothing but
-          // headers.
-          <div className="state-block">
-            <div className="empty-mark">0</div>
-            <p className="state-title">No jobs match these filters</p>
-            <p className="state-text">
-              Widen the date range, or clear both dates to count every job.
-            </p>
-          </div>
-        ) : report ? (
-          <div className="table-responsive">
-            <table className="table table-hover app-table align-middle mb-0">
-              <thead>
-                <tr>
-                  <th scope="col">Status</th>
-                  <th scope="col" className="text-end">
-                    Jobs
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {report.statuses.map((statusCount) => (
-                  <tr key={statusCount.status}>
-                    <td>{statusCount.status}</td>
-                    <td className="text-end">{statusCount.count}</td>
-                  </tr>
+        ) : (
+          <>
+            <div className="sum">
+              <div className="sum-head">
+                <div className="total">
+                  <span id="total">{total}</span>
+                  <small>jobs in total</small>
+                </div>
+                <div className="range" id="range">
+                  {rangeText}
+                </div>
+              </div>
+              <div className="stack" id="stack" role="img" aria-label="Share of jobs by status">
+                {nonZeroStages.map((stage) => (
+                  <i
+                    key={stage.key}
+                    title={`${stage.label}: ${stage.count}`}
+                    style={{
+                      flexGrow: stage.count,
+                      backgroundColor: stage.color,
+                    }}
+                  />
                 ))}
-              </tbody>
-              <tfoot>
-                <tr>
-                  {/* The API's own total, not a sum of the rows: the rows are
-                      what it grouped, and re-adding them here would be a second
-                      answer to the same question. */}
-                  <th scope="row">Total</th>
-                  <th className="text-end">{report.total}</th>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        ) : null}
-      </div>
-    </>
+              </div>
+            </div>
+
+            <ul className="rows" id="rows">
+              {stageRows.map((stage) => (
+                <li
+                  key={stage.key}
+                  className={`row${stage.count === 0 ? ' zero' : ''}`}
+                  style={
+                    {
+                      '--c': stage.color,
+                      '--w': `${stage.percentage}%`,
+                    } as React.CSSProperties
+                  }
+                >
+                  <div className="name">
+                    <span className="dot" style={{ backgroundColor: stage.color }} />
+                    <div>
+                      {stage.label}
+                      <small>{stage.hint}</small>
+                    </div>
+                  </div>
+                  <div className="track" aria-hidden="true">
+                    <b
+                      style={{
+                        width: `${stage.percentage}%`,
+                        backgroundColor: stage.color,
+                      }}
+                    />
+                  </div>
+                  <div className="n">{stage.count}</div>
+                  <div className="pct">{stage.percentage}%</div>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </section>
+    </div>
   )
 }
 
