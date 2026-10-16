@@ -130,7 +130,6 @@ function AppLayout() {
         <div className="head">
           <Link className="logo" to="/customers" onClick={closeMenu} aria-label="ASSMS home">
             <img alt="ASSMS" src={assmsLogo} />
-            <span>After-Sales Service Management System</span>
           </Link>
         </div>
 
