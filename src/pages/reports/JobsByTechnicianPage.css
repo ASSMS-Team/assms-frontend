@@ -377,6 +377,17 @@
 }
 
 @media(max-width: 640px) {
+  .jobs-by-technician-container .filters {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+  .jobs-by-technician-container .inp[type="datetime-local"],
+  .jobs-by-technician-container select.inp,
+  .jobs-by-technician-container .btn {
+    width: 100%;
+    min-width: 100%;
+  }
   .jobs-by-technician-container .row {
     grid-template-columns: 1fr auto auto;
     gap: 8px 12px;

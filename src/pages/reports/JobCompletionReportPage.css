@@ -429,6 +429,21 @@
 }
 
 @media(max-width: 640px) {
+  .job-completions-container .filters {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+  .job-completions-container .inp[type="datetime-local"],
+  .job-completions-container select.inp,
+  .job-completions-container .btn {
+    width: 100%;
+    min-width: 100%;
+  }
+  .job-completions-container .jobs-table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
   .job-completions-container .row {
     grid-template-columns: 1fr auto auto;
     gap: 8px 12px;

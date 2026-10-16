@@ -500,6 +500,29 @@
   }
 }
 
+@media (max-width: 480px) {
+  .signin-container {
+    padding: 8px;
+  }
+  .signin-container .pane {
+    padding: 24px 16px;
+  }
+  .signin-container .row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .signin-container .check {
+    font-size: 13px;
+  }
+  .signin-container .link {
+    font-size: 13px;
+  }
+  .signin-container .btn {
+    height: 46px;
+    font-size: 14px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .signin-container * {
     transition: none !important;

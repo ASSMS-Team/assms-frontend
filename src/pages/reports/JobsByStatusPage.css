@@ -356,6 +356,24 @@
 }
 
 @media(max-width: 640px) {
+  .jobs-by-status-container .filters {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 16px;
+  }
+  .jobs-by-status-container .presets {
+    width: 100%;
+    overflow-x: auto;
+  }
+  .jobs-by-status-container .presets button {
+    flex: 1;
+    white-space: nowrap;
+    text-align: center;
+  }
+  .jobs-by-status-container .inp,
+  .jobs-by-status-container .btn {
+    width: 100%;
+  }
   .jobs-by-status-container .row {
     grid-template-columns: 1fr auto auto;
     gap: 8px 12px;

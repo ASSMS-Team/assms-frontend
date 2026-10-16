@@ -344,8 +344,59 @@
   }
 }
 
+@media (max-width: 768px) {
+  .technicians-container .th {
+    display: none;
+  }
+  .technicians-container .row-item {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .technicians-container .row-item .person,
+  .technicians-container .row-item .sk {
+    grid-column: 1 / -1;
+  }
+  .technicians-container .row-item > [data-l]:before {
+    content: attr(data-l);
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 440px) {
+  .technicians-container .row-item {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 1000px) {
   .technicians-container .stats {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .technicians-container .stats {
+    grid-template-columns: 1fr;
+  }
+  .technicians-container .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .technicians-container .btn-create,
+  .technicians-container .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .technicians-container .tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .technicians-container .search,
+  .technicians-container select.field {
+    width: 100%;
+    min-width: 100%;
   }
 }
