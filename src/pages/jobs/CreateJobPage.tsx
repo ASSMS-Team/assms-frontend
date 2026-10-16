@@ -84,6 +84,11 @@ function CreateJobPage() {
     }, 2200)
   }
 
+  // Set page document title
+  useEffect(() => {
+    document.title = 'ASSMS · New service job'
+  }, [])
+
   // Load active customers
   useEffect(() => {
     async function load() {

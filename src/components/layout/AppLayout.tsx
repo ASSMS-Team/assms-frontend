@@ -3,13 +3,18 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { useAuth } from '../../auth/useAuth'
 import assmsLogo from '../../assets/assms-sidebar-logo.png'
 
-function getInitials(username?: string): string {
-  if (!username) return 'BM'
-  if (username.includes('.')) {
-    const parts = username.split('.')
-    return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase()
+function getInitials(username?: string, role?: string): string {
+  if (username) {
+    if (username.includes('.')) {
+      const parts = username.split('.')
+      return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase()
+    }
+    return username.slice(0, 2).toUpperCase()
   }
-  return username.slice(0, 2).toUpperCase()
+  if (role === 'Agent') return 'SA'
+  if (role === 'Dispatcher') return 'SD'
+  if (role === 'Technician') return 'ST'
+  return 'BM'
 }
 
 function AppLayout() {
@@ -44,7 +49,7 @@ function AppLayout() {
     }
   }, [location.pathname])
 
-  const initials = getInitials(staff?.username)
+  const initials = getInitials(staff?.username, staff?.role)
 
   const isCustomersActive =
     location.pathname === '/customers' ||
