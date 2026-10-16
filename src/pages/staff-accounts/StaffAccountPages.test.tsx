@@ -153,7 +153,7 @@ describe('Staff Account Pages', () => {
 
     expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByPlaceholderText('Search name, username or email'), {
+    fireEvent.change(screen.getByPlaceholderText('Search by name, username or email'), {
       target: { value: 'kamal' },
     })
     expect(screen.queryByText('Kasun Bandara')).not.toBeInTheDocument()
@@ -169,7 +169,7 @@ describe('Staff Account Pages', () => {
     )
 
     expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
-    const searchInput = screen.getByPlaceholderText('Search name, username or email') as HTMLInputElement
+    const searchInput = screen.getByPlaceholderText('Search by name, username or email') as HTMLInputElement
 
     // Simulate rapid keystroke sequence
     const rapidSequence = ['q', 'qa', 'qa.', 'qa.r', 'qa.ra', 'qa.rap', 'qa.rapi', 'qa.rapid', 'qa.rapid.4faf199e']
@@ -190,7 +190,7 @@ describe('Staff Account Pages', () => {
 
     expect(await screen.findByText('Kasun Bandara')).toBeInTheDocument()
 
-    fireEvent.change(screen.getByPlaceholderText('Search name, username or email'), {
+    fireEvent.change(screen.getByPlaceholderText('Search by name, username or email'), {
       target: { value: 'nonexistent' },
     })
     expect(await screen.findByText('No staff accounts match these filters')).toBeInTheDocument()

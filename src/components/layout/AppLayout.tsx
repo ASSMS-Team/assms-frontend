@@ -18,7 +18,7 @@ function AppLayout() {
     <div className="app-shell">
       <aside className={`operations-sidebar${menuOpen ? ' operations-sidebar-open' : ''}`} aria-label="Primary navigation">
         <Link className="operations-brand" to="/customers" onClick={closeMenu}>
-          <img className="app-brand-mark" src="/assets/assms-mark.png" alt="" />
+          <div className="app-brand-avatar" aria-hidden="true">A</div>
           <span className="operations-brand-copy">
             <strong>ASSMS</strong>
             <small>Service operations</small>
@@ -28,52 +28,52 @@ function AppLayout() {
         <nav className="operations-nav">
           <p className="operations-nav-label">Workspace</p>
           <NavLink className={navClass} to="/customers" end onClick={closeMenu}>
-            <span aria-hidden="true">◈</span> Customers
+            <span className="nav-bullet" aria-hidden="true">•</span> Customers
           </NavLink>
           {canManageCustomers && <NavLink className={navClass} to="/customers/new" onClick={closeMenu}>
-            <span aria-hidden="true">＋</span> Register customer
+            <span className="nav-bullet" aria-hidden="true">•</span> Register customer
           </NavLink>}
           {canManageCustomers && <NavLink className={navClass} to="/assets/new" onClick={closeMenu}>
-            <span aria-hidden="true">◇</span> Register asset
+            <span className="nav-bullet" aria-hidden="true">•</span> Register asset
           </NavLink>}
 
           <p className="operations-nav-label">Dispatch</p>
           {hasRole('Technician') && <NavLink className={navClass} to="/my-jobs" onClick={closeMenu}>
-            <span aria-hidden="true">▤</span> My jobs
+            <span className="nav-bullet" aria-hidden="true">•</span> My jobs
           </NavLink>}
           {canDispatch && <NavLink className={navClass} to="/jobs" onClick={closeMenu}>
-            <span aria-hidden="true">▤</span> Jobs
+            <span className="nav-bullet" aria-hidden="true">•</span> Jobs
           </NavLink>}
           {hasRole('Agent', 'Dispatcher', 'Manager') && <NavLink className={navClass} to="/jobs/new" onClick={closeMenu}>
-            <span aria-hidden="true">↗</span> New service job
+            <span className="nav-bullet" aria-hidden="true">•</span> New service job
           </NavLink>}
           {canDispatch && <NavLink className={navClass} to="/technicians" onClick={closeMenu}>
-            <span aria-hidden="true">◎</span> Technicians
+            <span className="nav-bullet" aria-hidden="true">•</span> Technicians
           </NavLink>}
           {canDispatch && <NavLink className={navClass} to="/technicians/new" onClick={closeMenu}>
-            <span aria-hidden="true">＋</span> Add technician
+            <span className="nav-bullet" aria-hidden="true">•</span> Add technician
           </NavLink>}
 
           {canDispatch && <>
             <p className="operations-nav-label">Insight</p>
             <NavLink className={navClass} to="/reports/jobs-by-status" onClick={closeMenu}>
-              <span aria-hidden="true">▤</span> Jobs by status
+              <span className="nav-bullet" aria-hidden="true">•</span> Jobs by status
             </NavLink>
             {hasRole('Manager') && <NavLink className={navClass} to="/reports/jobs-by-technician" onClick={closeMenu}>
-              <span aria-hidden="true">▤</span> Jobs by technician
+              <span className="nav-bullet" aria-hidden="true">•</span> Jobs by technician
             </NavLink>}
             {hasRole('Manager') && <NavLink className={navClass} to="/reports/job-completions" onClick={closeMenu}>
-              <span aria-hidden="true">▤</span> Job completions
+              <span className="nav-bullet" aria-hidden="true">•</span> Job completions
             </NavLink>}
           </>}
 
           {hasRole('Manager') && <>
-            <p className="operations-nav-label">Administration</p>
+            <p className="operations-nav-label">Admin</p>
             <NavLink className={navClass} to="/staff-accounts" end onClick={closeMenu}>
-              <span aria-hidden="true">👥</span> Staff accounts
+              <span className="nav-bullet" aria-hidden="true">•</span> Staff accounts
             </NavLink>
             <NavLink className={navClass} to="/staff-accounts/new" onClick={closeMenu}>
-              <span aria-hidden="true">＋</span> Add staff account
+              <span className="nav-bullet" aria-hidden="true">•</span> Add staff account
             </NavLink>
           </>}
         </nav>
@@ -88,8 +88,11 @@ function AppLayout() {
       <div className="operations-workspace">
         <header className="operations-topbar">
           <button className="operations-menu" type="button" aria-label="Open navigation" aria-expanded={menuOpen} onClick={() => setMenuOpen((open) => !open)}>☰</button>
-          <div className="environment-indicator"><i aria-hidden="true" /> Staging workspace</div>
-          <p className="operations-context">ASSMS <span>/</span> Service delivery</p>
+          <div className="operations-topbar-left">
+            <span className="environment-indicator"><i aria-hidden="true" /> <strong>Staging workspace</strong></span>
+            <span className="operations-topbar-divider">/</span>
+            <span className="operations-topbar-sub">Service delivery</span>
+          </div>
           <div className="operations-topbar-role">{staff?.role}</div>
         </header>
 

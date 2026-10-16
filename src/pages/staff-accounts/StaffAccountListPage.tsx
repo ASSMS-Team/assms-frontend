@@ -270,7 +270,7 @@ function StaffAccountListPage() {
                   className="staff-field"
                   id="staff-search"
                   type="search"
-                  placeholder="Search name, username or email"
+                  placeholder="Search by name, username or email"
                   aria-label="Search staff"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -360,7 +360,7 @@ function StaffAccountListPage() {
                               </div>
                             </td>
                             <td data-label="Username">
-                              <span className="mono">{account.username}</span>
+                              <span className="staff-username">{account.username}</span>
                             </td>
                             <td data-label="Role">
                               <span className={`role r-${account.role.toLowerCase()}`}>
@@ -381,10 +381,10 @@ function StaffAccountListPage() {
                                     </span>
                                   )
                                 ) : (
-                                  <span className="none">Unlinked</span>
+                                  <span className="none">None</span>
                                 )
                               ) : (
-                                <span className="none">—</span>
+                                <span className="none">None</span>
                               )}
                               {account.role === 'Technician' && account.status === 'INACTIVE' && account.dispatchSyncStatus === 'PENDING_RETRY' && (
                                 <span className="badge bg-warning text-dark ms-2" title="Dispatch sync pending">Sync pending</span>
@@ -402,7 +402,7 @@ function StaffAccountListPage() {
                               {account.status === 'ACTIVE' ? (
                                 <button
                                   type="button"
-                                  className="act"
+                                  className="act act-deactivate"
                                   disabled={isCurrentUser || deactivatingId === account.id}
                                   title={isCurrentUser ? 'You cannot deactivate your own account' : 'Deactivate staff account'}
                                   onClick={() => void handleDeactivate(account)}
@@ -412,7 +412,7 @@ function StaffAccountListPage() {
                               ) : account.role === 'Technician' && account.technicianId && account.dispatchSyncStatus === 'PENDING_RETRY' ? (
                                 <button
                                   type="button"
-                                  className="act ok"
+                                  className="act act-reactivate act-retry ok"
                                   disabled={deactivatingId === account.id}
                                   title="Retry Dispatch technician synchronization"
                                   onClick={() => void handleDeactivate(account)}
@@ -420,7 +420,14 @@ function StaffAccountListPage() {
                                   {deactivatingId === account.id ? 'Retrying…' : 'Retry sync'}
                                 </button>
                               ) : (
-                                <span className="text-muted small">Deactivated</span>
+                                <button
+                                  type="button"
+                                  className="act act-reactivate"
+                                  disabled
+                                  title="Account is currently inactive"
+                                >
+                                  Reactivate<span className="visually-hidden">Deactivated</span>
+                                </button>
                               )}
                             </td>
                           </tr>
