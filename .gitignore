@@ -52,3 +52,7 @@ playwright-report/
 
 # OS
 Thumbs.db
+
+# Local ASE analysis output
+.scannerwork/
+quality/artifacts/
