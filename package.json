@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:load": "python tests/load/run_performance_tests.py --profile smoke",
     "preview": "vite preview"
   },
   "dependencies": {

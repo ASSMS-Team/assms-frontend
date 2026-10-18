@@ -1,0 +1,15 @@
+# Copy this file to load-test.properties and replace the values.  The local file
+# is gitignored.  Environment variables take priority when using the runner.
+ASSMS_LOAD_LOGIN_IDENTIFIER=bootstrap.manager
+ASSMS_LOAD_LOGIN_PASSWORD=replace-with-a-local-test-password
+
+# Optional endpoint overrides (the listed values are the local-development defaults).
+ASSMS_CUSTOMER_API_URL=http://127.0.0.1:5037
+ASSMS_JOB_API_URL=http://127.0.0.1:5252
+ASSMS_DISPATCH_API_URL=http://127.0.0.1:5055
+ASSMS_REPORTING_API_URL=http://127.0.0.1:5238
+
+# Used only by the explicit, capped transactional profile. These are dedicated
+# staging test records; do not replace them with real customer or asset IDs.
+ASSMS_LOAD_TEST_CUSTOMER_ID=1c7f62cb-65f0-4cf1-b703-e0228b855000
+ASSMS_LOAD_TEST_ASSET_ID=387991bf-db14-4bbe-a595-b566f12e2495
