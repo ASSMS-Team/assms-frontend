@@ -1,6 +1,13 @@
 name: Staging performance test
 
 on:
+  workflow_call:
+    inputs:
+      profile:
+        description: Read-only workload to run against staging.
+        required: false
+        default: smoke
+        type: string
   workflow_dispatch:
     inputs:
       profile:
