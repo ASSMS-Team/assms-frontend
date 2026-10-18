@@ -55,8 +55,13 @@ jobs:
       ASSMS_LOAD_LOGIN_PASSWORD: ${{ secrets.ASSMS_LOAD_LOGIN_PASSWORD }}
 
     steps:
-      - name: Checkout
+      - name: Checkout performance suite
         uses: actions/checkout@v5
+        with:
+          # The main-branch manual launcher delegates here, but the suite itself
+          # intentionally lives with the staging code on dev. Dev CI keeps the
+          # exact triggering commit through github.sha.
+          ref: ${{ github.ref_name == 'main' && 'dev' || github.sha }}
 
       - name: Set up Java for JMeter
         uses: actions/setup-java@v5
