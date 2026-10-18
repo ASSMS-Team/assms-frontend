@@ -9,6 +9,10 @@ ASSMS_JOB_API_URL=http://127.0.0.1:5252
 ASSMS_DISPATCH_API_URL=http://127.0.0.1:5055
 ASSMS_REPORTING_API_URL=http://127.0.0.1:5238
 
+# Required only when running with --target apim. It must be the gateway origin,
+# with no service route suffix.
+ASSMS_APIM_BASE_URL=https://apim-assms-staging-d6a9031026.azure-api.net
+
 # Used only by the explicit, capped transactional profile. These are dedicated
 # staging test records; do not replace them with real customer or asset IDs.
 ASSMS_LOAD_TEST_CUSTOMER_ID=1c7f62cb-65f0-4cf1-b703-e0228b855000

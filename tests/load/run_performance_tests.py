@@ -83,12 +83,11 @@ def find_jmeter(explicit_path: str | None) -> Path:
     candidates: list[Path] = []
     if explicit_path:
         candidates.append(Path(explicit_path))
-    candidates.extend(
-        [
-            LOAD_DIR / "tools" / "apache-jmeter-5.6.3" / "bin" / "jmeter.bat",
-            LOAD_DIR / "tools" / "apache-jmeter-5.6.3" / "bin" / "jmeter",
-        ]
-    )
+    # GitHub Actions runs on Linux, where the bundled Windows batch file cannot
+    # be executed. Keep the local Windows experience intact while selecting the
+    # native launcher on CI and other Unix hosts.
+    bundled_launcher = "jmeter.bat" if os.name == "nt" else "jmeter"
+    candidates.append(LOAD_DIR / "tools" / "apache-jmeter-5.6.3" / "bin" / bundled_launcher)
     path_binary = shutil.which("jmeter")
     if path_binary:
         candidates.append(Path(path_binary))
@@ -233,9 +232,56 @@ def line_chart(values: list[float], color: str, unit: str) -> str:
 def report_page(title: str, active: str, summary: dict[str, object], content: str) -> str:
     result = str(summary["result"])
     result_class = "pass" if result == "PASS" else "fail"
-    links = [("Overview", "index.html"), ("Response times", "response-times.html"), ("Throughput", "throughput.html"), ("Timeline", "timeline.html")]
+    links = [("Overview", "index.html"), ("Response times", "response-times.html"), ("Throughput", "throughput.html"), ("Timeline", "timeline.html"), ("Comparison", "comparison.html")]
     navigation = "".join(f'<a class="{"active" if name == active else ""}" href="{target}">{name}</a>' for name, target in links)
-    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} · ASSMS performance</title><style>{PRESENTATION_CSS}</style></head><body><div class="app"><aside><div class="brand"><span class="mark">A</span> ASSMS</div><p class="eyebrow">Performance evidence</p><nav>{navigation}</nav><div class="foot">Profile: <b>{html.escape(str(summary['profile']))}</b><br>Started: {html.escape(str(summary['started_utc']))} UTC</div></aside><main><header><div><h1>{html.escape(title)}</h1><p>Staging performance test · {summary['samples']} total requests</p></div><div class="badge {result_class}">{result}</div></header>{content}</main></div></body></html>'''
+    route = "APIM gateway" if summary.get("target") == "apim" else "direct microservices"
+    return f'''<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>{html.escape(title)} · ASSMS performance</title><style>{PRESENTATION_CSS}</style></head><body><div class="app"><aside><div class="brand"><span class="mark">A</span> ASSMS</div><p class="eyebrow">Performance evidence</p><nav>{navigation}</nav><div class="foot">Target: <b>{route}</b><br>Profile: <b>{html.escape(str(summary['profile']))}</b><br>Started: {html.escape(str(summary['started_utc']))} UTC</div></aside><main><header><div><h1>{html.escape(title)}</h1><p>{route} · staging performance test · {summary['samples']} total requests</p></div><div class="badge {result_class}">{result}</div></header>{content}</main></div></body></html>'''
+
+
+def latest_matching_target(summary: dict[str, object]) -> dict[str, object] | None:
+    """Find the latest result for the other route using the same workload profile."""
+    current_target = str(summary.get("target", "direct"))
+    candidates: list[dict[str, object]] = []
+    for candidate_dir in RESULTS_DIR.iterdir() if RESULTS_DIR.exists() else []:
+        summary_path = candidate_dir / "summary.json"
+        if not candidate_dir.is_dir() or not summary_path.is_file():
+            continue
+        try:
+            candidate = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        if candidate.get("profile") == summary.get("profile") and str(candidate.get("target", "direct")) != current_target:
+            candidates.append(candidate)
+    return max(candidates, key=lambda item: str(item.get("started_utc", "")), default=None)
+
+
+def comparison_page_content(summary: dict[str, object], other: dict[str, object] | None) -> str:
+    if other is None:
+        return '''<section class="panel"><h2>Comparison pending</h2><p>Run this same profile once through the other route to create a direct-service versus APIM comparison.</p></section>'''
+
+    runs = {str(summary.get("target", "direct")): summary, str(other.get("target", "direct")): other}
+    direct = runs.get("direct")
+    apim = runs.get("apim")
+    if direct is None or apim is None:
+        return '''<section class="panel"><h2>Comparison unavailable</h2><p>The matching result must contain one direct-service run and one APIM run.</p></section>'''
+
+    def recorded_result(run: dict[str, object]) -> str:
+        if "result" in run:
+            return str(run["result"])
+        thresholds = run.get("thresholds")
+        if isinstance(thresholds, dict) and float(run["success_rate"]) >= float(thresholds["min_success_rate"]) and float(run["p95_ms"]) <= float(thresholds["max_p95_ms"]):
+            return "PASS"
+        return "RECORDED"
+
+    metrics = [("Success rate", "success_rate", "%"), ("p50 latency", "p50_ms", "ms"), ("p95 latency", "p95_ms", "ms"), ("p99 latency", "p99_ms", "ms"), ("Throughput", "throughput_rps", "rps")]
+    rows = "".join(
+        f"<tr><td>{label}</td><td>{direct[key]} {unit}</td><td>{apim[key]} {unit}</td></tr>"
+        for label, key, unit in metrics
+    )
+    p95_delta = float(apim["p95_ms"]) - float(direct["p95_ms"])
+    direction = "higher" if p95_delta > 0 else "lower" if p95_delta < 0 else "the same"
+    delta_text = f"APIM p95 is {abs(p95_delta):.0f} ms {direction} than direct services." if p95_delta else "APIM and direct services have the same p95 in these runs."
+    return f'''<section class="cards"><div class="card"><small>Direct result</small><strong>{recorded_result(direct)}</strong></div><div class="card"><small>APIM result</small><strong>{recorded_result(apim)}</strong></div><div class="card"><small>Direct p95</small><strong>{direct['p95_ms']} ms</strong></div><div class="card"><small>APIM p95</small><strong>{apim['p95_ms']} ms</strong></div></section><h2>Same profile, two routes</h2><section class="panel"><p class="callout">{delta_text}</p><div class="table-wrap"><table><thead><tr><th>Metric</th><th>Direct microservices</th><th>APIM gateway</th></tr></thead><tbody>{rows}</tbody></table></div></section><p class="muted">Direct run: {html.escape(str(direct.get('started_utc', 'unknown')))} UTC · APIM run: {html.escape(str(apim.get('started_utc', 'unknown')))} UTC. Compare runs made with the same profile; staging conditions can still differ between run times.</p>'''
 
 
 def write_presentation_dashboard(directory: Path, summary: dict[str, object], jtl_path: Path) -> None:
@@ -254,12 +300,29 @@ def write_presentation_dashboard(directory: Path, summary: dict[str, object], jt
     p95_values = [point['p95'] for point in timeline]
     throughput = cards + f'<h2>Requests completed over time</h2><section class="panel"><div class="legend"><span><i class="dot"></i>Requests per second</span></div>{line_chart(requests, "#0e9a59", "requests")}</section>'
     over_time = cards + f'<h2>p95 latency over time</h2><section class="panel"><div class="legend"><span><i class="dot amber"></i>p95 latency per second</span></div>{line_chart(p95_values, "#e3a321", "ms")}</section><h2>Endpoint detail</h2>{table}'
-    pages = {"index.html": ("Performance overview", "Overview", overview), "response-times.html": ("Response times", "Response times", response), "throughput.html": ("Throughput", "Throughput", throughput), "timeline.html": ("Latency timeline", "Timeline", over_time)}
+    comparison = comparison_page_content(summary, latest_matching_target(summary))
+    pages = {"index.html": ("Performance overview", "Overview", overview), "response-times.html": ("Response times", "Response times", response), "throughput.html": ("Throughput", "Throughput", throughput), "timeline.html": ("Latency timeline", "Timeline", over_time), "comparison.html": ("Direct vs APIM", "Comparison", comparison)}
     for filename, (title, active, content) in pages.items():
         (directory / filename).write_text(report_page(title, active, summary, content), encoding="utf-8")
 
 
-def properties_for_urls(local: dict[str, str]) -> tuple[dict[str, str], dict[str, str]]:
+def properties_for_urls(local: dict[str, str], target: str) -> tuple[dict[str, str], dict[str, str]]:
+    """Build JMeter host/path properties for direct services or the APIM gateway."""
+    if target == "apim":
+        gateway = setting("ASSMS_APIM_BASE_URL", local)
+        if not gateway:
+            raise ValueError("Set ASSMS_APIM_BASE_URL when using the APIM target.")
+        protocol, host, port = require_api_url("ASSMS_APIM_BASE_URL", gateway)
+        prefixes = {"customer": "/customer", "job": "/jobs", "dispatch": "/dispatch", "reporting": "/reports"}
+        jmeter = {"protocol": protocol}
+        health: dict[str, str] = {}
+        for name, prefix in prefixes.items():
+            jmeter[f"{name}_host"] = host
+            jmeter[f"{name}_port"] = str(port)
+            jmeter[f"{name}_prefix"] = prefix
+            health[name] = f"{protocol}://{host}:{port}{prefix}/api/health"
+        return jmeter, health
+
     endpoints = {
         "customer": setting("ASSMS_CUSTOMER_API_URL", local, "http://127.0.0.1:5037"),
         "job": setting("ASSMS_JOB_API_URL", local, "http://127.0.0.1:5252"),
@@ -275,6 +338,7 @@ def properties_for_urls(local: dict[str, str]) -> tuple[dict[str, str], dict[str
         protocols.add(protocol)
         jmeter[f"{name}_host"] = host
         jmeter[f"{name}_port"] = str(port)
+        jmeter[f"{name}_prefix"] = ""
         health[name] = f"{protocol}://{host}:{port}/api/health"
     if len(protocols) != 1:
         raise ValueError("All service base URLs must use the same protocol (all HTTP or all HTTPS) for this test plan.")
@@ -291,6 +355,9 @@ def run(args: argparse.Namespace) -> int:
     if args.profile == "transactional" and not args.include_writes:
         print("The transactional profile creates staging jobs. Re-run with --include-writes after confirming the dedicated test data.", file=sys.stderr)
         return 2
+    if args.target == "apim" and args.include_writes:
+        print("The APIM target is read-only. Run controlled transactional testing directly against the services.", file=sys.stderr)
+        return 2
     if args.include_writes and (args.users or profile.users) > 5:
         print("The transactional profile is capped at five virtual users to limit created staging jobs.", file=sys.stderr)
         return 2
@@ -305,7 +372,7 @@ def run(args: argparse.Namespace) -> int:
 
     try:
         jmeter_path = find_jmeter(args.jmeter)
-        url_properties, health_urls = properties_for_urls(local)
+        url_properties, health_urls = properties_for_urls(local, args.target)
     except (FileNotFoundError, ValueError) as error:
         print(error, file=sys.stderr)
         return 2
@@ -323,7 +390,8 @@ def run(args: argparse.Namespace) -> int:
             return 2
 
     timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    run_dir = RESULTS_DIR / f"{args.profile}-{timestamp}"
+    run_name = f"{args.profile}-{timestamp}" if args.target == "direct" else f"apim-{args.profile}-{timestamp}"
+    run_dir = RESULTS_DIR / run_name
     report_dir = run_dir / "dashboard"
     native_report_dir = run_dir / "jmeter-dashboard"
     jtl_path = run_dir / "results.jtl"
@@ -345,7 +413,7 @@ def run(args: argparse.Namespace) -> int:
     command = [str(jmeter_path), "-n", "-t", str(PLAN_FILE), "-l", str(jtl_path), "-e", "-o", str(native_report_dir)]
     command.extend(f"-J{key}={value}" for key, value in properties.items())
 
-    print(f"Running {args.profile} profile: {properties['users']} users, {properties['loops']} business loops, {properties['ramp_up']}s ramp-up")
+    print(f"Running {args.target} / {args.profile} profile: {properties['users']} users, {properties['loops']} business loops, {properties['ramp_up']}s ramp-up")
     completed = subprocess.run(command, cwd=LOAD_DIR, check=False)
     if completed.returncode != 0 or not jtl_path.exists():
         print(f"JMeter did not complete successfully. See {run_dir}", file=sys.stderr)
@@ -355,6 +423,7 @@ def run(args: argparse.Namespace) -> int:
     summary.update(
         {
             "profile": args.profile,
+            "target": args.target,
             "started_utc": timestamp,
             "thresholds": {"min_success_rate": profile.min_success_rate, "max_p95_ms": profile.max_p95_ms},
         }
@@ -380,6 +449,7 @@ def run(args: argparse.Namespace) -> int:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run ASSMS JMeter performance tests.")
     parser.add_argument("--profile", choices=PROFILES, default="smoke")
+    parser.add_argument("--target", choices=("direct", "apim"), default="direct", help="Run against individual services or through the APIM gateway.")
     parser.add_argument("--identifier", help="Overrides ASSMS_LOAD_LOGIN_IDENTIFIER; prefer the environment variable in shared terminals.")
     parser.add_argument("--users", type=int, help="Overrides the profile's virtual-user count.")
     parser.add_argument("--ramp-up", type=int, help="Overrides the profile's ramp-up seconds.")
