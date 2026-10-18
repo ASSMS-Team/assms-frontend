@@ -116,7 +116,7 @@ The repository includes a manual GitHub Actions workflow at `.github/workflows/s
 - `ASSMS_LOAD_LOGIN_IDENTIFIER`
 - `ASSMS_LOAD_LOGIN_PASSWORD`
 
-It reuses the existing staging URL repository variables (`VITE_CUSTOMER_API_URL`, `VITE_JOB_API_URL`, `VITE_DISPATCH_API_URL`, and `VITE_REPORTING_API_URL`). The workflow intentionally excludes `stress` and the job-creating `transactional` profile to protect shared staging.
+It uses the verified staging service root URLs directly. The workflow intentionally excludes `stress` and the job-creating `transactional` profile to protect shared staging.
 
 ## Two-minute demo
 

@@ -32,10 +32,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      ASSMS_CUSTOMER_API_URL: ${{ vars.VITE_CUSTOMER_API_URL }}
-      ASSMS_JOB_API_URL: ${{ vars.VITE_JOB_API_URL }}
-      ASSMS_DISPATCH_API_URL: ${{ vars.VITE_DISPATCH_API_URL }}
-      ASSMS_REPORTING_API_URL: ${{ vars.VITE_REPORTING_API_URL }}
+      # These are service roots, not the frontend's routed API paths.
+      ASSMS_CUSTOMER_API_URL: https://assms-customer-staging-d6a9031026.japaneast.cloudapp.azure.com
+      ASSMS_JOB_API_URL: https://assms-job-staging-d6a9031026.japaneast.cloudapp.azure.com
+      ASSMS_DISPATCH_API_URL: https://assms-dispatch-staging-d6a9031026.centralindia.cloudapp.azure.com
+      ASSMS_REPORTING_API_URL: https://assms-reporting-staging-d6a9031026.centralindia.cloudapp.azure.com
       ASSMS_LOAD_LOGIN_IDENTIFIER: ${{ secrets.ASSMS_LOAD_LOGIN_IDENTIFIER }}
       ASSMS_LOAD_LOGIN_PASSWORD: ${{ secrets.ASSMS_LOAD_LOGIN_PASSWORD }}
 
