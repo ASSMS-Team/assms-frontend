@@ -109,4 +109,15 @@ jobs:
     uses: ./.github/workflows/staging-performance.yml
     with:
       profile: smoke
+      target: direct
+    secrets: inherit
+
+  apim-performance-smoke:
+    name: APIM performance smoke test
+    needs: deploy-staging
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+    uses: ./.github/workflows/staging-performance.yml
+    with:
+      profile: smoke
+      target: apim
     secrets: inherit

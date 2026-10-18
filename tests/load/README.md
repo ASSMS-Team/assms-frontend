@@ -42,6 +42,18 @@ $env:ASSMS_LOAD_LOGIN_PASSWORD = "your-password"
 
 Optional endpoint overrides are `ASSMS_CUSTOMER_API_URL`, `ASSMS_JOB_API_URL`, `ASSMS_DISPATCH_API_URL`, and `ASSMS_REPORTING_API_URL`.
 
+### APIM gateway target
+
+The same workflow can also be measured through Azure API Management. This is a separate, read-only target: it keeps the service workload identical while including gateway routing, policies, and authentication handling in the measured path.
+
+```powershell
+$env:ASSMS_APIM_BASE_URL = "https://apim-assms-staging-d6a9031026.azure-api.net"
+python run_performance_tests.py --target apim --profile smoke
+python run_performance_tests.py --target apim --profile load
+```
+
+APIM runs use `/customer`, `/jobs`, `/dispatch`, and `/reports` gateway routes. The guarded `transactional` profile remains direct-service only so it cannot create jobs through the gateway.
+
 ### Azure staging target
 
 The runner supports HTTPS. To test the deployed staging services, set these local-only values before running:
@@ -95,7 +107,7 @@ The runner rejects write attempts unless all of these safeguards hold: the profi
 
 The command exits `0` only when its success-rate and p95 thresholds pass. It exits non-zero for a failed pre-flight, JMeter failure, assertion failure, or threshold breach—making it suitable for CI. Each run creates an ignored timestamped folder under `results/` containing:
 
-- `dashboard/index.html` — self-contained, presentation-friendly dashboard with Overview, Response Times, Throughput, and Timeline pages
+- `dashboard/index.html` — self-contained, presentation-friendly dashboard with Overview, Response Times, Throughput, Timeline, and a direct-versus-APIM Comparison page when both matching runs exist
 - `performance-summary.html` — compact PASS/FAIL overview with metric cards and per-endpoint p50/p95/p99 table
 - `results.jtl` — raw JMeter samples
 - `jmeter-dashboard/index.html` — native JMeter HTML report for low-level drill-down
@@ -111,7 +123,7 @@ The default thresholds are intentionally tolerant of local-development machines.
 
 Run the `smoke` profile on a disposable test environment in CI and upload `tests/load/results/**` as a workflow artifact. Keep `load` and `stress` manual or scheduled: they require all four APIs, databases, Kafka-dependent reporting data, and a controlled environment to make results comparable.
 
-The repository includes a manual GitHub Actions workflow at `.github/workflows/staging-performance.yml`. It offers the read-only `smoke` and `load` profiles and uploads the dashboard, raw JTL, and JSON summary as a 30-day workflow artifact. Before using it, configure these GitHub repository secrets:
+The repository includes a manual GitHub Actions workflow at `.github/workflows/staging-performance.yml`. It offers the read-only `smoke` and `load` profiles against either direct microservices or APIM, and uploads the dashboard, raw JTL, and JSON summary as a 30-day workflow artifact. After each deployment to `dev`, CI runs both safe smoke baselines automatically. Before using it, configure these GitHub repository secrets:
 
 - `ASSMS_LOAD_LOGIN_IDENTIFIER`
 - `ASSMS_LOAD_LOGIN_PASSWORD`
