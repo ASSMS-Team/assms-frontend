@@ -111,6 +111,13 @@ The default thresholds are intentionally tolerant of local-development machines.
 
 Run the `smoke` profile on a disposable test environment in CI and upload `tests/load/results/**` as a workflow artifact. Keep `load` and `stress` manual or scheduled: they require all four APIs, databases, Kafka-dependent reporting data, and a controlled environment to make results comparable.
 
+The repository includes a manual GitHub Actions workflow at `.github/workflows/staging-performance.yml`. It offers the read-only `smoke` and `load` profiles and uploads the dashboard, raw JTL, and JSON summary as a 30-day workflow artifact. Before using it, configure these GitHub repository secrets:
+
+- `ASSMS_LOAD_LOGIN_IDENTIFIER`
+- `ASSMS_LOAD_LOGIN_PASSWORD`
+
+It reuses the existing staging URL repository variables (`VITE_CUSTOMER_API_URL`, `VITE_JOB_API_URL`, `VITE_DISPATCH_API_URL`, and `VITE_REPORTING_API_URL`). The workflow intentionally excludes `stress` and the job-creating `transactional` profile to protect shared staging.
+
 ## Two-minute demo
 
 1. Show that pre-flight checks pass.
