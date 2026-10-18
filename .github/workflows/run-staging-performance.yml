@@ -1,0 +1,35 @@
+name: Run staging performance test
+
+on:
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Safe read-only workload to run against staging.
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - load
+      target:
+        description: Route to benchmark.
+        required: true
+        default: direct
+        type: choice
+        options:
+          - direct
+          - apim
+
+permissions:
+  contents: read
+
+jobs:
+  staging-performance:
+    name: ${{ inputs.target }} ${{ inputs.profile }} staging performance
+    # The performance suite lives on dev because it tests the staging deployment.
+    # Keeping this small launcher on main makes the Run workflow button visible.
+    uses: ASSMS-Team/assms-frontend/.github/workflows/staging-performance.yml@dev
+    with:
+      profile: ${{ inputs.profile }}
+      target: ${{ inputs.target }}
+    secrets: inherit
