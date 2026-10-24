@@ -1,5 +1,7 @@
 # ASSMS microservice load and performance testing
 
+> **Implemented by:** **Kapurubandara S.K.** (Student ID: **IT24103571**)
+
 This is the automated **Load & Performance Testing** layer for ASSMS. It uses the bundled Apache JMeter 5.6.3 engine in non-GUI mode. Read workloads are the default; one separate, capped transactional profile can create a small number of labelled jobs against dedicated staging test records.
 
 ## What is tested
