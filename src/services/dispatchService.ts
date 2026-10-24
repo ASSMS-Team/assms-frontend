@@ -1,10 +1,12 @@
 import axios from 'axios'
 
 import { attachAuth } from './authToken'
+import { DISPATCH_API_BASE_URL } from './apiConfig'
 import type { CreateTechnicianRequest, TechnicianResponse, UpdateTechnicianRequest } from '../types/technician'
+import type { MyAssignmentResponse } from '../types/assignment'
 
 export const dispatchApi = axios.create({
-  baseURL: import.meta.env.VITE_DISPATCH_API_URL,
+  baseURL: DISPATCH_API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
 })
 
@@ -37,5 +39,13 @@ export async function updateTechnician(id: string, request: UpdateTechnicianRequ
 
 export async function deactivateTechnician(id: string): Promise<TechnicianResponse> {
   const response = await dispatchApi.post<TechnicianResponse>(`/api/technicians/${encodeURIComponent(id)}/deactivate`)
+  return response.data
+}
+
+export async function getMyAssignments(): Promise<MyAssignmentResponse[]> {
+  const response = await dispatchApi.get<MyAssignmentResponse[]>('/api/my-assignments')
+  if (!Array.isArray(response.data)) {
+    throw new Error('Dispatch Service returned an invalid assignment list response.')
+  }
   return response.data
 }

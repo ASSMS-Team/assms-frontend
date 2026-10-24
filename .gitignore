@@ -52,3 +52,12 @@ playwright-report/
 
 # OS
 Thumbs.db
+
+# Local ASE analysis output
+.scannerwork/
+quality/artifacts/
+
+# Load-test output and local credentials
+tests/load/results/
+tests/load/load-test.properties
+tests/load/__pycache__/

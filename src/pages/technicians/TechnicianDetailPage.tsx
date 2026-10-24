@@ -3,13 +3,21 @@ import { Link, useParams } from 'react-router-dom'
 import axios from 'axios'
 
 import StatusBadge from '../../components/common/StatusBadge'
+import LoadingState from '../../components/feedback/LoadingState'
+import EmptyState from '../../components/feedback/EmptyState'
+import ErrorState from '../../components/feedback/ErrorState'
 import { REGION_LABELS } from '../../constants/technician'
 import { deactivateTechnician, getTechnicianById } from '../../services/dispatchService'
 import type { TechnicianResponse } from '../../types/technician'
 import { formatDateTime } from '../../utils/formatDateTime'
+import TechnicianLoginSetup from '../../components/forms/TechnicianLoginSetup'
+import { useAuth } from '../../auth/useAuth'
+import { parseApiError } from '../../utils/formatApiError'
 
 function TechnicianDetailPage() {
   const { id } = useParams<{ id: string }>()
+  const { hasRole } = useAuth()
+  const canManageTechnician = hasRole('Dispatcher', 'Manager')
   const [technician, setTechnician] = useState<TechnicianResponse | null>(null)
   const [loading, setLoading] = useState(true)
   const [notFound, setNotFound] = useState(false)
@@ -31,7 +39,8 @@ function TechnicianDetailPage() {
         if (axios.isAxiosError(caught) && caught.response?.status === 404) {
           setNotFound(true)
         } else {
-          setError('Could not load this technician. Check that the Dispatch Service is running.')
+          const parsed = parseApiError(caught, 'Could not load this technician. Check that the Dispatch Service is running.')
+          setError(parsed.message)
         }
       } finally {
         setLoading(false)
@@ -53,7 +62,8 @@ function TechnicianDetailPage() {
       if (axios.isAxiosError(caught) && caught.response?.status === 409) {
         setDeactivationError('This technician has open assignments. Reassign or close those jobs before deactivation.')
       } else {
-        setDeactivationError('Could not deactivate this technician. Please try again.')
+        const parsed = parseApiError(caught, 'Could not deactivate this technician. Please try again.')
+        setDeactivationError(parsed.message)
       }
     } finally {
       setDeactivating(false)
@@ -68,25 +78,41 @@ function TechnicianDetailPage() {
           <h1 className="page-title">{technician?.fullName ?? 'Technician'}</h1>
           {technician && <p className="page-sub">{technician.reference}</p>}
         </div>
-        {technician && <StatusBadge status={technician.status} />}
-        {technician && <div className="d-flex gap-2">
-          <Link className="btn btn-primary" to={`/technicians/${technician.id}/edit`}>Edit</Link>
-          {technician.status === 'ACTIVE' && <button type="button" className="btn btn-outline-danger" disabled={deactivating} onClick={handleDeactivate}>
-            {deactivating ? 'Deactivating...' : 'Deactivate'}
-          </button>}
-        </div>}
+        {technician && (
+          <div className="d-flex align-items-center gap-2">
+            <StatusBadge status={technician.status} />
+            {canManageTechnician && (
+              <Link className="btn btn-primary" to={`/technicians/${technician.id}/edit`}>Edit</Link>
+            )}
+            {canManageTechnician && technician.status === 'ACTIVE' && (
+              <button
+                type="button"
+                className="btn btn-outline-danger"
+                disabled={deactivating}
+                onClick={handleDeactivate}
+              >
+                {deactivating ? 'Deactivating...' : 'Deactivate'}
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="card app-card">
         {loading ? (
-          <div className="state-block"><div className="spinner-border text-primary" role="status"><span className="visually-hidden">Loading...</span></div><p className="state-text">Loading technician...</p></div>
+          <LoadingState message="Loading technician..." />
         ) : notFound ? (
-          <div className="state-block"><div className="empty-mark">?</div><p className="state-title">Technician not found</p><p className="state-text">No technician is registered with the id <code>{id}</code>.</p><Link className="btn btn-primary" to="/technicians">Back to technicians</Link></div>
+          <EmptyState
+            icon="?"
+            title="Technician not found"
+            message={<>No technician is registered with the id <code>{id}</code>.</>}
+            action={<Link className="btn btn-primary" to="/technicians">Back to technicians</Link>}
+          />
         ) : error ? (
-          <div className="state-block"><div className="alert alert-danger mb-0" role="alert">{error}</div></div>
+          <ErrorState message={error} />
         ) : technician && (
           <>
-            {deactivationError && <div className="alert alert-warning" role="alert">{deactivationError}</div>}
+            {deactivationError && <div className="alert alert-warning m-3 mb-0" role="alert">{deactivationError}</div>}
             <dl className="detail-grid mb-0">
               <div className="detail-row"><dt>Reference</dt><dd>{technician.reference}</dd></div>
               <div className="detail-row"><dt>Region</dt><dd>{REGION_LABELS[technician.region] ?? technician.region}</dd></div>
@@ -100,6 +126,7 @@ function TechnicianDetailPage() {
           </>
         )}
       </div>
+      {technician && <TechnicianLoginSetup key={technician.id} technicianId={technician.id} />}
     </>
   )
 }

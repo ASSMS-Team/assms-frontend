@@ -47,6 +47,10 @@ export interface JobResponse {
   // rather than fail to type-check against a stale union.
   status: string
   assignment: JobAssignment | null
+  // When the active assignee moved the job to IN_PROGRESS, or null until that transition happens.
+  startedAt?: string | null
+  // When the active assignee completed the job, or null until that transition happens.
+  completedAt?: string | null
   // ISO 8601 UTC strings, not Date objects - JSON has no date type.
   createdAt: string
   updatedAt: string
@@ -63,3 +67,32 @@ export interface JobListFilters {
   status?: string
   assignedTechnicianId?: string
 }
+
+export interface CreateWorkRecordRequest {
+  content: string
+}
+
+export interface UpdateWorkRecordRequest {
+  content: string
+}
+
+export interface ServiceWorkRecordResponse {
+  id: string
+  jobId: string
+  jobReference: string
+  technicianId: string
+  technicianReference: string
+  content: string
+  recordedAt: string
+  createdAt: string
+}
+
+export interface JobStatusHistoryResponse {
+  id: string
+  jobId: string
+  previousStatus: string | null
+  newStatus: string
+  actorId: string
+  createdAt: string
+}
+

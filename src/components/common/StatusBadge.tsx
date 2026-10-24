@@ -1,12 +1,26 @@
-// One place for the status-to-colour rule, so the list and the detail page
-// cannot drift apart. Anything that is not ACTIVE renders grey - the database
-// only allows ACTIVE and INACTIVE, but an unknown value should not go green.
+// Shared status badge component for consistent styling and high contrast across all role views.
+function getStatusVariant(normalized: string): string {
+  if (normalized === 'ACTIVE' || normalized === 'COMPLETED') {
+    return 'bg-success'
+  }
+  if (normalized === 'ASSIGNED') {
+    return 'bg-primary'
+  }
+  if (normalized === 'IN_PROGRESS' || normalized === 'IN PROGRESS') {
+    return 'bg-warning text-dark'
+  }
+  if (normalized === 'CANCELLED' || normalized === 'FAILED') {
+    return 'bg-danger'
+  }
+  if (normalized === 'CREATED' || normalized === 'UNASSIGNED') {
+    return 'bg-info text-dark'
+  }
+  return 'bg-secondary'
+}
+
 function StatusBadge({ status }: { status: string }) {
-  const variant = status === 'ACTIVE'
-    ? 'bg-success'
-    : status === 'ASSIGNED'
-      ? 'bg-primary'
-      : 'bg-secondary'
+  const normalized = status ? status.toUpperCase() : ''
+  const variant = getStatusVariant(normalized)
 
   return <span className={`badge rounded-pill ${variant}`}>{status}</span>
 }

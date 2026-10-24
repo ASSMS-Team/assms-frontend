@@ -1,15 +1,17 @@
 import axios from 'axios'
 
-import type { JobsByStatusReport, JobsByTechnicianFilters, JobsByTechnicianReport } from '../types/report'
+import type {
+  JobCompletionFilters,
+  JobCompletionReport,
+  JobsByStatusReport,
+  JobsByTechnicianFilters,
+  JobsByTechnicianReport,
+} from '../types/report'
 import { attachAuth } from './authToken'
+import { REPORTING_API_BASE_URL } from './apiConfig'
 
-// A third instance, alongside the customer and job ones: the reporting service
-// is another separate process on another port, so it needs its own baseURL. As
-// there, the URL comes from the env var declared in vite-env.d.ts, which types
-// it as a required string - so there is no fallback here to quietly mask a
-// missing .env.
 export const reportingApi = axios.create({
-  baseURL: import.meta.env.VITE_REPORTING_API_URL,
+  baseURL: REPORTING_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -62,6 +64,24 @@ export async function getJobsByTechnician(
 
   const response = await reportingApi.get<JobsByTechnicianReport>(
     '/api/reports/jobs-by-technician',
+    { params },
+  )
+
+  return response.data
+}
+
+// Completed jobs dynamic report. The API validates RFC 3339 values and the exact
+// normalized region; omitted values are left off the query entirely.
+export async function getJobCompletions(
+  filters: JobCompletionFilters = {},
+): Promise<JobCompletionReport> {
+  const params: Record<string, string> = {}
+  if (filters.from) params.from = filters.from
+  if (filters.to) params.to = filters.to
+  if (filters.region) params.region = filters.region
+
+  const response = await reportingApi.get<JobCompletionReport>(
+    '/api/reports/job-completions',
     { params },
   )
 

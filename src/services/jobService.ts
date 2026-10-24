@@ -1,14 +1,19 @@
 import axios from 'axios'
 
-import type { CreateJobRequest, JobListFilters, JobResponse } from '../types/job'
+import type {
+  CreateJobRequest,
+  CreateWorkRecordRequest,
+  JobListFilters,
+  JobResponse,
+  JobStatusHistoryResponse,
+  ServiceWorkRecordResponse,
+  UpdateWorkRecordRequest,
+} from '../types/job'
 import { attachAuth } from './authToken'
+import { JOB_API_BASE_URL } from './apiConfig'
 
-// Its own instance, not the customer one: the job service is a separate process
-// on a separate port, so it needs its own baseURL. As there, the URL comes from
-// the env var declared in vite-env.d.ts, which types it as a required string -
-// so there is no fallback here to quietly mask a missing .env.
 export const jobApi = axios.create({
-  baseURL: import.meta.env.VITE_JOB_API_URL,
+  baseURL: JOB_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -64,3 +69,88 @@ export async function getJobByReference(
 
   return response.data
 }
+
+// Starts an assigned job (moves status from ASSIGNED to IN_PROGRESS).
+// Job Service identifies the technician from the bearer token. Throws on
+// 403 (not assignee), 404 (not found), or 409 (not assigned / invalid transition).
+export async function startJob(id: string): Promise<JobResponse> {
+  const response = await jobApi.post<JobResponse>(
+    `/api/jobs/${encodeURIComponent(id)}/start`,
+  )
+
+  return response.data
+}
+
+// Completes an in-progress job (moves status from IN_PROGRESS to COMPLETED).
+// Job Service identifies the technician from the bearer token. Throws on
+// 403 (not assignee), 404 (not found), or 409 (not in-progress / no work records / invalid transition).
+export async function completeJob(id: string): Promise<JobResponse> {
+  const response = await jobApi.post<JobResponse>(
+    `/api/jobs/${encodeURIComponent(id)}/complete`,
+  )
+
+  return response.data
+}
+// Adds a service work record for an active in-progress job.
+// The caller must be the active assignee.
+export async function addWorkRecord(
+  jobId: string,
+  request: CreateWorkRecordRequest,
+): Promise<ServiceWorkRecordResponse> {
+  const response = await jobApi.post<ServiceWorkRecordResponse>(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records`,
+    request,
+  )
+
+  return response.data
+}
+
+// Retrieves all service work records for a job.
+export async function getWorkRecords(
+  jobId: string,
+): Promise<ServiceWorkRecordResponse[]> {
+  const response = await jobApi.get<ServiceWorkRecordResponse[]>(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records`,
+  )
+
+  if (!Array.isArray(response.data)) {
+    throw new Error('Job Service returned an invalid work records response.')
+  }
+
+  return response.data
+}
+
+// Updates a work record while its job remains in progress.
+export async function updateWorkRecord(
+  jobId: string,
+  recordId: string,
+  request: UpdateWorkRecordRequest,
+): Promise<ServiceWorkRecordResponse> {
+  const response = await jobApi.put<ServiceWorkRecordResponse>(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records/${encodeURIComponent(recordId)}`,
+    request,
+  )
+
+  return response.data
+}
+
+export async function getJobStatusHistory(
+  id: string,
+): Promise<JobStatusHistoryResponse[]> {
+  const response = await jobApi.get<JobStatusHistoryResponse[]>(
+    `/api/jobs/${encodeURIComponent(id)}/history`,
+  )
+  return response.data
+}
+
+// Deletes a draft work record while its job remains in progress.
+export async function deleteWorkRecord(
+  jobId: string,
+  recordId: string,
+): Promise<void> {
+  await jobApi.delete(
+    `/api/jobs/${encodeURIComponent(jobId)}/work-records/${encodeURIComponent(recordId)}`,
+  )
+}
+
+

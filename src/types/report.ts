@@ -26,3 +26,24 @@ export interface JobsByTechnicianFilters {
   to?: string
   region?: string
 }
+
+export interface CompletedJobItem {
+  jobId: string
+  jobReference: string
+  region: string
+  serviceCategory?: string | null
+  technicianId?: string | null
+  technicianReference?: string | null
+  completedAt: string
+}
+
+export interface JobCompletionReport {
+  jobs: CompletedJobItem[]
+  total: number
+}
+
+export interface JobCompletionFilters {
+  from?: string
+  to?: string
+  region?: string
+}

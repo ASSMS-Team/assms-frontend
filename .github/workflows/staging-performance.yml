@@ -1,0 +1,101 @@
+name: Staging performance test
+
+on:
+  workflow_call:
+    inputs:
+      profile:
+        description: Read-only workload to run against staging.
+        required: false
+        default: smoke
+        type: string
+      target:
+        description: Direct microservices or the APIM gateway.
+        required: false
+        default: direct
+        type: string
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: Read-only workload to run against the shared staging environment.
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - load
+      target:
+        description: Route to benchmark.
+        required: true
+        default: direct
+        type: choice
+        options:
+          - direct
+          - apim
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging-performance-test
+  cancel-in-progress: false
+
+jobs:
+  performance:
+    name: ${{ inputs.target }} ${{ inputs.profile }} performance baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # These are service roots, not the frontend's routed API paths.
+      ASSMS_CUSTOMER_API_URL: https://assms-customer-staging-d6a9031026.japaneast.cloudapp.azure.com
+      ASSMS_JOB_API_URL: https://assms-job-staging-d6a9031026.japaneast.cloudapp.azure.com
+      ASSMS_DISPATCH_API_URL: https://assms-dispatch-staging-d6a9031026.centralindia.cloudapp.azure.com
+      ASSMS_REPORTING_API_URL: https://assms-reporting-staging-d6a9031026.centralindia.cloudapp.azure.com
+      ASSMS_APIM_BASE_URL: https://apim-assms-staging-d6a9031026.azure-api.net
+      ASSMS_LOAD_LOGIN_IDENTIFIER: ${{ secrets.ASSMS_LOAD_LOGIN_IDENTIFIER }}
+      ASSMS_LOAD_LOGIN_PASSWORD: ${{ secrets.ASSMS_LOAD_LOGIN_PASSWORD }}
+
+    steps:
+      - name: Checkout performance suite
+        uses: actions/checkout@v5
+        with:
+          # The main-branch manual launcher delegates here, but the suite itself
+          # intentionally lives with the staging code on dev. Dev CI keeps the
+          # exact triggering commit through github.sha.
+          ref: ${{ github.ref_name == 'main' && 'dev' || github.sha }}
+
+      - name: Set up Java for JMeter
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Verify required staging configuration
+        run: |
+          for setting in \
+            ASSMS_CUSTOMER_API_URL \
+            ASSMS_JOB_API_URL \
+            ASSMS_DISPATCH_API_URL \
+            ASSMS_REPORTING_API_URL \
+            ASSMS_LOAD_LOGIN_IDENTIFIER \
+            ASSMS_LOAD_LOGIN_PASSWORD; do
+            test -n "${!setting}" || { echo "::error::$setting is not configured"; exit 1; }
+          done
+
+      - name: Run read-only staging performance test
+        run: |
+          chmod +x tests/load/tools/apache-jmeter-5.6.3/bin/jmeter
+          python tests/load/run_performance_tests.py --target "${{ inputs.target }}" --profile "${{ inputs.profile }}"
+
+      - name: Upload performance dashboard and raw results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-performance-${{ inputs.target }}-${{ inputs.profile }}-${{ github.run_number }}
+          path: tests/load/results/
+          if-no-files-found: warn
+          retention-days: 30

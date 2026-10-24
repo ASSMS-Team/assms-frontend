@@ -1,0 +1,402 @@
+/* Technicians List Page Styles matching HTML prototype and screenshots */
+.technicians-container {
+  --ink: #14332a;
+  --muted: #5f7a6e;
+  --line: #e1ece5;
+  --soft: #f4faf6;
+  --g1: #0f4a37;
+  --g2: #0a2f23;
+  --accent: #178a5c;
+  --accent-d: #0f6b47;
+  --shadow: 0 1px 2px rgba(15, 74, 55, 0.06), 0 8px 24px -8px rgba(15, 74, 55, 0.16);
+  --cols: minmax(220px, 2fr) 130px minmax(200px, 2fr) 110px;
+  color: var(--ink);
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.technicians-container * {
+  box-sizing: border-box;
+}
+
+.technicians-container .head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 0 0 24px;
+}
+
+.technicians-container .head h1 {
+  margin: 0 0 4px;
+  font-size: 32px;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.technicians-container .head p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 15px;
+}
+
+.technicians-container .btn-create,
+.technicians-container .btn {
+  border: 0;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 11px 20px;
+  border-radius: 12px;
+  color: #fff !important;
+  background: var(--accent);
+  box-shadow: 0 3px 0 var(--accent-d), 0 8px 16px -6px rgba(15, 107, 71, 0.45);
+  transition: transform 0.1s, box-shadow 0.1s, background 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.technicians-container .btn-create:hover,
+.technicians-container .btn:hover {
+  background: #1a9566;
+}
+
+.technicians-container .btn-create:active,
+.technicians-container .btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--accent-d);
+}
+
+/* Stats */
+.technicians-container .stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.technicians-container .stat {
+  background: #fff;
+  border-radius: 16px;
+  padding: 16px 20px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--line);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.technicians-container .stat:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(15, 74, 55, 0.1);
+}
+
+.technicians-container .stat span {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.technicians-container .stat b {
+  display: block;
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 2px 0;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.technicians-container .stat small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* Panel */
+.technicians-container .panel {
+  container-type: inline-size;
+  background: #fff;
+  border-radius: 20px;
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.technicians-container .tools {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.technicians-container .search {
+  flex: 1;
+  min-width: 220px;
+  position: relative;
+}
+
+.technicians-container .search svg {
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.technicians-container .field {
+  height: 42px;
+  border: 1px solid #cbdcd2;
+  border-radius: 10px;
+  background: #fff;
+  padding: 0 12px;
+  color: var(--ink);
+  font-size: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.technicians-container .field:focus {
+  outline: 0;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(23, 138, 92, 0.18);
+}
+
+.technicians-container .search .field {
+  width: 100%;
+  padding-left: 38px;
+}
+
+.technicians-container select.field {
+  min-width: 140px;
+  cursor: pointer;
+  appearance: auto;
+}
+
+/* Grid Table */
+.technicians-container .tr {
+  display: grid;
+  grid-template-columns: var(--cols);
+  gap: 16px;
+  align-items: center;
+  padding: 14px 20px;
+}
+
+.technicians-container .th {
+  background: var(--soft);
+  border-bottom: 1px solid var(--line);
+  padding-top: 10px;
+  padding-bottom: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.technicians-container .row-item {
+  border-bottom: 1px solid var(--line);
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.technicians-container .row-item:hover {
+  background: var(--soft);
+}
+
+.technicians-container .person {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+
+.technicians-container .av {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex: none;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  background: linear-gradient(145deg, var(--c1, #5db8ff), var(--c2, #0b5aa6));
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.15), 0 4px 8px -2px rgba(0, 0, 0, 0.25);
+}
+
+.technicians-container .person b {
+  display: block;
+  line-height: 1.3;
+}
+
+.technicians-container .person b a {
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.technicians-container .person b a:hover {
+  color: var(--accent);
+}
+
+.technicians-container .person small {
+  display: block;
+  font: 12.5px ui-monospace, Consolas, monospace;
+  color: var(--muted);
+}
+
+.technicians-container .skills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.technicians-container .skill {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #e8f5ee;
+  color: var(--accent-d);
+  border: 1px solid #cfe9db;
+}
+
+.technicians-container .st {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 13.5px;
+  color: var(--ink);
+}
+
+.technicians-container .st:before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.technicians-container .st.in {
+  color: var(--muted);
+}
+
+.technicians-container .st.in:before {
+  background: #a3b3aa;
+}
+
+.technicians-container .foot {
+  padding: 12px 20px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.technicians-container .empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--muted);
+}
+
+.technicians-container .empty b {
+  color: var(--ink);
+  display: block;
+  font-size: 16px;
+  margin-bottom: 6px;
+}
+
+.technicians-container .empty p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.technicians-container .visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@container (max-width: 700px) {
+  .technicians-container .th {
+    display: none;
+  }
+  .technicians-container .row-item {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .technicians-container .row-item .person,
+  .technicians-container .row-item .sk {
+    grid-column: 1 / -1;
+  }
+  .technicians-container .row-item > [data-l]:before {
+    content: attr(data-l);
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 768px) {
+  .technicians-container .th {
+    display: none;
+  }
+  .technicians-container .row-item {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px 16px;
+  }
+  .technicians-container .row-item .person,
+  .technicians-container .row-item .sk {
+    grid-column: 1 / -1;
+  }
+  .technicians-container .row-item > [data-l]:before {
+    content: attr(data-l);
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 2px;
+  }
+}
+
+@media (max-width: 440px) {
+  .technicians-container .row-item {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1000px) {
+  .technicians-container .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .technicians-container .stats {
+    grid-template-columns: 1fr;
+  }
+  .technicians-container .head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .technicians-container .btn-create,
+  .technicians-container .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .technicians-container .tools {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .technicians-container .search,
+  .technicians-container select.field {
+    width: 100%;
+    min-width: 100%;
+  }
+}
