@@ -51,22 +51,24 @@ function EditTechnicianPage() {
           <p className="page-sub">Update skills and operational region assignment.</p>
         </div>
       </div>
-      <div className="card app-card app-card-padded form-column">
-        {loading ? (
-          <LoadingState message="Loading technician..." />
-        ) : notFound ? (
-          <EmptyState
-            icon="?"
-            title="Technician not found"
-            message={`No technician is registered with the id "${id}".`}
-            action={<Link className="btn btn-primary" to="/technicians">Back to technicians</Link>}
-          />
-        ) : error ? (
-          <ErrorState message={error} />
-        ) : (
-          technician && <TechnicianForm technician={technician} />
-        )}
-      </div>
+      {loading || notFound || error ? (
+        <div className="card app-card app-card-padded form-column">
+          {loading ? (
+            <LoadingState message="Loading technician..." />
+          ) : notFound ? (
+            <EmptyState
+              icon="?"
+              title="Technician not found"
+              message={`No technician is registered with the id "${id}".`}
+              action={<Link className="btn btn-primary" to="/technicians">Back to technicians</Link>}
+            />
+          ) : (
+            <ErrorState message={error} />
+          )}
+        </div>
+      ) : (
+        technician && <TechnicianForm technician={technician} />
+      )}
     </>
   )
 }
